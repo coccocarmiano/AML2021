@@ -1,7 +1,7 @@
 # Domain Generalization by Solving Jigsaw Puzzles
 ## Introduction
 - Objective: Improve object (image) classification across different domains (Domain Generalization - Domain Adaptation)
-- Method: **JiGen** - Unsupervised learning: performs jointly image classification and Jigsaw puzzle solving to improve regularization and generalization
+- Method: **JiGen** - Unsupervised learning: performs jointly image classification and Jigsaw puzzle solving to improve regularization and generalization  
   ![JiGen Concept](/related-papers/resources/JiGen_concept.png "JiGen Concept")
 
 ## Method: JiGen
