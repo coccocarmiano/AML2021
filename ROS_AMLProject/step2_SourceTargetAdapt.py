@@ -56,6 +56,7 @@ def _do_epoch(args,feature_extractor,rot_cls,obj_cls,source_loader,target_loader
 
 
 def step2(args,feature_extractor,rot_cls,obj_cls,source_loader,target_loader_train,target_loader_eval,device):
+    prit("Help")
     pass
 #     optimizer, scheduler = get_optim_and_scheduler(feature_extractor,rot_cls,obj_cls, args.epochs_step2, args.learning_rate, args.train_all)
 # 
