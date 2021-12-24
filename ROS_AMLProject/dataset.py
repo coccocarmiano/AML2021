@@ -21,19 +21,19 @@ def _dataset_info(txt_labels):
 
 
 class Dataset(data.Dataset):
-    def __init__(self, names, labels, path_dataset,img_transformer=None):
+    def __init__(self, names, labels, path_dataset, img_transformer=None):
         self.data_path = path_dataset
         self.names = names
         self.labels = labels
         self._image_transformer = img_transformer
 
     def __getitem__(self, index):
-        with open(f'{path_dataset}/{names[index]}', 'rb') as f:
+        with open(f'{self.data_path}/{self.names[index]}', 'rb') as f:
             img = Image.open(f)
             img = img.convert('RGB')
 
-        if img_transformer is not Note:
-            img = img_transformer(img)
+        if self._image_transformer is not None:
+            img = self._image_transformer(img)
 
         index_rot = random.randint(1,4)
         img_rot = TF.rotate(img, -(index_rot-1)*90)
@@ -46,19 +46,19 @@ class Dataset(data.Dataset):
 
 
 class TestDataset(data.Dataset):
-    def __init__(self, names, labels, path_dataset,img_transformer=None):
+    def __init__(self, names, labels, path_dataset, img_transformer=None):
         self.data_path = path_dataset
         self.names = names
         self.labels = labels
         self._image_transformer = img_transformer
 
     def __getitem__(self, index):
-        with open(f'{path_dataset}/{names[index]}', 'rb') as f:
+        with open(f'{self.data_path}/{self.names[index]}', 'rb') as f:
             img = Image.open(f)
             img =  img.convert('RGB')
 
-        if img_transformer is not Note:
-            img = img_transformer(img)
+        if self._image_transformer is not None:
+            img = self._image_transformer(img)
 
         index_rot = random.randint(1,4)
         img_rot = TF.rotate(img, -(index_rot-1)*90)
