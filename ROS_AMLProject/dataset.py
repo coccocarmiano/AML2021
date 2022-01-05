@@ -35,8 +35,8 @@ class Dataset(data.Dataset):
         if self._image_transformer is not None:
             img = self._image_transformer(img)
 
-        index_rot = random.randint(1,4)
-        img_rot = TF.rotate(img, -(index_rot-1)*90)
+        index_rot = random.randint(0,3)
+        img_rot = TF.rotate(img, index_rot * 90 * -1)
 
         return img, int(self.labels[index]), img_rot, index_rot
 
@@ -60,8 +60,8 @@ class TestDataset(data.Dataset):
         if self._image_transformer is not None:
             img = self._image_transformer(img)
 
-        index_rot = random.randint(1,4)
-        img_rot = TF.rotate(img, -(index_rot-1)*90)
+        index_rot = random.randint(0,3)
+        img_rot = TF.rotate(img, index_rot * 90 * -1)
 
         return img, int(self.labels[index]), img_rot, index_rot
 

@@ -18,7 +18,7 @@ def _do_epoch(args,feature_extractor,rot_cls,obj_cls,source_loader,optimizer,dev
         data, class_l, data_rot, rot_l  = data.to(device), class_l.to(device), data_rot.to(device), rot_l.to(device)
         optimizer.zero_grad()
 
-        feature_extractor_output = feature_extractor(data)
+        feature_extractor_output     = feature_extractor(data)
         feature_extractor_output_rot = feature_extractor(data_rot)
 
         obj_cls_output = obj_cls(feature_extractor_output)
@@ -37,8 +37,14 @@ def _do_epoch(args,feature_extractor,rot_cls,obj_cls,source_loader,optimizer,dev
         _, l_preds = torch.max(obj_cls_output.data, 1)
         _, r_preds = torch.max(rot_cls_output.data, 1)
 
-        _, cls_pred = torch.sum(l_preds == class_l.data).data.item()
-        _, rot_pred = torch.sum(r_preds == rot_l.data).data.item()
+        
+        print(l_preds)
+        print(r_preds)
+        print(class_l)
+        print(rot_l)
+
+        cls_pred = torch.sum(l_preds == class_l).item()
+        rot_pred = torch.sum(r_preds == rot_l).item()
 
         cls_correct += (cls_pred == class_l).sum().item()
         rot_correct += (rot_pred == rot_l).sum().item()
