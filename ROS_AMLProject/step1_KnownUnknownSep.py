@@ -22,8 +22,10 @@ def _do_epoch(args,feature_extractor,rot_cls,obj_cls,source_loader,optimizer,dev
         feature_extractor_output_rot = feature_extractor(data_rot)
 
         obj_cls_output = obj_cls(feature_extractor_output)
+        print("obj_cls_putput", obj_cls_output.size())
         u = torch.cat((feature_extractor_output, feature_extractor_output_rot), dim=1)
         rot_cls_output = rot_cls(u)
+        print("rot_cls_output", rot_cls_output.size())
 
         #cls_out = obj_cls(obj_cls_output)
         #rot_out = rot_cls(rot_cls_output)
