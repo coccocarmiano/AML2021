@@ -35,7 +35,14 @@ def _do_epoch(args,feature_extractor,rot_cls,obj_cls,source_loader,optimizer,dev
         optimizer.step()
         
         cls_correct += (obj_cls_output == class_l).sum().item()
+        print("Class")
+        print("Predicted: ", obj_cls_output)
+        print("Actual   : ", class_l)
+
         rot_correct += (rot_cls_output == rot_l).sum().item()
+        print("Rot")
+        print("Predicted: ", rot_cls_output)
+        print("Actual   : ", rot_l)
         cls_tot += class_l.size(0)
         rot_tot += rot_l.size(0)
 
