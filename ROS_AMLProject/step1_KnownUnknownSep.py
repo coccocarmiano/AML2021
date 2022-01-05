@@ -17,7 +17,7 @@ def _do_epoch(args,feature_extractor,rot_cls,obj_cls,source_loader,optimizer,dev
     for it, (data, class_l, data_rot, rot_l) in enumerate(source_loader):
         data, class_l, data_rot, rot_l  = data.to(device), class_l.to(device), data_rot.to(device), rot_l.to(device)
         optimizer.zero_grad()
-
+        print(it)
         feature_extractor_output     = feature_extractor(data)
         feature_extractor_output_rot = feature_extractor(data_rot)
 
@@ -27,29 +27,23 @@ def _do_epoch(args,feature_extractor,rot_cls,obj_cls,source_loader,optimizer,dev
 
         #cls_out = obj_cls(obj_cls_output)
         #rot_out = rot_cls(rot_cls_output)
-        class_loss = criterion(obj_cls_output, class_l)
-        rot_loss = criterion(rot_cls_output, rot_l)
+        class_loss  = criterion(obj_cls_output, class_l)
+        rot_loss    = criterion(rot_cls_output, rot_l)
         loss = class_loss + args.weight_RotTask_step1 * rot_loss
 
         loss.backward()
         optimizer.step()
 
-        _, l_preds = torch.max(obj_cls_output.data, 1)
-        _, r_preds = torch.max(rot_cls_output.data, 1)
+        l_pred = torch.max(obj_cls_output.data, 1)
+        r_pred = torch.max(rot_cls_output.data, 1)
 
+        if l_pred == class_l:
+            cls_correct += 1
         
-        print(l_preds)
-        print(r_preds)
-        print(class_l)
-        print(rot_l)
-
-        cls_pred = torch.sum(l_preds == class_l).item()
-        rot_pred = torch.sum(r_preds == rot_l).item()
-
-        cls_correct += (cls_pred == class_l).sum().item()
-        rot_correct += (rot_pred == rot_l).sum().item()
-        cls_tot += class_l.size(0)
-        rot_tot += rot_l.size(0)
+        if r_pred == rot_l:
+            rot_correct += 1
+        cls_tot += 1
+        rot_tot += 1
 
 
     acc_cls = cls_correct / cls_tot
