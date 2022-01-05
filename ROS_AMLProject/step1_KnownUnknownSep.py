@@ -35,17 +35,11 @@ def _do_epoch(args,feature_extractor,rot_cls,obj_cls,source_loader,optimizer,dev
 
         loss.backward()
         optimizer.step()
-
-        l_pred = torch.max(obj_cls_output.data, 1)
-        r_pred = torch.max(rot_cls_output.data, 1)
-
-        if l_pred == class_l:
-            cls_correct += 1
         
-        if r_pred == rot_l:
-            rot_correct += 1
-        cls_tot += 1
-        rot_tot += 1
+        cls_correct += (obj_cls_output == class_l).sum().item()
+        rot_correct += (rot_cls_output == rot_l).sum().item()
+        cls_tot += class_l.size(0)
+        rot_tot += rot_l.size(0)
 
 
     acc_cls = cls_correct / cls_tot
