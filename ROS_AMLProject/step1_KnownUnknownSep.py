@@ -16,14 +16,16 @@ def _do_epoch(args,feature_extractor,rot_cls,obj_cls,source_loader,optimizer,dev
 
     for it, (data, class_l, data_rot, rot_l) in enumerate(source_loader):
         data, class_l, data_rot, rot_l  = data.to(device), class_l.to(device), data_rot.to(device), rot_l.to(device)
+        print("data.size()",data.size())
         optimizer.zero_grad()
-        print(it)
         feature_extractor_output     = feature_extractor(data)
         feature_extractor_output_rot = feature_extractor(data_rot)
 
         obj_cls_output = obj_cls(feature_extractor_output)
+        print("obj_cls_output.size()",obj_cls_output.size())
         u = torch.cat((feature_extractor_output, feature_extractor_output_rot), dim=1)
         rot_cls_output = rot_cls(u)
+        print("obj_cls_output.size()",obj_cls_output.size())
 
         #cls_out = obj_cls(obj_cls_output)
         #rot_out = rot_cls(rot_cls_output)
