@@ -22,10 +22,10 @@ def _do_epoch(args,feature_extractor,rot_cls,obj_cls,source_loader,optimizer,dev
         feature_extractor_output_rot = feature_extractor(data_rot)
 
         obj_cls_output = obj_cls(feature_extractor_output)
-        print("obj_cls_putput", obj_cls_output.size())
+        #print("obj_cls_putput", obj_cls_output.size())
         u = torch.cat((feature_extractor_output, feature_extractor_output_rot), dim=1)
         rot_cls_output = rot_cls(u)
-        print("rot_cls_output", rot_cls_output.size())
+        #print("rot_cls_output", rot_cls_output.size())
 
         #cls_out = obj_cls(obj_cls_output)
         #rot_out = rot_cls(rot_cls_output)
@@ -36,14 +36,16 @@ def _do_epoch(args,feature_extractor,rot_cls,obj_cls,source_loader,optimizer,dev
         loss.backward()
         optimizer.step()
         
-        cls_correct += (obj_cls_output == class_l).sum().item()
+        preds = torch.argmax(obj_cls_output, dim=1)
+        cls_correct += (preds == class_l).sum().item()
         print("Class")
-        print("Predicted: ", obj_cls_output)
+        print("Predicted: ", preds)
         print("Actual   : ", class_l)
 
-        rot_correct += (rot_cls_output == rot_l).sum().item()
+        preds = torch.argmax(rot_cls_output, dim=1)
+        rot_correct += (preds == rot_l).sum().item()
         print("Rot")
-        print("Predicted: ", rot_cls_output)
+        print("Predicted: ", preds)
         print("Actual   : ", rot_l)
         cls_tot += class_l.size(0)
         rot_tot += rot_l.size(0)
