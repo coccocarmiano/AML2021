@@ -12,26 +12,26 @@ def evaluation(args,feature_extractor,rot_cls,target_loader_eval,device):
     feature_extractor.eval()
     rot_cls.eval()
 
-    gts, normality_scores = [], []
+    gts, preds, normality_scores = [], [], []
 
     with torch.no_grad():
         for it, (data,class_l,data_rot,rot_l) in enumerate(target_loader_eval):
             data, class_l, data_rot, rot_l = data.to(device), class_l.to(device), data_rot.to(device), rot_l.to(device)
 
-            feature_extractor_output = feature_extractor(data)
+            feature_extractor_output     = feature_extractor(data)
             feature_extractor_output_rot = feature_extractor(data_rot)
-            rot_cls_output = rot_cls(torch.cat((feature_extractor_output, feature_extractor_output_rot)))
-
-            rot_out = rot_cls(rot_cls_output)
-            _, r_preds = torch.max(rot_out.data, 1)
+            u = torch.cat((feature_extractor_output, feature_extractor_output_rot), dim=1)
+            rot_cls_output = rot_cls(u)
+            # r_preds = torch.argmax(rot_cls_output, dim=1)
+            r_preds = rot_cls_output
 
             gts += rot_l
             normality_scores += r_preds
 
-    ground_truth = np.array(gts)
-    normality_score = np.array(normality_scores)
-
-    auroc = roc_auc_score(ground_truth,normality_score)
+    
+    gts =  numpy.array([i.item() for i in gts], dtype=int)
+    normality_scores = torch.cat(normality_scores).numpy().astype(float)
+    auroc = roc_auc_score(ground_truth,normality_score, multi_class='ovr') # 'ovr' or 'ovo' ???
     print('AUROC %.4f' % auroc)
 
     # create new txt files

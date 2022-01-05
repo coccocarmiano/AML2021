@@ -55,7 +55,7 @@ class TestDataset(data.Dataset):
     def __getitem__(self, index):
         with open(f'{self.data_path}/{self.names[index]}', 'rb') as f:
             img = Image.open(f)
-            img =  img.convert('RGB')
+            img = img.convert('RGB')
 
         if self._image_transformer is not None:
             img = self._image_transformer(img)

@@ -22,13 +22,9 @@ def _do_epoch(args,feature_extractor,rot_cls,obj_cls,source_loader,optimizer,dev
         feature_extractor_output_rot = feature_extractor(data_rot)
 
         obj_cls_output = obj_cls(feature_extractor_output)
-        #print("obj_cls_putput", obj_cls_output.size())
         u = torch.cat((feature_extractor_output, feature_extractor_output_rot), dim=1)
-        rot_cls_output = rot_cls(u)
-        #print("rot_cls_output", rot_cls_output.size())
+        rot_cls_output = rot_cls(u) 
 
-        #cls_out = obj_cls(obj_cls_output)
-        #rot_out = rot_cls(rot_cls_output)
         class_loss  = criterion(obj_cls_output, class_l)
         rot_loss    = criterion(rot_cls_output, rot_l)
         loss = class_loss + args.weight_RotTask_step1 * rot_loss
@@ -38,21 +34,15 @@ def _do_epoch(args,feature_extractor,rot_cls,obj_cls,source_loader,optimizer,dev
         
         preds = torch.argmax(obj_cls_output, dim=1)
         cls_correct += (preds == class_l).sum().item()
-        print("Class")
-        print("Predicted: ", preds)
-        print("Actual   : ", class_l)
 
         preds = torch.argmax(rot_cls_output, dim=1)
         rot_correct += (preds == rot_l).sum().item()
-        print("Rot")
-        print("Predicted: ", preds)
-        print("Actual   : ", rot_l)
         cls_tot += class_l.size(0)
         rot_tot += rot_l.size(0)
 
 
-    acc_cls = cls_correct / cls_tot
-    acc_rot = rot_correct / rot_tot
+    acc_cls = cls_correct / cls_tot * 100
+    acc_rot = rot_correct / rot_tot * 100
 
     return class_loss, acc_cls, rot_loss, acc_rot
 
@@ -64,5 +54,8 @@ def step1(args,feature_extractor,rot_cls,obj_cls,source_loader,device):
     for epoch in range(args.epochs_step1):
         print('Epoch: ',epoch)
         class_loss, acc_cls, rot_loss, acc_rot = _do_epoch(args,feature_extractor,rot_cls,obj_cls,source_loader,optimizer,device)
-        print("Class Loss %.4f, Class Accuracy %.4f,Rot Loss %.4f, Rot Accuracy %.4f" % (class_loss.item(),acc_cls,rot_loss.item(), acc_rot))
+        print("Class Loss %.2f, Class Accuracy %.2f,Rot Loss %.2f, Rot Accuracy %.2f" % (class_loss.item(),acc_cls,rot_loss.item(), acc_rot))
         scheduler.step()
+
+    # torch.save(rot_cls.state_dict(), 'rot_cls_step1.pth')
+    # torch.save(obj_cls.state_dict(), 'obj_cls_step1.pth')
