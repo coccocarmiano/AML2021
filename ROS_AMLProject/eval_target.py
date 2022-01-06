@@ -30,8 +30,8 @@ def evaluation(args,feature_extractor,rot_cls,target_loader_eval,device):
             normality_scores += r_preds
 
     
-    gts =  np.array([i.item() for i in gts], dtype=int)
-    normality_scores = torch.cat(normality_scores).numpy().astype(float)
+    gts =  torch.tensor([i.item() for i in gts], dtype=int)
+    normality_scores = torch.cat(normality_scores)
     auroc = roc_auc_score(ground_truth,normality_score, multi_class='ovr') # 'ovr' or 'ovo' ???
     print('AUROC %.4f' % auroc)
 
