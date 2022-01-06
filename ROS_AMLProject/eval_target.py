@@ -47,8 +47,6 @@ def evaluation2(args,feature_extractor,rot_cls,target_loader_eval,device):
     ground_truths =  torch.tensor([i.item() for i in gts], dtype=int)
     softmax = torch.nn.Softmax(dim=1)
     normality_scores = torch.vstack([softmax(i.reshape(1, i.size(0))) for i in normality_scores])
-    print(normality_scores[0])
-    print(f"Size: {normality_scores.size()}")
     
     auroc = roc_auc_score(ground_truths, normality_scores, multi_class='ovr') # 'ovr' or 'ovo' ???
     print('AUROC %.4f' % auroc)
@@ -56,6 +54,9 @@ def evaluation2(args,feature_extractor,rot_cls,target_loader_eval,device):
     # create new txt files
     rand = random.randint(0,100000)
     print('Generated random number is :', rand)
+
+    normality_scores, _ = torch.max(normality_scores, 1)
+    print(normality_scores.size())
 
     if not os.path.isdir('new_txt_list'):
         os.mkdir('new_txt_list')
