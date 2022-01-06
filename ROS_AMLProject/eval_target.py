@@ -69,13 +69,15 @@ def evaluation2(args,feature_extractor,rot_cls,target_loader_eval,device):
     known = normality_scores > args.threshold
     unknown = normality_scores <= args.threshold
 
+    print(known.size())
+
     number_of_known_samples = known.sum()
     number_of_unknown_samples = unknown.sum()
     files = target_loader_eval.dataset.names
     labels = target_loader_eval.dataset.labels
 
     for it, name in enumerate(files):
-        if known[it]:
+        if known[it] > 0:
             target_known.write(name + ' ' + str(labels[it]) + '\n')
         else:
             target_unknown.write(name + ' ' + str(labels[it]) + '\n')
