@@ -28,8 +28,11 @@ def evaluation(args,feature_extractor,rot_cls,target_loader_eval,device):
 
             gts += rot_l
             normality_scores += r_preds
-
     
+    return gts, normality_scores
+        
+def evalaution2(args, gts, normality_scores, device):
+
     ground_truths =  torch.tensor([i.item() for i in gts], dtype=int)
     normality_scores = torch.cat(normality_scores)
     auroc = roc_auc_score(ground_truths, normality_scores, multi_class='ovr') # 'ovr' or 'ovo' ???
