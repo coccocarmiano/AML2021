@@ -3,7 +3,7 @@ import torch
 import numpy as np
 from sklearn.metrics import roc_auc_score
 import random
-import numpy as np
+import pickle
 
 
 #### Implement the evaluation on the target for the known/unknown separation
@@ -29,9 +29,19 @@ def evaluation(args,feature_extractor,rot_cls,target_loader_eval,device):
             gts += rot_l
             normality_scores += r_preds
     
-    return gts, normality_scores
+    with open("gts", "wb") as gtsf:
+        pickle.dump(gts, gtsf)
+    
+    with open("normality_scores", "wb") as normality_scoresf:
+        pickle.dump(normality_scores, normality_scoresf)
         
-def evalaution2(args, gts, normality_scores, device):
+def evaluation2(args,feature_extractor,rot_cls,target_loader_eval,device):
+
+    with open("gts", "rb") as gtsf:
+        gts = pickle.load(gtsf)
+
+    with open("normality_scores", "rb") as normality_scoresf:
+        normality_scores = pickle.load(normality_scoresf)
 
     ground_truths =  torch.tensor([i.item() for i in gts], dtype=int)
     normality_scores = torch.cat(normality_scores)
