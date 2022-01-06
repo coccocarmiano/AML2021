@@ -44,7 +44,7 @@ def evaluation2(args,feature_extractor,rot_cls,target_loader_eval,device):
         normality_scores = pickle.load(normality_scoresf)
 
     ground_truths =  torch.tensor([i.item() for i in gts], dtype=int)
-    normality_scores = torch.hstack(normality_scores)
+    normality_scores = torch.hstack([ i for i in normality_scores])
     print(f"Size: {normality_scores.size()}")
     
     auroc = roc_auc_score(ground_truths, normality_scores, multi_class='ovr') # 'ovr' or 'ovo' ???
