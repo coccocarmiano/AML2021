@@ -59,15 +59,15 @@ def evaluation2(args,feature_extractor,rot_cls,target_loader_eval,device):
 
     if not os.path.isdir('new_txt_list'):
         os.mkdir('new_txt_list')
-        
+
     # This txt files will have the names of the source images and the names of the target images selected as unknown
     target_unknown = open('new_txt_list/' + args.source + '_known_' + str(rand) + '.txt','w')
 
     # This txt files will have the names of the target images selected as known
     target_known = open('new_txt_list/' + args.target + '_known_' + str(rand) + '.txt','w')
 
-    known = normality_score > args.threshold
-    unknown = normality_score <= args.threshold
+    known = normality_scores > args.threshold
+    unknown = normality_scores <= args.threshold
 
     number_of_known_samples = known.sum()
     number_of_unknown_samples = unknown.sum()
