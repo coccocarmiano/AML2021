@@ -3,6 +3,7 @@ import torch
 import numpy as np
 from sklearn.metrics import roc_auc_score
 import random
+import numpy as np
 
 
 #### Implement the evaluation on the target for the known/unknown separation
@@ -29,7 +30,7 @@ def evaluation(args,feature_extractor,rot_cls,target_loader_eval,device):
             normality_scores += r_preds
 
     
-    gts =  numpy.array([i.item() for i in gts], dtype=int)
+    gts =  np.array([i.item() for i in gts], dtype=int)
     normality_scores = torch.cat(normality_scores).numpy().astype(float)
     auroc = roc_auc_score(ground_truth,normality_score, multi_class='ovr') # 'ovr' or 'ovo' ???
     print('AUROC %.4f' % auroc)
