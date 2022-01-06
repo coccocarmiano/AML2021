@@ -57,6 +57,7 @@ def evaluation2(args,feature_extractor,rot_cls,target_loader_eval,device):
 
     normality_scores, _ = torch.max(normality_scores, 1)
     print(normality_scores.size())
+    print(normality_scores[:100])
 
     if not os.path.isdir('new_txt_list'):
         os.mkdir('new_txt_list')
