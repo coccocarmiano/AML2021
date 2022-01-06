@@ -43,7 +43,7 @@ def evaluation2(args,feature_extractor,rot_cls,target_loader_eval,device):
     with open("normality_scores", "rb") as normality_scoresf:
         normality_scores = pickle.load(normality_scoresf)
 
-    print(f"ground_truths: {gts.size()} -- normality_scores: {normality_scores.size()}")
+    print(normality_scores[0].size())
     ground_truths =  torch.tensor([i.item() for i in gts], dtype=int)
     normality_scores = torch.cat(normality_scores)
     
