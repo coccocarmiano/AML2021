@@ -44,7 +44,8 @@ def evaluation2(args,feature_extractor,rot_cls,target_loader_eval,device):
         normality_scores = pickle.load(normality_scoresf)
 
     ground_truths =  torch.tensor([i.item() for i in gts], dtype=int)
-    normality_scores = torch.vstack([torch.softmax(i.reshape(1, i.size(0))) for i in normality_scores])
+    softmax = torch.nn.Softmax(dim=1)
+    normality_scores = torch.vstack([softmax(i.reshape(1, i.size(0))) for i in normality_scores])
     print(normality_scores[0])
     print(f"Size: {normality_scores.size()}")
     
