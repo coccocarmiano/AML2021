@@ -79,7 +79,7 @@ class Trainer:
         print('Target - Evaluation -- for known/unknown separation')
         evaluation(self.args,self.feature_extractor,self.rot_cls,self.target_loader_eval,self.device)
 
-    def do_eval2(self, gts, normality_score):
+    def do_eval2(self):
         rand = evaluation2(self.args,self.feature_extractor,self.rot_cls,self.target_loader_eval,self.device)
 
 
