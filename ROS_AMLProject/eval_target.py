@@ -45,6 +45,7 @@ def evaluation2(args,feature_extractor,rot_cls,target_loader_eval,device):
 
     ground_truths =  torch.tensor([i.item() for i in gts], dtype=int)
     normality_scores = torch.cat(normality_scores)
+    print(f"ground_truths: {ground_truths.size()} -- normality_scores: {normality_scores.size()}")
     auroc = roc_auc_score(ground_truths, normality_scores, multi_class='ovr') # 'ovr' or 'ovo' ???
     print('AUROC %.4f' % auroc)
 
