@@ -1,6 +1,7 @@
 
 import torch
 import numpy as np
+import os
 from sklearn.metrics import roc_auc_score
 import random
 import pickle
@@ -56,6 +57,9 @@ def evaluation2(args,feature_extractor,rot_cls,target_loader_eval,device):
     rand = random.randint(0,100000)
     print('Generated random number is :', rand)
 
+    if not os.path.isdir('new_txt_list'):
+        os.mkdir('new_txt_list')
+        
     # This txt files will have the names of the source images and the names of the target images selected as unknown
     target_unknown = open('new_txt_list/' + args.source + '_known_' + str(rand) + '.txt','w')
 
