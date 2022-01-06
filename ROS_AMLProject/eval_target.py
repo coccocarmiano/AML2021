@@ -72,6 +72,7 @@ def evaluation2(args,feature_extractor,rot_cls,target_loader_eval,device):
     unknown = normality_scores <= args.threshold
 
     print(known.size())
+    print(known[:10])
 
     number_of_known_samples = known.sum()
     number_of_unknown_samples = unknown.sum()
