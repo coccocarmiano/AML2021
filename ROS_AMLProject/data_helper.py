@@ -4,7 +4,7 @@ from torchvision import transforms
 
 from dataset import Dataset, TestDataset, _dataset_info
 
-NUM_WORKERS = 2
+NUM_WORKERS = 2 # 4 Was the default, but Colab kept suggested using 2
 
 def get_train_dataloader(args,txt_file):
 

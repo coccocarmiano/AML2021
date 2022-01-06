@@ -6,7 +6,7 @@ import data_helper
 from resnet import resnet18_feat_extractor, Classifier
 
 from step1_KnownUnknownSep import step1
-from eval_target import evaluation, evaluation2
+from eval_target import evaluation
 from step2_SourceTargetAdapt import step2
 
 
@@ -75,32 +75,67 @@ class Trainer:
         print("Source: ",self.args.source," Target: ",self.args.target)
         print("Dataset size: source %d, target %d" % (len(self.source_loader.dataset), len(self.target_loader_train.dataset)))
 
-    def do_eval(self):
-        print('Target - Evaluation -- for known/unknown separation')
-        evaluation(self.args,self.feature_extractor,self.rot_cls,self.target_loader_eval,self.device)
+    ### COLAB DEBUG FUNCTIONS, DELETE LATER
+    def trainer_step1(self):
+        step1(self.args,self.feature_extractor,self.rot_cls,self.obj_cls,self.source_loader,self.device)
+        print("Saving models")
+        torch.save(self.rot_cls.state_dict(), f'rot_cls_step1.pth')
+        torch.save(self.obj_cls.state_dict(), f'obj_cls_step1.pth')
 
-    def do_eval2(self):
-        rand = evaluation2(self.args,self.feature_extractor,self.rot_cls,self.target_loader_eval,self.device)
+    def trainer_evaluation(self):
+        rand = evaluation(self.args,self.feature_extractor,self.rot_cls,self.target_loader_eval,self.device)
+        print(f"Saving `rand` {rand} to `lastrand.txt`")
+        with open("lastrand.txt", "w") as lastrand:
+            print(rand, file=lastrand)
+        return rand
 
+    def trainer_step2(self):
+        print("Retrieving lastrand")
+        with open("lastrand.txt", "r") as lastrand:
+            rand = int(lastrand.read())
+        
+        # new dataloaders
+        print("Building source dataloader")
+        source_path_file = 'new_txt_list/' + self.args.source + '_known_'+str(rand)+'.txt'
+        self.source_loader = data_helper.get_train_dataloader(self.args,source_path_file)
+
+        print("Building target dataloader")
+        target_path_file = 'new_txt_list/' + self.args.target + '_known_' + str(rand) + '.txt'
+        self.target_loader_train = data_helper.get_train_dataloader(self.args,target_path_file)
+        self.target_loader_eval = data_helper.get_val_dataloader(self.args,target_path_file)
+
+        print("source_loader lentgh: ",   len(self.source_loader))
+        print("target_loader_train lentgh: ",   len(self.target_loader_train))
+        print("target_loader_eval lentgh: ",   len(self.target_loader_eval))
+
+
+        print("Executing step2")
+        step2(self.args,self.feature_extractor,self.rot_cls,self.obj_cls,self.source_loader,self.target_loader_train,self.target_loader_eval,self.device)
+    ### 
 
     def do_training(self):
-
         print('Step 1 --------------------------------------------')
         step1(self.args,self.feature_extractor,self.rot_cls,self.obj_cls,self.source_loader,self.device)
 
-        # print('Target - Evaluation -- for known/unknown separation')
-        # rand = evaluation(self.args,self.feature_extractor,self.rot_cls,self.target_loader_eval,self.device)
+        print('Target - Evaluation -- for known/unknown separation')
+        rand = evaluation(self.args,self.feature_extractor,self.rot_cls,self.target_loader_eval,self.device)
+
+        print(f"Generated random is {rand}. Saving models.")
+        torch.save(self.rot_cls.state_dict(), f'rot_cls_step1.pth')
+        torch.save(self.obj_cls.state_dict(), f'obj_cls_step1.pth')
+
 
         # new dataloaders
-        # source_path_file = 'new_txt_list/' + self.args.source + '_known_'+str(rand)+'.txt'
-        # self.source_loader = data_helper.get_train_dataloader(self.args,source_path_file)
+        source_path_file = 'new_txt_list/' + self.args.source + '_known_'+str(rand)+'.txt'
+        self.source_loader = data_helper.get_train_dataloader(self.args,source_path_file)
 
-        #target_path_file = 'new_txt_list/' + self.args.target + '_known_' + str(rand) + '.txt'
-        #self.target_loader_train = data_helper.get_train_dataloader(self.args,target_path_file)
-        #self.target_loader_eval = data_helper.get_val_dataloader(self.args,target_path_file)
+        target_path_file = 'new_txt_list/' + self.args.target + '_known_' + str(rand) + '.txt'
+        self.target_loader_train = data_helper.get_train_dataloader(self.args,target_path_file)
+        self.target_loader_eval = data_helper.get_val_dataloader(self.args,target_path_file)
 
-        # print('Step 2 --------------------------------------------')
-        # step2(self.args,self.feature_extractor,self.rot_cls,self.obj_cls,self.source_loader,self.target_loader_train,self.target_loader_eval,self.device)
+
+        print('Step 2 --------------------------------------------')
+        step2(self.args,self.feature_extractor,self.rot_cls,self.obj_cls,self.source_loader,self.target_loader_train,self.target_loader_eval,self.device)
 
 
 def main():

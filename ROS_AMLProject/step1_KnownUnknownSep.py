@@ -27,7 +27,7 @@ def _do_epoch(args,feature_extractor,rot_cls,obj_cls,source_loader,optimizer,dev
 
         class_loss  = criterion(obj_cls_output, class_l)
         rot_loss    = criterion(rot_cls_output, rot_l)
-        loss = class_loss + args.weight_RotTask_step1 * rot_loss
+        loss        = class_loss + args.weight_RotTask_step1 * rot_loss
 
         loss.backward()
         optimizer.step()
@@ -56,6 +56,3 @@ def step1(args,feature_extractor,rot_cls,obj_cls,source_loader,device):
         class_loss, acc_cls, rot_loss, acc_rot = _do_epoch(args,feature_extractor,rot_cls,obj_cls,source_loader,optimizer,device)
         print("Class Loss %.2f, Class Accuracy %.2f,Rot Loss %.2f, Rot Accuracy %.2f" % (class_loss.item(),acc_cls,rot_loss.item(), acc_rot))
         scheduler.step()
-
-    # torch.save(rot_cls.state_dict(), 'rot_cls_step1.pth')
-    # torch.save(obj_cls.state_dict(), 'obj_cls_step1.pth')
