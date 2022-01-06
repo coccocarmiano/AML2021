@@ -77,10 +77,11 @@ class Trainer:
 
     def do_eval(self):
         print('Target - Evaluation -- for known/unknown separation')
-        evaluation(self.args,self.feature_extractor,self.rot_cls,self.target_loader_eval,self.device)
+        rand = evaluation(self.args,self.feature_extractor,self.rot_cls,self.target_loader_eval,self.device)
 
-    def do_eval2(self):
-        rand = evaluation2(self.args,self.feature_extractor,self.rot_cls,self.target_loader_eval,self.device)
+
+    # def do_eval2(self):
+    #     rand = evaluation2(self.args,self.feature_extractor,self.rot_cls,self.target_loader_eval,self.device)
 
 
     def do_training(self):
@@ -88,17 +89,18 @@ class Trainer:
         print('Step 1 --------------------------------------------')
         step1(self.args,self.feature_extractor,self.rot_cls,self.obj_cls,self.source_loader,self.device)
 
-        # print('Target - Evaluation -- for known/unknown separation')
-        # rand = evaluation(self.args,self.feature_extractor,self.rot_cls,self.target_loader_eval,self.device)
+        print('Target - Evaluation -- for known/unknown separation')
+        rand = evaluation(self.args,self.feature_extractor,self.rot_cls,self.target_loader_eval,self.device)
 
         # new dataloaders
-        # source_path_file = 'new_txt_list/' + self.args.source + '_known_'+str(rand)+'.txt'
-        # self.source_loader = data_helper.get_train_dataloader(self.args,source_path_file)
+        source_path_file = 'new_txt_list/' + self.args.source + '_known_'+str(rand)+'.txt'
+        self.source_loader = data_helper.get_train_dataloader(self.args,source_path_file)
 
-        #target_path_file = 'new_txt_list/' + self.args.target + '_known_' + str(rand) + '.txt'
-        #self.target_loader_train = data_helper.get_train_dataloader(self.args,target_path_file)
-        #self.target_loader_eval = data_helper.get_val_dataloader(self.args,target_path_file)
+        target_path_file = 'new_txt_list/' + self.args.target + '_known_' + str(rand) + '.txt'
+        self.target_loader_train = data_helper.get_train_dataloader(self.args,target_path_file)
+        self.target_loader_eval = data_helper.get_val_dataloader(self.args,target_path_file)
 
+        print("Made it up to step 2 --- Hooray!")
         # print('Step 2 --------------------------------------------')
         # step2(self.args,self.feature_extractor,self.rot_cls,self.obj_cls,self.source_loader,self.target_loader_train,self.target_loader_eval,self.device)
 

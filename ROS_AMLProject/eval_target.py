@@ -30,19 +30,19 @@ def evaluation(args,feature_extractor,rot_cls,target_loader_eval,device):
             gts += rot_l
             normality_scores += r_preds
     
-    with open("gts", "wb") as gtsf:
-        pickle.dump(gts, gtsf)
-    
-    with open("normality_scores", "wb") as normality_scoresf:
-        pickle.dump(normality_scores, normality_scoresf)
-        
-def evaluation2(args,feature_extractor,rot_cls,target_loader_eval,device):
-
-    with open("gts", "rb") as gtsf:
-        gts = pickle.load(gtsf)
-
-    with open("normality_scores", "rb") as normality_scoresf:
-        normality_scores = pickle.load(normality_scoresf)
+#     with open("gts", "wb") as gtsf:
+#         pickle.dump(gts, gtsf)
+#     
+#     with open("normality_scores", "wb") as normality_scoresf:
+#         pickle.dump(normality_scores, normality_scoresf)
+#         
+# def evaluation2(args,feature_extractor,rot_cls,target_loader_eval,device):
+# 
+#     with open("gts", "rb") as gtsf:
+#         gts = pickle.load(gtsf)
+# 
+#     with open("normality_scores", "rb") as normality_scoresf:
+#         normality_scores = pickle.load(normality_scoresf)
 
     ground_truths =  torch.tensor([i.item() for i in gts], dtype=int)
     softmax = torch.nn.Softmax(dim=1)
@@ -56,8 +56,6 @@ def evaluation2(args,feature_extractor,rot_cls,target_loader_eval,device):
     print('Generated random number is :', rand)
 
     normality_scores, _ = torch.max(normality_scores, 1)
-    print(normality_scores.size())
-    print(normality_scores[:100])
 
     if not os.path.isdir('new_txt_list'):
         os.mkdir('new_txt_list')
@@ -70,9 +68,6 @@ def evaluation2(args,feature_extractor,rot_cls,target_loader_eval,device):
 
     known = normality_scores > args.threshold
     unknown = normality_scores <= args.threshold
-
-    print(known.size())
-    print(known[:10])
 
     number_of_known_samples = known.sum()
     number_of_unknown_samples = unknown.sum()
