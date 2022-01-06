@@ -6,7 +6,7 @@ import data_helper
 from resnet import resnet18_feat_extractor, Classifier
 
 from step1_KnownUnknownSep import step1
-from eval_target import evaluation, evaluation2
+from eval_target import evaluation
 from step2_SourceTargetAdapt import step2
 
 
