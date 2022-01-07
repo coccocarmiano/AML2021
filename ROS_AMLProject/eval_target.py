@@ -67,6 +67,10 @@ def evaluation(args,feature_extractor,rot_cls,target_loader_eval,device):
     #normality_scores = torch.vstack([softmax(i.reshape(1, i.size(0))) for i in normality_scores])
     
     #auroc = roc_auc_score(ground_truths.cpu(), normality_scores.cpu(), multi_class='ovr') # 'ovr' or 'ovo' ???
+    print(f"gts len: {len(gts)}")
+    print(f"gts: {gts}")
+    print(f"normality scores len: {len(normality_scores)}")
+    print(f"normality scores: {normality_scores}")
     auroc = roc_auc_score(gts, normality_scores)
     print('AUROC %.4f' % auroc)
 
@@ -74,7 +78,7 @@ def evaluation(args,feature_extractor,rot_cls,target_loader_eval,device):
     rand = random.randint(0,100000)
     print('Generated random number is :', rand)
 
-    normality_scores, _ = torch.max(normality_scores, 1)
+    #normality_scores, _ = torch.max(normality_scores, 1)
 
     if not os.path.isdir('new_txt_list'):
         os.mkdir('new_txt_list')
