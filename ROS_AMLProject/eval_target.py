@@ -28,10 +28,10 @@ def evaluation(args,feature_extractor,rot_cls,target_loader_eval,device):
             rot_cls_output_softmax = softmax(rot_cls_output)
             # r_preds = torch.argmax(rot_cls_output, dim=1)
             # r_preds = rot_cls_output
-            r_preds, _ = torch.max(rot_cls_output_softmax, dim=1).item()
+            r_preds, _ = torch.max(rot_cls_output_softmax, dim=1)
 
             #gts += rot_l
-            normality_scores += r_preds
+            normality_scores += r_preds.item()
     
 #     with open("gts", "wb") as gtsf:
 #         pickle.dump(gts, gtsf)
@@ -88,7 +88,7 @@ def evaluation(args,feature_extractor,rot_cls,target_loader_eval,device):
 
     # This txt files will have the names of the target images selected as known
     target_known = open('new_txt_list/' + args.target + '_known_' + str(rand) + '.txt','w')
-    
+
     normality_scores = np.array(normality_scores)
     known = normality_scores > args.threshold
     unknown = normality_scores <= args.threshold
