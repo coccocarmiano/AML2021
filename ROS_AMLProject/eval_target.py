@@ -31,7 +31,7 @@ def evaluation(args,feature_extractor,rot_cls,target_loader_eval,device):
             r_preds, _ = torch.max(rot_cls_output_softmax, dim=1)
 
             #gts += rot_l
-            normality_scores += r_preds.item()
+            normality_scores.append(r_preds.item())
     
 #     with open("gts", "wb") as gtsf:
 #         pickle.dump(gts, gtsf)
