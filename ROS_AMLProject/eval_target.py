@@ -48,7 +48,7 @@ def evaluation(args,feature_extractor,rot_cls,target_loader_eval,device):
 #         normality_scores = pickle.load(normality_scoresf)
 
     # Build ground truths
-    target_known_f = open('txt_list/' + args.target + '_known.txt','w')
+    target_known_f = open('txt_list/' + args.target + '_known.txt','r')
     known_file_names = target_known_f.readlines()
 
     gts = []
