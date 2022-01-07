@@ -10,11 +10,12 @@ import pickle
 #### Implement the evaluation on the target for the known/unknown separation
 
 def evaluation(args,feature_extractor,rot_cls,target_loader_eval,device):
-
+    softmax = torch.nn.Softmax(dim=1)
     feature_extractor.eval()
     rot_cls.eval()
 
-    gts, preds, normality_scores = [], [], []
+    #gts, preds, normality_scores = [], [], []
+    normality_scores = []
 
     with torch.no_grad():
         for it, (data,class_l,data_rot,rot_l) in enumerate(target_loader_eval):
@@ -24,10 +25,12 @@ def evaluation(args,feature_extractor,rot_cls,target_loader_eval,device):
             feature_extractor_output_rot = feature_extractor(data_rot)
             u = torch.cat((feature_extractor_output, feature_extractor_output_rot), dim=1)
             rot_cls_output = rot_cls(u)
+            rot_cls_output_softmax = softmax(rot_cls_output)
             # r_preds = torch.argmax(rot_cls_output, dim=1)
-            r_preds = rot_cls_output
+            # r_preds = rot_cls_output
+            r_preds, _ = torch.max(rot_cls_output_softmax, dim=1)
 
-            gts += rot_l
+            #gts += rot_l
             normality_scores += r_preds
     
 #     with open("gts", "wb") as gtsf:
@@ -44,11 +47,27 @@ def evaluation(args,feature_extractor,rot_cls,target_loader_eval,device):
 #     with open("normality_scores", "rb") as normality_scoresf:
 #         normality_scores = pickle.load(normality_scoresf)
 
-    ground_truths =  torch.tensor([i.item() for i in gts], dtype=int)
-    softmax = torch.nn.Softmax(dim=1)
-    normality_scores = torch.vstack([softmax(i.reshape(1, i.size(0))) for i in normality_scores])
+    # Build ground truths
+    target_known_f = open('txt_list/' + args.target + '_known.txt','w')
+    known_file_names = target_known_f.readlines()
+
+    gts = []
+    file_names = target_loader_eval.dataset.names
+    labels = target_loader_eval.dataset.labels
+    for n, l in zip(file_names, labels):
+        if f"{n} {l}" in known_file_names:
+            gts.append(1)
+        else:
+            gts.append(0)
+
+    target_known_f.close()
+
+    #ground_truths =  torch.tensor([i.item() for i in gts], dtype=int)
+    #softmax = torch.nn.Softmax(dim=1)
+    #normality_scores = torch.vstack([softmax(i.reshape(1, i.size(0))) for i in normality_scores])
     
-    auroc = roc_auc_score(ground_truths.cpu(), normality_scores.cpu(), multi_class='ovr') # 'ovr' or 'ovo' ???
+    #auroc = roc_auc_score(ground_truths.cpu(), normality_scores.cpu(), multi_class='ovr') # 'ovr' or 'ovo' ???
+    auroc = roc_auc_score(gts, normality_scores)
     print('AUROC %.4f' % auroc)
 
     # create new txt files
@@ -61,7 +80,7 @@ def evaluation(args,feature_extractor,rot_cls,target_loader_eval,device):
         os.mkdir('new_txt_list')
 
     # This txt files will have the names of the source images and the names of the target images selected as unknown
-    target_unknown = open('new_txt_list/' + args.source + '_known_' + str(rand) + '.txt','w')
+    #target_unknown = open('new_txt_list/' + args.source + '_known_' + str(rand) + '.txt','w')
 
     # This txt files will have the names of the target images selected as known
     target_known = open('new_txt_list/' + args.target + '_known_' + str(rand) + '.txt','w')
@@ -71,17 +90,17 @@ def evaluation(args,feature_extractor,rot_cls,target_loader_eval,device):
 
     number_of_known_samples = known.sum()
     number_of_unknown_samples = unknown.sum()
-    files = target_loader_eval.dataset.names
-    labels = target_loader_eval.dataset.labels
+    #files = target_loader_eval.dataset.names
+    #labels = target_loader_eval.dataset.labels
 
-    for it, name in enumerate(files):
+    for it, name in enumerate(file_names):
         if known[it] > 0:
             target_known.write(name + ' ' + str(labels[it]) + '\n')
-        else:
-            target_unknown.write(name + ' ' + str(labels[it]) + '\n')
+        #else:
+        #    target_unknown.write(name + ' ' + str(labels[it]) + '\n')
         
     target_known.close()
-    target_unknown.close()
+    #target_unknown.close()
 
     print('The number of target samples selected as known is: ',number_of_known_samples)
     print('The number of target samples selected as unknown is: ', number_of_unknown_samples)
