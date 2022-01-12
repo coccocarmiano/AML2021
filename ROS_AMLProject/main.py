@@ -9,9 +9,10 @@ from step1_KnownUnknownSep import step1
 from eval_target import evaluation
 from step2_SourceTargetAdapt import step2
 
+import pickle
 
 def get_args():
-    parser = argparse.ArgumentParser(description="Script to launch training",
+    parser = argparse.ArgumentParser(description="Script to launch training", 
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
     parser.add_argument("--source", default='Art', help="Source name")
@@ -26,7 +27,7 @@ def get_args():
     parser.add_argument("--min_scale", default=0.8, type=float, help="Minimum scale percent")
     parser.add_argument("--max_scale", default=1.0, type=float, help="Maximum scale percent")
     parser.add_argument("--jitter", default=0.4, type=float, help="Color jitter amount")
-    parser.add_argument("--random_grayscale", default=0.1, type=float,help="Randomly greyscale the image")
+    parser.add_argument("--random_grayscale", default=0.1, type=float, help="Randomly greyscale the image")
 
     # training parameters
     parser.add_argument("--image_size", type=int, default=222, help="Image size")
@@ -46,6 +47,9 @@ def get_args():
     parser.add_argument("--tf_logger", type=bool, default=True, help="If true will save tensorboard compatible logs")
     parser.add_argument("--folder_name", default=None, help="Used by the logger to save logs")
 
+    # variants
+    parser.add_argument("--multihead", type=bool, default=False, help="If true will use multi-head rotation classifier")
+    parser.add_argument("--center_loss", type=bool, default=False, help="If true will use center loss") # To be implemented
     return parser.parse_known_args()[0]
     #return parser.parse_args()
 
@@ -59,84 +63,125 @@ class Trainer:
         # initialize the network with a number of classes equals to the number of known classes + 1 (the unknown class, trained only in step2)
         self.feature_extractor = resnet18_feat_extractor()
         self.obj_classifier = Classifier(512, self.args.n_classes_known+1)
-        self.rot_classifier = Classifier(1024, 4)
+
+        if args.multihead:
+            self.rot_classifier = [ Classifier(512, self.args.n_classes_known+1).to(self.device) for _ in range(args.n_classes_known+1) ]
+        else:
+            self.rot_classifier = Classifier(512, self.args.n_classes_known+1).to(self.device)
 
         self.feature_extractor = self.feature_extractor.to(self.device)
-        self.obj_cls = self.obj_classifier.to(self.device)
-        self.rot_cls = self.rot_classifier.to(self.device)
+        self.obj_cls = self.obj_classifier
+        self.rot_cls = self.rot_classifier
 
-        source_path_file = 'txt_list/'+args.source+'_known.txt'
-        self.source_loader = data_helper.get_train_dataloader(args,source_path_file)
+        source_path_file = f"txt_list/{args.source}_known.txt"
+        self.source_loader = data_helper.get_train_dataloader(args, source_path_file)
 
-        target_path_file = 'txt_list/' + args.target + '.txt'
-        self.target_loader_train = data_helper.get_val_dataloader(args,target_path_file)
-        self.target_loader_eval = data_helper.get_val_dataloader(args,target_path_file)
+        target_path_file = f"txt_list/{args.target}.txt"
+        self.target_loader_train = data_helper.get_val_dataloader(args, target_path_file)
+        self.target_loader_eval = data_helper.get_val_dataloader(args, target_path_file)
 
-        print("Source: ",self.args.source," Target: ",self.args.target)
-        print("Dataset size: source %d, target %d" % (len(self.source_loader.dataset), len(self.target_loader_train.dataset)))
+        print(f"Source: {args.source} [{len(self.source_loader.dataset)}]")
+        print(f"Target: {args.target} [{len(self.target_loader_train.dataset)}]")
 
-    ### COLAB DEBUG FUNCTIONS, DELETE LATER
+    def get_rotation_classifiers(self):
+        # Wrapper Method
+        multihead      = self.args.multihead
+        rot_classifier = self.rot_classifier
+        def _get_rotation_classifiers(class_labels):
+            """
+            Returns a Tuple with:
+            a ) the list of classifiers to use, with `list[i]` being the classifier for class `class_labels[i]`
+            b ) the `zip` of (`label`, `idx` ) for an easier iteration
+            """
+            n_samples = len(class_labels)
+            linspace = [ i for i in range(n_samples) ]
+            if multihead:
+                classifiers = [ self.rot_classifier[i] for i in class_labels ]
+            else:
+                classifiers = [ self.rot_classifier for i in class_labels]
+            pairs = zip(class_labels, linspace)
+            return classifiers, pairs
+
+        return _get_rotation_classifiers
+        
     def trainer_step1(self):
-        step1(self.args,self.feature_extractor,self.rot_cls,self.obj_cls,self.source_loader,self.device)
-        print("Saving models")
-        torch.save(self.rot_cls.state_dict(), f'rot_cls_step1.pth')
-        torch.save(self.obj_cls.state_dict(), f'obj_cls_step1.pth')
+        print("Step One -- Training")
+        step1(self.args, self.feature_extractor, self.rot_cls, self.obj_cls, self.get_rotation_classifiers(), self.source_loader, self.device)
+
+        ### For Debug Purposes
+        with open("obj-s1.pickle", "wb") as f:
+            pickle.dump(self.obj_cls, f)
+        with open("rot-s1.pickle", "wb") as f:
+            pickle.dump(self.rot_cls, f)
+        ### For Debug Purposes
+
 
     def trainer_evaluation(self):
-        rand = evaluation(self.args,self.feature_extractor,self.rot_cls,self.target_loader_eval,self.device)
-        print(f"Saving `rand` {rand} to `lastrand.txt`")
-        with open("lastrand.txt", "w") as lastrand:
-            print(rand, file=lastrand)
+        print("Evaluation -- Known/Unknown Separation")
+        rand = evaluation(self.args, self.feature_extractor, 
+                          self.rot_cls, self.obj_cls, self.get_rotation_classifiers(), self.target_loader_eval, self.device)
+
+        print(f"Random: {rand}")
+
+        ### For Debug Purposes
+        with open('lastrand', 'w') as f:
+            f.write(str(rand))
+        with open("obj-ev.pickle", "wb") as f:
+            pickle.dump(self.obj_cls, f)
+        with open("rot-ev.pickle", "wb") as f:
+            pickle.dump(self.rot_cls, f)
+        ### For Debug Purposes
+        
+
+        print("Adding source samples to known target samples... ", end="")
+
+        filepath = f'new_txt_list/{self.args.source}_known_{str(rand)}.txt'
+
+        with open(filepath, "a") as f:
+            pairs = zip(self.source_loader.dataset.names, self.source_loader.dataset.labels)
+            for (file, label) in pairs:
+                f.write(f"{file} {str(label)}\n")
+
+        print("Done.")
         return rand
 
     def trainer_step2(self):
-        print("Retrieving lastrand")
-        with open("lastrand.txt", "r") as lastrand:
+        ### For Debug Purposes
+        with open("lastrand", "r") as lastrand:
             rand = int(lastrand.read())
+        print(f"Random: {rand}")
+        ### For Debug Purposes
         
         # new dataloaders
-        print("Building source dataloader")
-        source_path_file = 'new_txt_list/' + self.args.source + '_known_'+str(rand)+'.txt'
-        self.source_loader = data_helper.get_train_dataloader(self.args,source_path_file)
+        source_path_file   = f"new_txt_list/{self.args.source}_known_{str(rand)}.txt"
+        self.source_loader = data_helper.get_train_dataloader(self.args, source_path_file)
 
-        print("Building target dataloader")
-        target_path_file = 'new_txt_list/' + self.args.target + '_known_' + str(rand) + '.txt'
-        self.target_loader_train = data_helper.get_train_dataloader(self.args,target_path_file)
-        self.target_loader_eval = data_helper.get_val_dataloader(self.args,target_path_file)
+        target_path_file = f"new_txt_list/{self.args.target}_known_{str(rand)}.txt"
+        self.target_loader_train = data_helper.get_train_dataloader(self.args, target_path_file)
+        self.target_loader_eval  = data_helper.get_val_dataloader(self.args, target_path_file)
 
-        print("source_loader lentgh: ",   len(self.source_loader))
-        print("target_loader_train lentgh: ",   len(self.target_loader_train))
-        print("target_loader_eval lentgh: ",   len(self.target_loader_eval))
+        print(f"Source Size (SRC+K): {len(self.source_loader.dataset)}")
+        print(f"Target Size (TRAIN): {len(self.target_loader_train.dataset)}")
+        print(f"Target Size (TEST ): {len(self.target_loader_eval.dataset)}")
 
-
-        print("Executing step2")
-        step2(self.args,self.feature_extractor,self.rot_cls,self.obj_cls,self.source_loader,self.target_loader_train,self.target_loader_eval,self.device)
-    ### 
-
+        print("Step 2 -- Domain Adaptation")
+        os, unk, hos, osd, rsd = step2(self.args, self.feature_extractor, self.rot_cls, self.obj_cls, 
+                                       self.source_loader, self.target_loader_train, self.target_loader_eval, self.device)
+        print("Saving best performing model based on HOS")
+        
+        # These should actually be .pth models
+        ### For Debug Purposes
+        with open("obj-s2.pickle", "wb") as f:
+            pickle.dump(self.obj_cls, f)
+        with open("rot-s2.pickle", "wb") as f:
+            pickle.dump(self.rot_cls, f)
+        ### For Debug Purposes
+        ### Or should we save the entire model?
+        
     def do_training(self):
-        print('Step 1 --------------------------------------------')
-        step1(self.args,self.feature_extractor,self.rot_cls,self.obj_cls,self.source_loader,self.device)
-
-        print('Target - Evaluation -- for known/unknown separation')
-        rand = evaluation(self.args,self.feature_extractor,self.rot_cls,self.target_loader_eval,self.device)
-
-        print(f"Generated random is {rand}. Saving models.")
-        torch.save(self.rot_cls.state_dict(), f'rot_cls_step1.pth')
-        torch.save(self.obj_cls.state_dict(), f'obj_cls_step1.pth')
-
-
-        # new dataloaders
-        source_path_file = 'new_txt_list/' + self.args.source + '_known_'+str(rand)+'.txt'
-        self.source_loader = data_helper.get_train_dataloader(self.args,source_path_file)
-
-        target_path_file = 'new_txt_list/' + self.args.target + '_known_' + str(rand) + '.txt'
-        self.target_loader_train = data_helper.get_train_dataloader(self.args,target_path_file)
-        self.target_loader_eval = data_helper.get_val_dataloader(self.args,target_path_file)
-
-
-        print('Step 2 --------------------------------------------')
-        step2(self.args,self.feature_extractor,self.rot_cls,self.obj_cls,self.source_loader,self.target_loader_train,self.target_loader_eval,self.device)
-
+        self.trainer_step1()
+        self.trainer_evaluation()
+        self.traner_step2()
 
 def main():
     args = get_args()

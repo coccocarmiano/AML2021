@@ -5,33 +5,31 @@ from optimizer_helper import get_optim_and_scheduler
 from itertools import cycle
 import numpy as np
 
-def _do_epoch(args,feature_extractor,rot_cls,obj_cls,source_loader,target_loader_train,target_loader_eval,optimizer,device):
+def _do_epoch(args, feature_extractor, rot_cls, obj_cls, get_rotation_classifiers, source_loader, target_loader_train, target_loader_eval, optimizer, device):
 
-    # Step2 
-    # 
-    # The unknw_accnown part of the target will be used to train the unknw_accnown class in Step2, the 
-    # known part instead will be used for the source-target adaptation. 
-    #       - From the assignment PDF
-
-    criterion = nn.CrossEntropyLoss()
+    if args.centerloss:
+        raise Exception("Implement Center Loss")
+    else:
+        criterion = nn.CrossEntropyLoss()
+    
     feature_extractor.train()
     obj_cls.train() # Should the classifier be re-initialized ?
-    rot_cls.train() # Should the classifier be re-initialized ?
+
+    if args.multihead:
+        for head in rot_cls:
+            head.train()
+        else:
+            rot_cls.train()
 
     target_loader_train = cycle(target_loader_train)
-    cls_correct, rot_correct, cls_tot, rot_tot = 0, 0, 0, 0
+    cls_correct, rot_correct = 0, 0
+    cls_tot,     rot_tot     = 0, 0
 
     for it, (data_source, data_source_label, _, _) in enumerate(source_loader):
-
-        # Reset Gradients
         optimizer.zero_grad()
 
-        # We're using two iterators at once, one for the source and one for the target.
         (data_target, _, data_target_rot, data_target_rotation_label) = next(target_loader_train)
 
-        # UNDER TEST!
-        # cnt = (data_source_label > 44).sum()
-        # print(f"Found {cnt} samples with label > 44 (Unknown) in {len(data_source_label)} samples")
         data_source_label[data_source_label > 44] = 45
 
         # Move everything to the used device ( CPU/GPU )
@@ -45,14 +43,17 @@ def _do_epoch(args,feature_extractor,rot_cls,obj_cls,source_loader,target_loader
         feature_extractor_output_target     = feature_extractor(data_target)
         feature_extractor_output_target_rot = feature_extractor(data_target_rot)
 
-        obj_cls_output  = obj_cls(feature_extractor_output)
-        temp            = torch.cat((feature_extractor_output_target, feature_extractor_output_target_rot), dim=1)
-        rot_cls_output  = rot_cls(temp) 
+        obj_cls_output        = obj_cls(feature_extractor_output)
+        output_rot_output_cat = torch.cat((feature_extractor_output_target, feature_extractor_output_target_rot), dim=1)
+
+        classifiers, pairs = get_rotation_classifiers(data_source_label)
+        stack              = lambda x: torch.vstack(x, dim=1)
+        rot_cls_output     = stack( [ rot_cls[cls_idx](output_rot_output_cat[data_idx]) for (cls_idx, data_idx) in pairs ] )
 
         # Evaluate loss
         class_loss  = criterion(obj_cls_output, data_source_label)
-        rot_loss    = criterion(rot_cls_output, data_target_rotation_label)
-        loss        = class_loss + args.weight_RotTask_step2 * rot_loss
+        rot_loss    = criterion(rot_cls_output, data_target_rotation_label) * args.weight_RotTask_step2
+        loss        = class_loss + rot_loss
 
         loss.backward()
         optimizer.step()
@@ -68,55 +69,72 @@ def _do_epoch(args,feature_extractor,rot_cls,obj_cls,source_loader,target_loader
     acc_cls = cls_correct / cls_tot * 100
     acc_rot = rot_correct / rot_tot * 100
 
-    print("Class Loss %.4f, Class Accuracy %.4f,Rot Loss %.4f, Rot Accuracy %.4f" % (class_loss.item(), acc_cls, rot_loss.item(), acc_rot))
+    print(f"\tRotation Loss: {rot_loss.item():.4f}")
+    print(f"\tClass    Loss: {class_loss.item():.4f}")
+    print(f"\tRotation Acc.: {acc_rot:.2f}%")
+    print(f"\tClass    Acc.: {acc_cls:.2f}%")
 
 
-    #### Implement the final evaluation step, computing OS*, UNK and HOS
     feature_extractor.eval()
     obj_cls.eval()
-    rot_cls.eval()
 
     # kwn_acc   = OS*
     # unknw_acc = UNK
-    tot_known, tot_unknw, known_correct, unknw_correct  = 0, 0, 0, 0
+    tot_known, tot_unkwn, known_correct, unknw_correct  = 0, 0, 0, 0
 
     with torch.no_grad():
         for it, (data, class_l, _, _) in enumerate(target_loader_eval):
+
             data, class_l = data.to(device), class_l.to(device)
             feature_extractor_output  = feature_extractor(data)
             obj_cls_output            = obj_cls(feature_extractor_output)
-
             cls_pred = torch.argmax(obj_cls_output, dim=1)
 
-            # Are this masks correct? Need to check
-            class_l[class_l > 44] = 45
-            tot_known    += class_l[class_l < 45].sum()
-            tot_unkwn    += class_l[class_l > 44].sum()
-            
-            known_correct   += (class_l == cls_pred)[class_l < 45].sum()
-            unknw_correct   += ((class_l > 44) * (cls_pred > 44)).sum()
-            
-        
-        
-        known_acc = float(known_correct) / float(tot_known)
-        unknw_acc = float(unknw_correct) / float(tot_unknw)
 
-        if known_acc < 0.001:
-            known_acc = 0.001
-        
-        if unknw_acc < 0.001:
-            unknw_acc = 0.001
+            known_mask    = class_l < 45
+            unknw_mask    = class_l > 44
 
-        print(known_acc, unknw_acc)
+            class_l[unknw_mask] = 45
+
+            tot_known    += known_mask.sum().item()
+            tot_unkwn    += unknw_mask.sum().item()
+            
+            known_correct   += (cls_pred[known_mask] == class_l[known_mask]).sum().item()
+            unknw_correct   += (cls_pred[unknw_mask] == class_l[unknw_mask]).sum().item()
+
+        known_acc = known_correct / tot_known
+        unknw_acc = unknw_correct / tot_unkwn
 
         hos = 2 / ( 1.0 / float(known_acc) + 1.0 / float(unknw_acc) )
 
-        print(f'\nkwn_acc={known_acc * 100:.2f}, unknw_acc={unknw_acc * 100 : 2f}, HOS={hos * 100 : .2f}')
+    return known_acc, unknw_acc, hos
 
 
-
-def step2(args,feature_extractor,rot_cls,obj_cls,source_loader,target_loader_train,target_loader_eval,device):
-    optimizer, scheduler = get_optim_and_scheduler(feature_extractor,rot_cls,obj_cls, args.epochs_step2, args.learning_rate, args.train_all)
+def step2(args, feature_extractor, rot_cls, obj_cls, source_loader, target_loader_train, target_loader_eval, device):
+    """
+    Returns: Tuple(OS, UNK, HOS, OSD, RSD), Tuple is selected based on the highest scoring UNK
+    OS = Known Accuracy
+    UNK = Unknown Accuracy
+    HOS = Harmonic Mean of OS and UNK
+    OSD = Object Classifier State Dict
+    RSD = Rotation Classifier State Dict
+    """
+    ## From "On the Effectivnes of ...", LR is doubled in this step
+    ## IMPLEMENT DOUBLING OF LEARNING RATE
+    optimizer, scheduler = get_optim_and_scheduler(feature_extractor, rot_cls, obj_cls, args.epochs_step2, args.learning_rate, args.train_all)
+    best_values = (0, 0, 0, 0, 0)
+    best = .0
     for epoch in range(args.epochs_step2):
-        _do_epoch(args,feature_extractor,rot_cls,obj_cls,source_loader,target_loader_train,target_loader_eval,optimizer,device)
+        print(f"Epoch {epoch+1}/{args.epochs_step2}")
+        known_acc, unknw_acc, hos = _do_epoch(args, feature_extractor, rot_cls, obj_cls, source_loader, target_loader_train, target_loader_eval, optimizer, device)
+        
+        print(f"\tOS : {known_acc * 100:.2f}%")
+        print(f"\tUNK: {unknw_acc * 100:.2f}%")
+        print(f"\tHOS: {hos * 100:.2f}%")
+
+        if hos > best:
+            best = hos
+            best_values = (known_acc, unknw_acc, hos, obj_cls.state_dict(), rot_cls.state_dict())
         scheduler.step()
+    
+    return best_values
