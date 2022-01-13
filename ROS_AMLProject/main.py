@@ -62,12 +62,12 @@ class Trainer:
 
         # initialize the network with a number of classes equals to the number of known classes + 1 (the unknown class, trained only in step2)
         self.feature_extractor = resnet18_feat_extractor()
-        self.obj_classifier = Classifier(512, self.args.n_classes_known+1)
+        self.obj_classifier = Classifier(512, self.args.n_classes_known+1).to(self.device)
 
         if args.multihead:
-            self.rot_classifier = [ Classifier(512, self.args.n_classes_known+1).to(self.device) for _ in range(args.n_classes_known+1) ]
+            self.rot_classifier = [ Classifier(1024, 4).to(self.device) for _ in range(args.n_classes_known+1) ]
         else:
-            self.rot_classifier = Classifier(512, self.args.n_classes_known+1).to(self.device)
+            self.rot_classifier = Classifier(1024, 4).to(self.device)
 
         self.feature_extractor = self.feature_extractor.to(self.device)
         self.obj_cls = self.obj_classifier
@@ -94,13 +94,11 @@ class Trainer:
             b ) the `zip` of (`label`, `idx` ) for an easier iteration
             """
             n_samples = len(class_labels)
-            linspace = [ i for i in range(n_samples) ]
             if multihead:
                 classifiers = [ self.rot_classifier[i] for i in class_labels ]
             else:
-                classifiers = [ self.rot_classifier for i in class_labels]
-            pairs = zip(class_labels, linspace)
-            return classifiers, pairs
+                classifiers = [ self.rot_classifier    for i in class_labels ]
+            return classifiers
 
         return _get_rotation_classifiers
         
@@ -160,23 +158,22 @@ class Trainer:
         self.target_loader_train = data_helper.get_train_dataloader(self.args, target_path_file)
         self.target_loader_eval  = data_helper.get_val_dataloader(self.args, target_path_file)
 
-        print(f"Source Size (SRC+K): {len(self.source_loader.dataset)}")
+        print(f"Source Size (S+UNK): {len(self.source_loader.dataset)}")
         print(f"Target Size (TRAIN): {len(self.target_loader_train.dataset)}")
         print(f"Target Size (TEST ): {len(self.target_loader_eval.dataset)}")
 
         print("Step 2 -- Domain Adaptation")
-        os, unk, hos, osd, rsd = step2(self.args, self.feature_extractor, self.rot_cls, self.obj_cls, 
+        os, unk, hos, osd, rsd = step2(self.args, self.feature_extractor, self.rot_cls, self.obj_cls, self.get_rotation_classifiers(),
                                        self.source_loader, self.target_loader_train, self.target_loader_eval, self.device)
         print("Saving best performing model based on HOS")
         
         # These should actually be .pth models
         ### For Debug Purposes
         with open("obj-s2.pickle", "wb") as f:
-            pickle.dump(self.obj_cls, f)
+            pickle.dump(osd, f)
         with open("rot-s2.pickle", "wb") as f:
-            pickle.dump(self.rot_cls, f)
+            pickle.dump(rsd, f)
         ### For Debug Purposes
-        ### Or should we save the entire model?
         
     def do_training(self):
         self.trainer_step1()

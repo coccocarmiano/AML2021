@@ -10,13 +10,13 @@ import random
 def evaluation(args, feature_extractor, rot_cls, obj_cls, get_rotation_classifiers, target_loader_eval, device):
 
     feature_extractor.eval()
-    rot_cls.eval()
+    obj_cls.eval()
 
     if args.multihead:
         for head in rot_cls:
             head.eval()
-        else:
-            rot_cls.eval()
+    else:
+        rot_cls.eval()
     
     ground_truths, normality_scores = [], []
 
@@ -25,21 +25,24 @@ def evaluation(args, feature_extractor, rot_cls, obj_cls, get_rotation_classifie
             data,     data_label     =  data.to(device),     data_label.to(device)
             data_rot, data_rot_label =  data_rot.to(device), data_rot_label.to(device)
 
+            data_label[data_label > 44] = 45
+
             feature_extractor_output     = feature_extractor(data)
             feature_extractor_output_rot = feature_extractor(data_rot)
             output_rot_output_cat        = torch.cat((feature_extractor_output, feature_extractor_output_rot), dim=1)
 
             # Should this use inferred labels... ?
-            rotation_classifiers, pairs  = get_rotation_classifiers(data_label)
-            rot_cls_output               = torch.vstack( [ rot_cls[cls_idx](output_rot_output_cat[data_idx]) for (cls_idx, data_idx) in pairs ], dim=1)
+            rotation_classifiers         = get_rotation_classifiers(data_label)
+            it = range(len(rotation_classifiers))
+            rot_cls_output               = torch.vstack( [ rot_cls[idx](output_rot_output_cat[idx]) for idx in it ])
 
             ground_truths    += data_rot_label
             normality_scores += rot_cls_output
 
     ground_truths =  torch.tensor([i.item() for i in ground_truths], dtype=int)
     softmax = torch.nn.Softmax(dim=1)
-    reshape = lambda x: x.reshape(1, i.size(0))
-    normality_scores = torch.vstack( [ softmax(reshape(x)) for i in normality_scores] )
+    reshape = lambda x: x.reshape(1, x.size(0))
+    normality_scores = torch.vstack( [ softmax(reshape(i)) for i in normality_scores] )
     
     auroc = roc_auc_score(ground_truths.cpu(), normality_scores.cpu(), multi_class='ovr') # 'ovr' or 'ovo' ???
     print('AUROC %.4f' % auroc)
@@ -64,7 +67,7 @@ def evaluation(args, feature_extractor, rot_cls, obj_cls, get_rotation_classifie
     number_of_unkwn_samples = unknw.sum()
 
     pairs = zip(target_loader_eval.dataset.names, target_loader_eval.dataset.labels)
-    for it, (name, label) in enumerate(files):
+    for it, (name, label) in enumerate(pairs):
         if known[it] > 0:
             target_known.write(f"{name} {str(label)}\n")
         else:
@@ -72,12 +75,6 @@ def evaluation(args, feature_extractor, rot_cls, obj_cls, get_rotation_classifie
     
     target_known.close()
     target_unknw.close()
-
-    ### Debug Statements
-    print(f'# Known: {number_of_known_samples.item()}')
-    print(f'# Unknw: {number_of_unkwn_samples.item()}')
-    print(f'# Total: {len(labels)}')
-    ### Debug Statements
 
     return rand
 

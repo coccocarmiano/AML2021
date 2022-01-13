@@ -7,7 +7,7 @@ import numpy as np
 
 def _do_epoch(args, feature_extractor, rot_cls, obj_cls, get_rotation_classifiers, source_loader, target_loader_train, target_loader_eval, optimizer, device):
 
-    if args.centerloss:
+    if args.center_loss:
         raise Exception("Implement Center Loss")
     else:
         criterion = nn.CrossEntropyLoss()
@@ -18,8 +18,8 @@ def _do_epoch(args, feature_extractor, rot_cls, obj_cls, get_rotation_classifier
     if args.multihead:
         for head in rot_cls:
             head.train()
-        else:
-            rot_cls.train()
+    else:
+        rot_cls.train()
 
     target_loader_train = cycle(target_loader_train)
     cls_correct, rot_correct = 0, 0
@@ -46,9 +46,9 @@ def _do_epoch(args, feature_extractor, rot_cls, obj_cls, get_rotation_classifier
         obj_cls_output        = obj_cls(feature_extractor_output)
         output_rot_output_cat = torch.cat((feature_extractor_output_target, feature_extractor_output_target_rot), dim=1)
 
-        classifiers, pairs = get_rotation_classifiers(data_source_label)
-        stack              = lambda x: torch.vstack(x, dim=1)
-        rot_cls_output     = stack( [ rot_cls[cls_idx](output_rot_output_cat[data_idx]) for (cls_idx, data_idx) in pairs ] )
+        classifiers    = get_rotation_classifiers(data_source_label)
+        it             = range(len(classifiers))
+        rot_cls_output = torch.vstack( [ classifiers[idx](output_rot_output_cat[idx]) for idx in it ] )
 
         # Evaluate loss
         class_loss  = criterion(obj_cls_output, data_source_label)
@@ -110,9 +110,9 @@ def _do_epoch(args, feature_extractor, rot_cls, obj_cls, get_rotation_classifier
     return known_acc, unknw_acc, hos
 
 
-def step2(args, feature_extractor, rot_cls, obj_cls, source_loader, target_loader_train, target_loader_eval, device):
+def step2(args, feature_extractor, rot_cls, obj_cls, get_rotation_classifiers, source_loader, target_loader_train, target_loader_eval, device):
     """
-    Returns: Tuple(OS, UNK, HOS, OSD, RSD), Tuple is selected based on the highest scoring UNK
+    Returns: Tuple(OS, UNK, HOS, OSD, RSD), Tuple is selected based on the highest scoring HOS
     OS = Known Accuracy
     UNK = Unknown Accuracy
     HOS = Harmonic Mean of OS and UNK
@@ -121,12 +121,12 @@ def step2(args, feature_extractor, rot_cls, obj_cls, source_loader, target_loade
     """
     ## From "On the Effectivnes of ...", LR is doubled in this step
     ## IMPLEMENT DOUBLING OF LEARNING RATE
-    optimizer, scheduler = get_optim_and_scheduler(feature_extractor, rot_cls, obj_cls, args.epochs_step2, args.learning_rate, args.train_all)
+    optimizer, scheduler = get_optim_and_scheduler(feature_extractor, rot_cls, obj_cls, args.epochs_step2, args.learning_rate, args.train_all, args.multihead)
     best_values = (0, 0, 0, 0, 0)
     best = .0
     for epoch in range(args.epochs_step2):
         print(f"Epoch {epoch+1}/{args.epochs_step2}")
-        known_acc, unknw_acc, hos = _do_epoch(args, feature_extractor, rot_cls, obj_cls, source_loader, target_loader_train, target_loader_eval, optimizer, device)
+        known_acc, unknw_acc, hos = _do_epoch(args, feature_extractor, rot_cls, obj_cls, get_rotation_classifiers, source_loader, target_loader_train, target_loader_eval, optimizer, device)
         
         print(f"\tOS : {known_acc * 100:.2f}%")
         print(f"\tUNK: {unknw_acc * 100:.2f}%")
@@ -134,7 +134,7 @@ def step2(args, feature_extractor, rot_cls, obj_cls, source_loader, target_loade
 
         if hos > best:
             best = hos
-            best_values = (known_acc, unknw_acc, hos, obj_cls.state_dict(), rot_cls.state_dict())
+            best_values = (known_acc, unknw_acc, hos, obj_cls, rot_cls)
         scheduler.step()
     
     return best_values

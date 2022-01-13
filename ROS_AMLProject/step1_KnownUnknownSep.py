@@ -35,9 +35,9 @@ def _do_epoch(args, feature_extractor, rot_cls, obj_cls, get_rotation_classifier
         obj_cls_output        = obj_cls(feature_extractor_output)
         output_rot_output_cat = torch.cat((feature_extractor_output, feature_extractor_output_rot), dim=1)
 
-        rotation_classifiers, pairs = get_rotation_classifiers(data_label)
-        stack = lambda x: torch.vstack(x, dim=1)
-        rot_cls_output = stack([ rotation_classifiers[cls_idx](data[data_idx]) for (cls_idx, data_idx) in pairs ])
+        classifiers    = get_rotation_classifiers(data_label)
+        it             = range(len(classifiers))
+        rot_cls_output = torch.vstack([ classifiers[idx](output_rot_output_cat[idx]) for idx in it])
 
         class_loss  = criterion(obj_cls_output, data_label)
         rot_loss    = criterion(rot_cls_output, data_rot_label) * args.weight_RotTask_step1
@@ -62,7 +62,7 @@ def _do_epoch(args, feature_extractor, rot_cls, obj_cls, get_rotation_classifier
 
 
 def step1(args, feature_extractor, rot_cls, obj_cls, get_rotation_classifiers, source_loader, device):
-    optimizer, scheduler = get_optim_and_scheduler(feature_extractor, rot_cls, obj_cls, args.epochs_step1, args.learning_rate, args.train_all)
+    optimizer, scheduler = get_optim_and_scheduler(feature_extractor, rot_cls, obj_cls, args.epochs_step1, args.learning_rate, args.train_all, args.multihead)
 
     for epoch in range(args.epochs_step1):
         print(f'Epoch {epoch+1}/{args.epochs_step1}')
