@@ -73,7 +73,7 @@ class Trainer:
         self.obj_cls = self.obj_classifier
         self.rot_cls = self.rot_classifier
 
-        source_path_file = f"txt_list/{args.source}_known.txt"
+        source_path_file = f"txt_list/{args.source}_known.txt" 
         self.source_loader = data_helper.get_train_dataloader(args, source_path_file)
 
         target_path_file = f"txt_list/{args.target}.txt"
@@ -81,7 +81,17 @@ class Trainer:
         self.target_loader_eval = data_helper.get_val_dataloader(args, target_path_file)
 
         print(f"Source known: {args.source} [{len(self.source_loader.dataset)}]")
+
+        ### DEBUG andrea
+        data_helper.visualize_img(self.source_loader) #batch of 5 images
+        ### DEBUG andrea
+
+
         print(f"Target known+unknown: {args.target} [{len(self.target_loader_train.dataset)}]")
+
+        ### DEBUG
+        data_helper.visualize_img(self.target_loader_train) #just one image
+        ### DEBUG
 
     def get_rotation_classifiers(self):
         # Wrapper Method
@@ -176,7 +186,7 @@ class Trainer:
         ### For Debug Purposes
         
     def do_training(self):
-        self.trainer_step1()
+        #self.trainer_step1()
         self.trainer_evaluation()
         self.traner_step2()
 
