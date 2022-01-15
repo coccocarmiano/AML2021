@@ -13,8 +13,9 @@ def _do_epoch(args, feature_extractor, rot_cls, obj_cls, get_rotation_classifier
         criterion = nn.CrossEntropyLoss()
     
     feature_extractor.train()
-    obj_cls.train() # Should the classifier be re-initialized ?
+    obj_cls.train() # TODO: Should the classifier be re-initialized ?
 
+    # TODO: Reinitialize rot_cls with a new single head (only if multihead?)
     if args.multihead:
         for head in rot_cls:
             head.train()

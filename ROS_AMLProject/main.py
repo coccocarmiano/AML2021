@@ -176,7 +176,7 @@ class Trainer:
         ### For Debug Purposes
         
     def do_training(self):
-        self.trainer_step1()
+        #self.trainer_step1()
         self.trainer_evaluation()
         self.traner_step2()
 
