@@ -34,7 +34,7 @@ def evaluation(args, feature_extractor, rot_cls, obj_cls, get_rotation_classifie
             # Should this use inferred labels... ?
             rotation_classifiers         = get_rotation_classifiers(data_label)
             it = range(len(rotation_classifiers))
-            rot_cls_output               = torch.vstack( [ rot_cls[idx](output_rot_output_cat[idx]) for idx in it ])
+            rot_cls_output               = torch.vstack( [ rotation_classifiers[idx](output_rot_output_cat[idx]) for idx in it ])
 
             ground_truths    += data_rot_label
             normality_scores += rot_cls_output

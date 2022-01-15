@@ -80,8 +80,8 @@ class Trainer:
         self.target_loader_train = data_helper.get_val_dataloader(args, target_path_file)
         self.target_loader_eval = data_helper.get_val_dataloader(args, target_path_file)
 
-        print(f"Source: {args.source} [{len(self.source_loader.dataset)}]")
-        print(f"Target: {args.target} [{len(self.target_loader_train.dataset)}]")
+        print(f"Source known: {args.source} [{len(self.source_loader.dataset)}]")
+        print(f"Target known+unknown: {args.target} [{len(self.target_loader_train.dataset)}]")
 
     def get_rotation_classifiers(self):
         # Wrapper Method
