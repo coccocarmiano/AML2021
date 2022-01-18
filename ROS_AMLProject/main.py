@@ -84,14 +84,14 @@ class Trainer:
         print(f"Source known: {args.source} [{len(self.source_loader.dataset)}]")
 
         ### DEBUG andrea
-        #data_helper.visualize_img(self.source_loader) #batch of 5 images
+        data_helper.visualize_img(self.source_loader) #batch of 5 images
         ### DEBUG andrea
 
 
         print(f"Target known+unknown: {args.target} [{len(self.target_loader_train.dataset)}]")
 
         ### DEBUG andrea
-        #data_helper.visualize_img(self.target_loader_train) #just one image
+        data_helper.visualize_img(self.target_loader_train) #just one image
         ### DEBUG andrea
 
     def get_rotation_classifiers(self):
