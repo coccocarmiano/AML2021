@@ -11,6 +11,7 @@ from step2_SourceTargetAdapt import step2
 
 import pickle
 
+
 def get_args():
     parser = argparse.ArgumentParser(description="Script to launch training", 
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -83,15 +84,15 @@ class Trainer:
         print(f"Source known: {args.source} [{len(self.source_loader.dataset)}]")
 
         ### DEBUG andrea
-        data_helper.visualize_img(self.source_loader) #batch of 5 images
+        #data_helper.visualize_img(self.source_loader) #batch of 5 images
         ### DEBUG andrea
 
 
         print(f"Target known+unknown: {args.target} [{len(self.target_loader_train.dataset)}]")
 
-        ### DEBUG
-        data_helper.visualize_img(self.target_loader_train) #just one image
-        ### DEBUG
+        ### DEBUG andrea
+        #data_helper.visualize_img(self.target_loader_train) #just one image
+        ### DEBUG andrea
 
     def get_rotation_classifiers(self):
         # Wrapper Method
@@ -186,7 +187,7 @@ class Trainer:
         ### For Debug Purposes
         
     def do_training(self):
-        #self.trainer_step1()
+        self.trainer_step1()
         self.trainer_evaluation()
         self.traner_step2()
 
