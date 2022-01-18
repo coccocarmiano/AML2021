@@ -3,6 +3,8 @@ import torch
 from torch import nn
 from optimizer_helper import get_optim_and_scheduler
 
+from tqdm import tqdm
+
 #### Implement Step1
 
 def _do_epoch(args, feature_extractor, rot_cls, obj_cls, get_rotation_classifiers, source_loader, optimizer, device):
@@ -23,7 +25,7 @@ def _do_epoch(args, feature_extractor, rot_cls, obj_cls, get_rotation_classifier
 
     cls_correct, rot_correct, cls_tot, rot_tot = 0, 0, 0, 0
 
-    for it, (data, data_label, data_rot, data_rot_label) in enumerate(source_loader):
+    for data, data_label, data_rot, data_rot_label in tqdm(source_loader):
         optimizer.zero_grad()
 
         data    , data_label     = data.to(device)    , data_label.to(device),
