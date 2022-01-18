@@ -1,9 +1,11 @@
 
+from tqdm import tqdm
 import torch
 import numpy as np
 import os
 from sklearn.metrics import roc_auc_score
 import random
+from tqdm import tqdm
 
 #### Implement the evaluation on the target for the known/unknw separation
 
@@ -21,7 +23,7 @@ def evaluation(args, feature_extractor, rot_cls, obj_cls, get_rotation_classifie
     ground_truths, normality_scores = [], []
 
     with torch.no_grad():
-        for it, (data, data_label, data_rot, data_rot_label) in enumerate(target_loader_eval):
+        for data, data_label, data_rot, data_rot_label in tqdm(target_loader_eval):
             data,     data_label     =  data.to(device),     data_label.to(device)
             data_rot, data_rot_label =  data_rot.to(device), data_rot_label.to(device)
 

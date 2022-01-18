@@ -1,19 +1,18 @@
 
+from tqdm import tqdm
 import torch
 from torch import nn
 from optimizer_helper import get_optim_and_scheduler
 from itertools import cycle
 import numpy as np
+from tqdm import tqdm
 
 def _do_epoch(args, feature_extractor, rot_cls, obj_cls, get_rotation_classifiers, source_loader, target_loader_train, target_loader_eval, optimizer, device):
 
-    if args.center_loss:
-        raise Exception("Implement Center Loss")
-    else:
-        criterion = nn.CrossEntropyLoss()
+    criterion = nn.CrossEntropyLoss()
     
     feature_extractor.train()
-    obj_cls.train() # TODO: Should the classifier be re-initialized ?
+    obj_cls.train()
 
     # TODO: Reinitialize rot_cls with a new single head (only if multihead?)
     if args.multihead:
@@ -26,7 +25,7 @@ def _do_epoch(args, feature_extractor, rot_cls, obj_cls, get_rotation_classifier
     cls_correct, rot_correct = 0, 0
     cls_tot,     rot_tot     = 0, 0
 
-    for it, (data_source, data_source_label, _, _) in enumerate(source_loader):
+    for data_source, data_source_label, _, _ in tqdm(source_loader):
         optimizer.zero_grad()
 
         (data_target, _, data_target_rot, data_target_rotation_label) = next(target_loader_train)
@@ -84,7 +83,7 @@ def _do_epoch(args, feature_extractor, rot_cls, obj_cls, get_rotation_classifier
     tot_known, tot_unkwn, known_correct, unknw_correct  = 0, 0, 0, 0
 
     with torch.no_grad():
-        for it, (data, class_l, _, _) in enumerate(target_loader_eval):
+        for data, class_l, _, _ in tqdm(target_loader_eval):
 
             data, class_l = data.to(device), class_l.to(device)
             feature_extractor_output  = feature_extractor(data)
