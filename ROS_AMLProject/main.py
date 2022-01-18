@@ -73,9 +73,8 @@ class Trainer:
         self.obj_cls = self.obj_classifier
         self.rot_cls = self.rot_classifier
 
-        source_path_file = f"txt_list/{args.source}_known.txt"
-        source_loader = data_helper.get_train_dataloader(args, source_path_file)
-        self.source_loader = source_loader
+        source_path_file = f"txt_list/{args.source}_known.txt" 
+        self.source_loader = data_helper.get_train_dataloader(args, source_path_file)
 
         target_path_file = f"txt_list/{args.target}.txt"
         self.target_loader_train = data_helper.get_val_dataloader(args, target_path_file)
@@ -84,8 +83,7 @@ class Trainer:
         print(f"Source known: {args.source} [{len(self.source_loader.dataset)}]")
 
         ### DEBUG andrea
-        print("len(self.source_loader.dataset)")
-        data_helper.visualize_img(source_loader) #batch of 5 images
+        data_helper.visualize_img(self.source_loader) #batch of 5 images
         ### DEBUG andrea
 
 
