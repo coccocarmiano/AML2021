@@ -84,7 +84,7 @@ class Trainer:
         print(f"Source known: {args.source} [{len(self.source_loader.dataset)}]")
 
         ### DEBUG andrea
-        print(source_loader)
+        print(len(self.source_loader.dataset))
         data_helper.visualize_img(source_loader) #batch of 5 images
         ### DEBUG andrea
 
