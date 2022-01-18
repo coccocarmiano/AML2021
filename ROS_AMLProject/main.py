@@ -81,6 +81,12 @@ class Trainer:
         self.target_loader_eval = data_helper.get_val_dataloader(args, target_path_file)
 
         print(f"Source known: {args.source} [{len(self.source_loader.dataset)}]")
+
+        ### DEBUG
+        class_names = list(self.source_loader.dataset.labels_dict.keys())
+        data_helper.visualize_img(self.source_loader,class_names)
+        ### DEBUG
+
         print(f"Target known+unknown: {args.target} [{len(self.target_loader_train.dataset)}]")
 
     def get_rotation_classifiers(self):
