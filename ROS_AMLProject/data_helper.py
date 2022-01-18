@@ -4,6 +4,7 @@ import torchvision
 from torchvision import transforms
 import numpy as np
 import matplotlib.pyplot as plt
+import re
 
 from dataset import Dataset, TestDataset, _dataset_info
 
@@ -63,13 +64,21 @@ def imshow(inp, title=None):
         plt.title(title)
     plt.pause(0.001)  # pause a bit so that plots are updated
 
-def visualize_img(dataloader,class_names,batch_size=5):
+def visualize_img(dataloader,batch_size=5):
   # Get a batch of training data
-  inputs, classes = next(iter(dataloader))
+  inputs, classes, inputs_rot, classes_rot = next(iter(dataloader))
   inputs, classes = inputs[0:batch_size], classes[0:batch_size]
 
-  # Make a grid from batch
+  # Make a grid from batch of images
   out = torchvision.utils.make_grid(inputs)
-
+  class_names = list(dict.fromkeys([re.split('/', name)[2] for name in dataloader.dataset.names]))
   imshow(out, title=[class_names[x] for x in classes])
+
+  inputs_rot, classes_rot = inputs_rot[0:batch_size], classes_rot[0:batch_size]
+
+  # Make a grid from batch of rotated images
+  out = torchvision.utils.make_grid(inputs_rot)
+
+  class_names = ['0°','90°','180°','270°']
+  imshow(out, title=[class_names[x] for x in classes_rot])
 
