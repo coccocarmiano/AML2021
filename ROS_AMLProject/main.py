@@ -83,7 +83,7 @@ class Trainer:
         print(f"Source known: {args.source} [{len(self.source_loader.dataset)}]")
 
         ### DEBUG
-        class_names = list(self.source_loader.dataset.labels_dict.keys())
+        class_names = list(self.source_loader.dataset.names.keys())
         data_helper.visualize_img(self.source_loader,class_names)
         ### DEBUG
 
