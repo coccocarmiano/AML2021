@@ -13,9 +13,10 @@ def _dataset_info(txt_labels):
     file_names = []
     labels = []
     for row in images_list:
-        row = row.split(' ')
-        file_names.append(row[0])
-        labels.append(int(row[1]))
+        if row.strip() != '':
+            row = row.split(' ')
+            file_names.append(row[0])
+            labels.append(int(row[1]))
 
     return file_names, labels
 
@@ -28,7 +29,8 @@ class Dataset(data.Dataset):
         self._image_transformer = img_transformer
 
     def __getitem__(self, index):
-        with open(f'{self.data_path}/{self.names[index]}', 'rb') as f:
+        filename = f'{self.data_path}/{self.names[index]}'
+        with open(filename, 'rb') as f:
             img = Image.open(f)
             img = img.convert('RGB')
 
@@ -53,7 +55,8 @@ class TestDataset(data.Dataset):
         self._image_transformer = img_transformer
 
     def __getitem__(self, index):
-        with open(f'{self.data_path}/{self.names[index]}', 'rb') as f:
+        filename = f'{self.data_path}/{self.names[index]}'
+        with open(filename, 'rb') as f:
             img = Image.open(f)
             img = img.convert('RGB')
 
