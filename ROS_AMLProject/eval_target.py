@@ -20,12 +20,13 @@ def evaluation(args, feature_extractor, rot_cls, obj_cls, get_rotation_classifie
     else:
         rot_cls.eval()
     
-    ground_truths, normality_scores = [], []
+    ground_truths    = []
+    normality_scores = []
 
     with torch.no_grad():
         for data, data_label, data_rot, data_rot_label in tqdm(target_loader_eval):
             data,     data_label     =  data.to(device),     data_label.to(device)
-            data_rot, data_rot_label =  data_rot.to(device), data_rot_label.to(device)
+            data_rot = data_rot.to(device)
 
             data_label[data_label > 44] = 45
 
@@ -33,76 +34,64 @@ def evaluation(args, feature_extractor, rot_cls, obj_cls, get_rotation_classifie
             feature_extractor_output_rot = feature_extractor(data_rot)
             output_rot_output_cat        = torch.cat((feature_extractor_output, feature_extractor_output_rot), dim=1)
 
-            # TODO: Should this use inferred labels... (silvia said so) ?
-            rotation_classifiers         = get_rotation_classifiers(data_label)
+            l_score   = obj_cls(feature_extractor_output)
+            l_preds   = torch.argmax(l_score, dim=1)
+
+            ### Using inferred lables for rotation prediction ###
+            rotation_classifiers = get_rotation_classifiers(l_preds)
             it = range(len(rotation_classifiers))
-            rot_cls_output               = torch.vstack( [ rotation_classifiers[idx](output_rot_output_cat[idx]) for idx in it ])
-            rot_cls_output_softmax = softmax(rot_cls_output)
-            r_preds, _ = torch.max(rot_cls_output_softmax, dim=1)
-            normality_scores.append(r_preds.item())
-            #ground_truths    += data_rot_label
-            #normality_scores += rot_cls_output
+            r_score   = torch.vstack( [ rotation_classifiers[idx](output_rot_output_cat[idx]) for idx in it ])
+            n_scores = softmax(r_score)
+            n_score, _ = torch.max(n_scores, dim=1)
+            
+            ground_truths.append(data_label.item())
+            normality_scores.append(n_score.item())
+            
 
-    #ground_truths =  torch.tensor([i.item() for i in ground_truths], dtype=int)
-    #softmax = torch.nn.Softmax(dim=1)
-    #reshape = lambda x: x.reshape(1, x.size(0))
-    #normality_scores = torch.vstack( [ softmax(reshape(i)) for i in normality_scores] )
+    # Convert GTs and scores computed ( on inferred labels) into tensors
+    ground_truths = torch.tensor(ground_truths).to(device)
+    normality_scores = torch.tensor(normality_scores).to(device)
 
-    # Build ground truths
-    target_known_f = open('txt_list/' + args.target + '_known.txt', 'r')
-    known_file_names = target_known_f.readlines()
-    known_file_names = [l.strip() for l in known_file_names]
+    # Conert to Binary Task : 1 is known, 0 in unknown
+    mask_known = ground_truths < 45
+    mask_unknw = ground_truths > 44
+    ground_truths[mask_known] = 1
+    ground_truths[mask_unknw] = 0
 
-    gts = []
+    ## Display ROC AUC Value
+    auc = roc_auc_score(ground_truths.cpu(), normality_scores.cpu())
+    print(f"Computed ROC AUC: {auc:.4f}")
+    
+
+    mask_known = normality_scores >= args.threshold
+    mask_unknw = normality_scores <  args.threshold
+
+    normality_scores[mask_known] = 1
+    normality_scores[mask_unknw] = 0
+    print(f"Marked Known: {normality_scores.sum().item()} Actually Known: {ground_truths.sum().item()}")
+
+    ## We now must save two datasets
+    ## New Source Dataset, with Source + Unknown Samples
+    ## New Target Dataset, with only Known Samples
+
     file_names = target_loader_eval.dataset.names
     labels = target_loader_eval.dataset.labels
-    for n, l in zip(file_names, labels):
-        if f"{n} {l}" in known_file_names:
-            gts.append(1)
-        else:
-            gts.append(0)
-
-    target_known_f.close()
-
-    # ground_truths =  torch.tensor([i.item() for i in gts], dtype=int)
-    # softmax = torch.nn.Softmax(dim=1)
-    # normality_scores = torch.vstack([softmax(i.reshape(1, i.size(0))) for i in normality_scores])
-
-    # auroc = roc_auc_score(ground_truths.cpu(), normality_scores.cpu(), multi_class='ovr') # 'ovr' or 'ovo' ???
-    print(f"gts len: {len(gts)}")
-    print(f"gts: {gts}")
-    print(f"normality scores len: {len(normality_scores)}")
-    print(f"normality scores: {normality_scores}")
-    normality_scores = np.array(normality_scores)
-    auroc = roc_auc_score(gts, normality_scores)
-    print('AUROC %.4f' % auroc)
-
-    # TODO: Should it test the goodness of R1 in predicting rotations or in separating the samples in known and unknown?
-    #auroc = roc_auc_score(ground_truths.cpu(), normality_scores.cpu(), multi_class='ovr') # 'ovr' or 'ovo' ???
-    #print('AUROC %.4f' % auroc)
-
-    # create new txt files
-    rand = random.randint(0, 100000)
-    #normality_scores, _ = torch.max(normality_scores, 1)
-
-    #normality_scores, _ = torch.max(normality_scores, 1)
 
     if not os.path.isdir('new_txt_list'):
         os.mkdir('new_txt_list')
 
-    # This txt files will have the names of the source images and the names of the target images selected as unknw
-    target_unknw = open(f'new_txt_list/{args.source}_known_{str(rand)}.txt', 'w')
+    rand = random.randint(0, 100000)
 
-    # This txt files will have the names of the target images selected as known
+    target_unknw = open(f'new_txt_list/{args.source}_known_{str(rand)}.txt', 'w')
     target_known = open(f'new_txt_list/{args.target}_known_{str(rand)}.txt', 'w')
 
-    known = normality_scores >  args.threshold
-    unknw = normality_scores <= args.threshold
-
-    number_of_known_samples = known.sum()
-    number_of_unkwn_samples = unknw.sum()
-
     pairs = zip(target_loader_eval.dataset.names, target_loader_eval.dataset.labels)
+    # Ok so naming here is a little confusing so I'm leaving a note
+    # We must add UNKNOWN samples to the SOURCE
+    # UNKNWON samples are labeled as a 0
+    # SOURCE_KNOWN is SOURCE + UNKNOWN (???)
+    # Refer to `Project_OpenSet.pdf`
+    known = normality_scores >= args.threshold
     for it, (name, label) in enumerate(pairs):
         if known[it] > 0:
             target_known.write(f"{name} {str(label)}\n")

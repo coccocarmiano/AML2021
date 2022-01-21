@@ -99,12 +99,9 @@ class Trainer:
         multihead      = self.args.multihead
         rot_classifier = self.rot_classifier
         def _get_rotation_classifiers(class_labels):
-            """
-            Returns a Tuple with:
-            a ) the list of classifiers to use, with `list[i]` being the classifier for class `class_labels[i]`
-            b ) the `zip` of (`label`, `idx` ) for an easier iteration
-            """
-            n_samples = len(class_labels)
+            ### Given a list of labels L_i [i_0, i_1, ...]
+            ### Returns the classifier C_i [C[i_0]], C[i_1], ...] if multihead is enabled
+            ### Othewise, for compatibility, returns a list with the same, only classifier C [C, C, C, ...]
             if multihead:
                 classifiers = [ self.rot_classifier[i] for i in class_labels ]
             else:
@@ -126,6 +123,15 @@ class Trainer:
 
 
     def trainer_evaluation(self):
+
+        ### For Debug Purposes
+        ### Load Previous Trained Models
+        with open("obj-s1.pickle", "rb") as f:
+            self.obj_cls = pickle.load(f)
+        with open("rot-s1.pickle", "rb") as f:
+            self.rot_cls = pickle.load(f)
+        ### For Debug Purposes
+
         print("Evaluation -- Known/Unknown Separation")
         rand = evaluation(self.args, self.feature_extractor, 
                           self.rot_cls, self.obj_cls, self.get_rotation_classifiers(), self.target_loader_eval, self.device)
