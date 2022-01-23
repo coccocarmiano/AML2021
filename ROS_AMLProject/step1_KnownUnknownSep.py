@@ -1,6 +1,7 @@
 import torch
 from torch import nn
 from optimizer_helper import get_optim_and_scheduler
+from center_loss import CenterLoss
 
 from tqdm import tqdm
 
@@ -8,10 +9,28 @@ from tqdm import tqdm
 
 def _do_epoch(args, feature_extractor, rot_cls, obj_cls, get_rotation_classifiers, source_loader, optimizer, device):
 
+    cls_crietrion = nn.CrossEntropyLoss()
+
+    def _rot_criterion():
+        rot_criterion_ce = nn.CrossEntropyLoss()
+        rot_criterion_cl =    CenterLoss(num_classes=4, feat_dim=1024, use_gpu=torch.cuda.is_available())
+        a1, l = args.weight_RotTask_step1, args.cl_lambda
+        if args.center_loss:
+            optimizer.param_groups.append({'params' : rot_criterion_cl.params()})
+        def rot_crierion(scores, labels):
+            # Does this have to use both, or... ?
+            loss_ce = rot_criterion_ce(scores, labels) * a1
+            loss_cl = rot_criterion_cl(scores, labels) * l if args.center_loss else 0.0
+            return loss_ce + loss_cl
+        return rot_crierion
+
+    rot_criterion = _rot_criterion()
+
     if args.center_loss:
-        raise Exception("Implement Center Loss")
+        _obj_criterion = CenterLoss(num_classes=4, feat_dim=1024, use_gpu=torch.cuda.is_available)
+        obj_criterion = lambda x, y: _obj_criterion(x, y) * args.cl_lambda;
     else:
-        criterion = nn.CrossEntropyLoss()
+        obj_criterion = nn.CrossEntropyLoss()
 
     feature_extractor.train()
     obj_cls.train()
@@ -40,8 +59,8 @@ def _do_epoch(args, feature_extractor, rot_cls, obj_cls, get_rotation_classifier
         it             = range(len(classifiers))
         rot_cls_output = torch.vstack([ classifiers[idx](output_rot_output_cat[idx]) for idx in it])
 
-        class_loss  = criterion(obj_cls_output, data_label)
-        rot_loss    = criterion(rot_cls_output, data_rot_label) * args.weight_RotTask_step1
+        class_loss  = cls_criterion(obj_cls_output, data_label)
+        rot_loss    = rot_criterion(rot_cls_output, data_rot_label)
         loss        = class_loss + rot_loss
 
         loss.backward()
@@ -63,7 +82,7 @@ def _do_epoch(args, feature_extractor, rot_cls, obj_cls, get_rotation_classifier
 
 
 def step1(args, feature_extractor, rot_cls, obj_cls, get_rotation_classifiers, source_loader, device):
-    optimizer, scheduler = get_optim_and_scheduler(feature_extractor, rot_cls, obj_cls, args.epochs_step1, args.learning_rate, args.train_all, args.multihead)
+    optimizer, scheduler = get_optim_and_scheduler(feature_extractor, rot_cls, obj_cls, args.epochs_step1, args.learning_rate, args.train_all, args.multihead, args.center_loss)
 
     for epoch in range(args.epochs_step1):
         print(f'Epoch {epoch+1}/{args.epochs_step1}')

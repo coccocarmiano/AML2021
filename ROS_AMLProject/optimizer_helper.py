@@ -1,7 +1,8 @@
 from torch import optim
+from center_loss import CenterLoss
+from torch.cuda import is_available as is_cuda_available
 
-
-def get_optim_and_scheduler(feature_extractor,rot_cls,obj_cls, epochs, lr, train_all, multihead):
+def get_optim_and_scheduler(feature_extractor,rot_cls,obj_cls, epochs, lr, train_all, multihead, center_loss):
 
     def chain(to_chain):
         t = []
@@ -9,15 +10,16 @@ def get_optim_and_scheduler(feature_extractor,rot_cls,obj_cls, epochs, lr, train
             t.extend(l)
         return t
 
-    if multihead:
-        rot_cls_params = chain( [ head.parameters() for head in rot_cls ] )
-    else:
-        rot_cls_params = list(rot_cls.parameters())
+    params = list(obj_cls.parameters())
 
     if train_all:
-        params = list(obj_cls.parameters()) + rot_cls_params + list(feature_extractor.parameters())
+        params.extend(rot_cls_params)
+    
+    if multihead:
+        params.extend(chain( [ head.parameters() for head in feature_extractor ] ))
     else:
-        params = list(obj_cls.parameters()) + rot_cls_params
+        params.extend(list(rot_cls.parameters()))
+
 
     optimizer = optim.SGD(params, weight_decay=.0005, momentum=.9, lr=lr)
     step_size = int(epochs * .8)

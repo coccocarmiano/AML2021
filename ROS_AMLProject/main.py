@@ -39,7 +39,7 @@ def get_args():
     parser.add_argument("--batch_size", type=int, default=128, help="Batch size")
     parser.add_argument("--learning_rate", type=float, default=0.001, help="Learning rate")
 
-    parser.add_argument("--epochs_step1", type=int, default=10, help="Number of epochs of step1 for known/unknown separation")
+    parser.add_argument("--epochs_step1", type=int, default=10, help="Number of epohs of step1 for known/unknown separation")
     parser.add_argument("--epochs_step2", type=int, default=10, help="Number of epochs of step2 for source-target adaptation")
 
     parser.add_argument("--train_all", type=bool, default=True, help="If true, all network weights will be trained")
@@ -210,7 +210,7 @@ class Trainer:
 
     def get_file_names(self):
         common  = f"S-{self.args.source}-T-{self.args.target}-MH-{self.args.multihead}-CL-{self.args.center_loss}"
-        common += f"L-{self.args.cl_lambda}-A1-{self.args.alpha1}-A2-{self.args.alpha2}-NE-{self.args.n_epochs}-R-{self.args.random}.pickle"
+        common += f"L-{self.args.cl_lambda}-A1-{self.args.weight_RotTask_step1}-A2-{self.args.weight_RotTask_step2}-NE-{self.args.n_epochs}-R-{self.args.random}.pickle"
         return "obj-s1-" + common, "rot-s1-" + common, "obj-s2-" + common, "rot-s2-" + common 
 
 def main():
