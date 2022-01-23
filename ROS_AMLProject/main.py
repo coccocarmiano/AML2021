@@ -9,7 +9,11 @@ from step1_KnownUnknownSep import step1
 from eval_target import evaluation
 from step2_SourceTargetAdapt import step2
 
+from random import randint
+
 import pickle
+
+from google.colab import files
 
 
 def get_args():
@@ -51,6 +55,7 @@ def get_args():
     # variants
     parser.add_argument("--multihead", type=bool, default=False, help="If true will use multi-head rotation classifier")
     parser.add_argument("--center_loss", type=bool, default=False, help="If true will use center loss") # To be implemented
+    parser.add_argument("--cl_lambda", type=float, default=.1, help="Lambda for center loss") # To be implemented
     return parser.parse_known_args()[0]
     #return parser.parse_args()
 
@@ -80,6 +85,7 @@ class Trainer:
         target_path_file = f"txt_list/{args.target}.txt"
         self.target_loader_train = data_helper.get_val_dataloader(args, target_path_file)
         self.target_loader_eval = data_helper.get_val_dataloader(args, target_path_file)
+        self.rand = randint(0, 1e5)
 
         print(f"Source known: {args.source} [{len(self.source_loader.dataset)}]")
 
@@ -136,15 +142,19 @@ class Trainer:
         rand = evaluation(self.args, self.feature_extractor, 
                           self.rot_cls, self.obj_cls, self.get_rotation_classifiers(), self.target_loader_eval, self.device)
 
-        print(f"Random: {rand}")
+        print(f"Random: {self.rand}")
 
         ### For Debug Purposes
         with open('lastrand', 'w') as f:
-            f.write(str(rand))
-        with open("obj-ev.pickle", "wb") as f:
+            f.write(str(self.rand))
+
+        o1, r1,  _, _ = self.get_file_names()
+        with open(o1, "wb") as f:
             pickle.dump(self.obj_cls, f)
-        with open("rot-ev.pickle", "wb") as f:
+        with open(r1, "wb") as f:
             pickle.dump(self.rot_cls, f)
+        files.download(o1)
+        files.download(r1)
         ### For Debug Purposes
         
 
@@ -185,10 +195,11 @@ class Trainer:
         print("Saving best performing model based on HOS")
         
         # These should actually be .pth models
+        _, _, o2, r2 = self.get_file_names()
         ### For Debug Purposes
-        with open("obj-s2.pickle", "wb") as f:
+        with open(o2, "wb") as f:
             pickle.dump(osd, f)
-        with open("rot-s2.pickle", "wb") as f:
+        with open(r2, "wb") as f:
             pickle.dump(rsd, f)
         ### For Debug Purposes
         
@@ -196,6 +207,11 @@ class Trainer:
         self.trainer_step1()
         self.trainer_evaluation()
         self.traner_step2()
+
+    def get_file_names(self):
+        common  = f"S-{self.args.source}-T-{self.args.target}-MH-{self.args.multihead}-CL-{self.args.center_loss}"
+        common += f"L-{self.args.cl_lambda}-A1-{self.args.alpha1}-A2-{self.args.alpha2}-NE-{self.args.n_epochs}-R-{self.args.random}.pickle"
+        return "obj-s1-" + common, "rot-s1-" + common, "obj-s2-" + common, "rot-s2-" + common 
 
 def main():
     args = get_args()

@@ -4,7 +4,6 @@ import torch
 import numpy as np
 import os
 from sklearn.metrics import roc_auc_score
-import random
 from tqdm import tqdm
 
 #### Implement the evaluation on the target for the known/unknw separation
@@ -80,7 +79,7 @@ def evaluation(args, feature_extractor, rot_cls, obj_cls, get_rotation_classifie
     if not os.path.isdir('new_txt_list'):
         os.mkdir('new_txt_list')
 
-    rand = random.randint(0, 100000)
+    rand = args.rand
 
     target_unknw = open(f'new_txt_list/{args.source}_known_{str(rand)}.txt', 'w')
     target_known = open(f'new_txt_list/{args.target}_known_{str(rand)}.txt', 'w')
