@@ -5,3 +5,4 @@
 | RealWorld  |    Art     |     20     |   0.5605    |
 | RealWorld  |  Product   |     20     |   0.5964    |
 |  Product   |    Art     |     20     |   0.5453    |
+|  Clipart   |    Art     |     20     |   0.5315    |
