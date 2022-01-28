@@ -42,7 +42,8 @@ def _do_epoch(args, feature_extractor, rot_cls, obj_cls, get_rotation_classifier
             rot_cls_output = torch.vstack([classifiers[idx](output_rot_output_cat[idx]) for idx in it])   
 
         class_loss  = cls_criterion(obj_cls_output, data_label)
-        loss_ce, loss_cl    = rot_criterion(rot_cls_output, data_rot_label, output_rot_output_cat)
+        #loss_ce, loss_cl    = rot_criterion(rot_cls_output, data_rot_label, output_rot_output_cat)
+        loss_ce, loss_cl    = rot_criterion(rot_cls_output, data_rot_label, features)
         loss        = class_loss + loss_ce + loss_cl
 
         loss.backward()
