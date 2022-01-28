@@ -43,7 +43,7 @@ def _do_epoch(args, feature_extractor, rot_cls, obj_cls, get_rotation_classifier
 
         class_loss  = cls_criterion(obj_cls_output, data_label)
         #loss_ce, loss_cl    = rot_criterion(rot_cls_output, data_rot_label, output_rot_output_cat)
-        loss_ce, loss_cl    = rot_criterion(rot_cls_output, data_rot_label, features)
+        loss_ce, loss_cl    = rot_criterion(rot_cls_output, data_rot_label, features, optimizer)
         loss        = class_loss + loss_ce + loss_cl
 
         loss.backward()
@@ -79,12 +79,10 @@ def step1(args, feature_extractor, rot_cls, obj_cls, get_rotation_classifiers, s
         a1, l = args.weight_RotTask_step1, args.cl_lambda
         if args.center_loss:
             optimizer.add_param_group({'params' : criterion_center.parameters()})
-        def rot_criterion(scores, labels, feat_maps):
+        def rot_criterion(scores, labels, feat_maps, optimizer):
             # Does this have to use both, or... ?
             loss_ce = rot_criterion_ce(scores, labels) * a1
             loss_cl = criterion_center(feat_maps, labels) * l if args.center_loss else 0.0
-            print(optimizer)
-            print(optimizer.param_groups)
             for param in optimizer.param_groups[-1]['params']:
                 param.grad.data *= (args.learning_rate_center / (args.cl_lambda * args.learning_rate))
             return loss_ce, loss_cl
