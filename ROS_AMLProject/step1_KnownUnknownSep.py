@@ -106,7 +106,7 @@ def step1(args, feature_extractor, rot_cls, obj_cls, get_rotation_classifiers, s
         print(f"\tClass Loss    : {class_loss.item():.4f}")
         print(f"\tRot   Loss    : {loss_ce.item():.4f}")
         if args.center_loss:
-            print(f"\tCenter   Loss    : {loss_cl.item():.4f}")
+            print(f"\tCenterLoss    : {loss_cl.item():.4f}")
         print(f"\tClass Accuracy: {acc_cls*100:.2f}%")
         print(f"\tRot   Accuracy: {acc_rot*100:.2f}%")
         scheduler.step()
