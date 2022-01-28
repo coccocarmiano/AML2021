@@ -48,7 +48,13 @@ def _do_epoch(args, feature_extractor, rot_cls, obj_cls, get_rotation_classifier
 
         classifiers    = get_rotation_classifiers(data_source_label)
         it             = range(len(classifiers))
-        rot_cls_output = torch.vstack( [ classifiers[idx](output_rot_output_cat[idx]) for idx in it ] )
+        if args.center_loss:  #version 2: we are using Discriminator 
+            rot_cls_output,features = map(list,zip(*[classifiers[idx](output_rot_output_cat[idx]) for idx in it])) #version 2: features from first layer of R1
+            #rot_cls_output,features = classifiers[0](output_rot_output_cat) #versione per single-head
+            rot_cls_output = torch.vstack(rot_cls_output)
+            features = torch.vstack(features)                   
+        else: #otherwise we are using Classifier here (also version 1: features from feature extractor)
+            rot_cls_output = torch.vstack([classifiers[idx](output_rot_output_cat[idx]) for idx in it])
 
         # Evaluate loss
         class_loss  = criterion(obj_cls_output, data_source_label)

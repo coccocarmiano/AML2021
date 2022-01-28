@@ -33,11 +33,17 @@ def _do_epoch(args, feature_extractor, rot_cls, obj_cls, get_rotation_classifier
 
         classifiers    = get_rotation_classifiers(data_label)
         it             = range(len(classifiers))
-        rot_cls_output = torch.vstack([ classifiers[idx](output_rot_output_cat[idx]) for idx in it])
+        if args.center_loss:  #version 2: we are using Discriminator 
+            rot_cls_output,features = map(list,zip(*[classifiers[idx](output_rot_output_cat[idx]) for idx in it])) #version 2: features from first layer of R1
+            #rot_cls_output,features = classifiers[0](output_rot_output_cat) #versione per single-head
+            rot_cls_output = torch.vstack(rot_cls_output)
+            features = torch.vstack(features)                   
+        else: #otherwise we are using Classifier here (also version 1: features from feature extractor)
+            rot_cls_output = torch.vstack([classifiers[idx](output_rot_output_cat[idx]) for idx in it])   
 
         class_loss  = cls_criterion(obj_cls_output, data_label)
-        rot_loss    = rot_criterion(rot_cls_output, data_rot_label, output_rot_output_cat)
-        loss        = class_loss + rot_loss
+        loss_ce, loss_cl    = rot_criterion(rot_cls_output, data_rot_label, output_rot_output_cat)
+        loss        = class_loss + loss_ce + loss_cl
 
         loss.backward()
         optimizer.step()
@@ -54,7 +60,7 @@ def _do_epoch(args, feature_extractor, rot_cls, obj_cls, get_rotation_classifier
     acc_cls = cls_correct / cls_tot
     acc_rot = rot_correct / rot_tot
 
-    return class_loss, acc_cls, rot_loss, acc_rot
+    return class_loss, acc_cls, loss_ce, loss_cl, acc_rot
 
 
 def step1(args, feature_extractor, rot_cls, obj_cls, get_rotation_classifiers, source_loader, device):
@@ -64,16 +70,22 @@ def step1(args, feature_extractor, rot_cls, obj_cls, get_rotation_classifiers, s
 
     def _rot_criterion():
         rot_criterion_ce = nn.CrossEntropyLoss()
-        rot_criterion_cl = CenterLoss(num_classes=4, feat_dim=1024, use_gpu=torch.cuda.is_available())
+        if args.center_loss and args.cl_lambda > 0:
+            #rot_criterion_cl = CenterLoss(num_classes=4, feat_dim=1024, use_gpu=torch.cuda.is_available())
+            criterion_center = CenterLoss(num_classes=4, feat_dim=256, use_gpu=True, device=device) #version 2: features from first layer of R1
+            #optimizer_center = torch.optim.SGD(criterion_center.parameters(), lr=args.learning_rate_center) #version a: used a specified LR for center loss
+
         a1, l = args.weight_RotTask_step1, args.cl_lambda
         if args.center_loss:
-            optimizer.add_param_group({'params' : rot_criterion_cl.parameters()})
-        def rot_crierion(scores, labels, feat_maps):
+            optimizer.add_param_group({'params' : criterion_center.parameters()})
+        def rot_criterion(scores, labels, feat_maps):
             # Does this have to use both, or... ?
             loss_ce = rot_criterion_ce(scores, labels) * a1
-            loss_cl = rot_criterion_cl(feat_maps, labels) * l if args.center_loss else 0.0
-            return loss_ce + loss_cl
-        return rot_crierion
+            loss_cl = criterion_center(feat_maps, labels) * l if args.center_loss else 0.0
+            for param in loss_cl.parameters():
+                param.grad.data *= (args.learning_rate_center / (args.cl_lambda * args.learning_rate))
+            return loss_ce, loss_cl
+        return rot_criterion
 
     rot_criterion = _rot_criterion()
 
@@ -88,9 +100,11 @@ def step1(args, feature_extractor, rot_cls, obj_cls, get_rotation_classifiers, s
 
     for epoch in range(args.epochs_step1):
         print(f'Epoch {epoch+1}/{args.epochs_step1}')
-        class_loss, acc_cls, rot_loss, acc_rot = _do_epoch(args, feature_extractor, rot_cls, obj_cls, get_rotation_classifiers, source_loader, optimizer, device, cls_criterion, rot_criterion)
+        class_loss, acc_cls, loss_ce, loss_cl, acc_rot = _do_epoch(args, feature_extractor, rot_cls, obj_cls, get_rotation_classifiers, source_loader, optimizer, device, cls_criterion, rot_criterion)
         print(f"\tClass Loss    : {class_loss.item():.4f}")
-        print(f"\tRot   Loss    : {rot_loss.item():.4f}")
+        print(f"\tRot   Loss    : {loss_ce.item():.4f}")
+        if args.center_loss:
+            print(f"\tCenter   Loss    : {loss_cl.item():.4f}")
         print(f"\tClass Accuracy: {acc_cls*100:.2f}%")
         print(f"\tRot   Accuracy: {acc_rot*100:.2f}%")
         scheduler.step()

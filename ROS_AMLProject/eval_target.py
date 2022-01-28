@@ -41,7 +41,15 @@ def evaluation(args, feature_extractor, rot_cls, obj_cls, get_rotation_classifie
             ### Using inferred lables for rotation prediction ###
             rotation_classifiers = get_rotation_classifiers(l_preds)
             it = range(len(rotation_classifiers))
-            r_score   = torch.vstack( [ rotation_classifiers[idx](output_rot_output_cat[idx]) for idx in it ])
+            if args.center_loss:  #version 2: we are using Discriminator 
+                rot_cls_output,features = map(list,zip(*[rotation_classifiers[idx](output_rot_output_cat[idx]) for idx in it])) #version 2: features from first layer of R1
+                #rot_cls_output,features = classifiers[0](output_rot_output_cat) #versione per single-head
+                rot_cls_output = torch.vstack(rot_cls_output)
+                features = torch.vstack(features)                   
+            else: #otherwise we are using Classifier here (also version 1: features from feature extractor)
+                rot_cls_output = torch.vstack([rotation_classifiers[idx](output_rot_output_cat[idx]) for idx in it])
+
+            r_score   = rot_cls_output
             n_scores = softmax(r_score)
             n_score, _ = torch.max(n_scores, dim=1)
             

@@ -69,7 +69,22 @@ class Classifier(nn.Module):
 
         return self.class_classifier(x)
 
+class Discriminator(nn.Module):
+    def __init__(self,input_size,classes):
+        super(Discriminator, self).__init__()
+        self.fc1 = nn.Sequential(
+                nn.Linear(input_size, 256),
+                #nn.BatchNorm1d(256),
+                nn.LeakyReLU(0.2, inplace=True)    
+            )
 
+        self.fc2 = nn.Linear(256, classes)
+
+
+    def forward(self, x):
+        features = self.fc1(x)
+        output = self.fc2(features)
+        return output, features
 
 def resnet18_feat_extractor():
     """Constructs a ResNet-18 model.

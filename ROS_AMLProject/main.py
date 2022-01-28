@@ -3,7 +3,7 @@ import argparse
 import torch
 
 import data_helper
-from resnet import resnet18_feat_extractor, Classifier
+from resnet import resnet18_feat_extractor, Classifier, Discriminator
 
 from step1_KnownUnknownSep import step1
 from eval_target import evaluation
@@ -38,8 +38,12 @@ def get_args():
     parser.add_argument("--image_size", type=int, default=222, help="Image size")
     parser.add_argument("--batch_size", type=int, default=128, help="Batch size")
     parser.add_argument("--learning_rate", type=float, default=0.001, help="Learning rate")
+    parser.add_argument("--image_size", type=int, default=222, help="Image size")
+    parser.add_argument("--batch_size", type=int, default=128, help="Batch size")
+    parser.add_argument("--learning_rate", type=float, default=0.001, help="Learning rate")
+    parser.add_argument("--learning_rate_center", type=float, default=0.5, help="Learning rate for center loss")
 
-    parser.add_argument("--epochs_step1", type=int, default=10, help="Number of epohs of step1 for known/unknown separation")
+    parser.add_argument("--epochs_step1", type=int, default=10, help="Number of epochs of step1 for known/unknown separation")
     parser.add_argument("--epochs_step2", type=int, default=10, help="Number of epochs of step2 for source-target adaptation")
 
     parser.add_argument("--train_all", type=bool, default=True, help="If true, all network weights will be trained")
@@ -47,6 +51,7 @@ def get_args():
     parser.add_argument("--weight_RotTask_step1", type=float, default=0.5, help="Weight for the rotation loss in step1")
     parser.add_argument("--weight_RotTask_step2", type=float, default=0.5, help="Weight for the rotation loss in step2")
     parser.add_argument("--threshold", type=float, default=0.5, help="Threshold for the known/unkown separation")
+    parser.add_argument("--cl_lambda", type=float, default=0.0, help="Weight for the center loss in step1")   
 
     # tensorboard logger
     parser.add_argument("--tf_logger", type=bool, default=True, help="If true will save tensorboard compatible logs")
@@ -54,8 +59,7 @@ def get_args():
 
     # variants
     parser.add_argument("--multihead", type=bool, default=False, help="If true will use multi-head rotation classifier")
-    parser.add_argument("--center_loss", type=bool, default=False, help="If true will use center loss") # To be implemented
-    parser.add_argument("--cl_lambda", type=float, default=.1, help="Lambda for center loss") # To be implemented
+    parser.add_argument("--center_loss", type=bool, default=False, help="If true will use center loss")
     return parser.parse_known_args()[0]
     #return parser.parse_args()
 
@@ -70,10 +74,17 @@ class Trainer:
         self.feature_extractor = resnet18_feat_extractor()
         self.obj_classifier = Classifier(512, self.args.n_classes_known+1).to(self.device)
 
-        if args.multihead:
-            self.rot_classifier = [ Classifier(1024, 4).to(self.device) for _ in range(args.n_classes_known+1) ]
+        if args.center_loss: # CenterLoss v2: 2FC only for the rotation classifier
+            if args.multihead:
+                self.rot_classifier = [ Discriminator(1024, 4).to(self.device) for _ in range(args.n_classes_known+1) ]
+            else:
+                self.rot_classifier = Discriminator(1024, 4).to(self.device)
         else:
-            self.rot_classifier = Classifier(1024, 4).to(self.device)
+            if args.multihead:
+                self.rot_classifier = [ Classifier(1024, 4).to(self.device) for _ in range(args.n_classes_known+1) ]
+            else:
+                self.rot_classifier = Classifier(1024, 4).to(self.device)
+
 
         self.feature_extractor = self.feature_extractor.to(self.device)
         self.obj_cls = self.obj_classifier
