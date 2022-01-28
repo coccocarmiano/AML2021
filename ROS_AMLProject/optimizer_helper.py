@@ -11,15 +11,12 @@ def get_optim_and_scheduler(feature_extractor,rot_cls,obj_cls, epochs, lr, train
         return t
 
     params = list(obj_cls.parameters())
-
-    if train_all:
-        params.extend(rot_cls_params)
+    params.extend(feature_extractor.parameters())
     
     if multihead:
-        params.extend(chain( [ head.parameters() for head in feature_extractor ] ))
+        params.extend(chain( [ head.parameters() for head in rot_cls] ))
     else:
         params.extend(list(rot_cls.parameters()))
-
 
     optimizer = optim.SGD(params, weight_decay=.0005, momentum=.9, lr=lr)
     step_size = int(epochs * .8)
