@@ -7,7 +7,7 @@ from tqdm import tqdm
 
 #### Implement Step1
 
-def _do_epoch(args, feature_extractor, rot_cls, obj_cls, get_rotation_classifiers, source_loader, optimizer, device, cls_criterion, rot_criterion, criterion_center):
+def _do_epoch(args, feature_extractor, rot_cls, obj_cls, get_rotation_classifiers, source_loader, optimizer, device):
 
     '''
     if args.center_loss:
@@ -16,12 +16,27 @@ def _do_epoch(args, feature_extractor, rot_cls, obj_cls, get_rotation_classifier
     else:
         obj_criterion = nn.CrossEntropyLoss()
     '''
+    cls_criterion = nn.CrossEntropyLoss()
+    rot_criterion_ce = nn.CrossEntropyLoss()
+    if args.center_loss and args.weight_cent > 0:
+        criterion_center = CenterLoss(num_classes=4, feat_dim=256, use_gpu=True, device=device) #version 2: features from first layer of R1
+        optimizer_center = torch.optim.SGD(criterion_center.parameters(), lr=args.learning_rate_center) #version a: used a specified LR for center loss
+
+    feature_extractor.train()
+    obj_cls.train()
+
+    if args.multihead:
+        for head in rot_cls:
+            head.train()
+    else:
+        rot_cls.train()
 
     cls_correct, rot_correct, cls_tot, rot_tot = 0, 0, 0, 0
 
     for data, data_label, data_rot, data_rot_label in tqdm(source_loader):
         optimizer.zero_grad()
-
+        if args.center_loss and args.weight_cent > 0:
+            optimizer_center.zero_grad()
         data    , data_label     = data.to(device)    , data_label.to(device),
         data_rot, data_rot_label = data_rot.to(device), data_rot_label.to(device)
         
@@ -42,13 +57,23 @@ def _do_epoch(args, feature_extractor, rot_cls, obj_cls, get_rotation_classifier
             rot_cls_output = torch.vstack([classifiers[idx](output_rot_output_cat[idx]) for idx in it])   
 
         class_loss  = cls_criterion(obj_cls_output, data_label)
-        #loss_ce, loss_cl    = rot_criterion(rot_cls_output, data_rot_label, output_rot_output_cat)
-        loss_ce, loss_cl    = rot_criterion(rot_cls_output, data_rot_label, features, criterion_center)
-        loss        = class_loss + loss_ce + loss_cl
+        rot_loss    = rot_criterion_ce(rot_cls_output, data_rot_label) * args.weight_RotTask_step1
+        if args.center_loss and args.weight_cent > 0:
+            #cent_loss  = criterion_center(output_rot_output_cat, data_rot_label) * args.weight_cent  #version 1: features from feature extractor
+            cent_loss = criterion_center(features, data_rot_label) * args.weight_cent               #version 2: features from first layer of R1
+        else:
+            cent_loss = 0.0
+        loss        = class_loss + rot_loss + cent_loss
+
 
         loss.backward()
         optimizer.step()
-        
+        # by doing so, weight_cent would not impact on the learning of centers
+        if args.center_loss and args.weight_cent > 0:
+            for param in criterion_center.parameters():
+                param.grad.data *= (1. / args.weight_cent)
+            optimizer_center.step()
+
         preds        = torch.argmax(obj_cls_output, dim=1)
         cls_correct += (preds == data_label).sum().item()
 
@@ -61,33 +86,11 @@ def _do_epoch(args, feature_extractor, rot_cls, obj_cls, get_rotation_classifier
     acc_cls = cls_correct / cls_tot
     acc_rot = rot_correct / rot_tot
 
-    return class_loss, acc_cls, loss_ce, loss_cl, acc_rot
+    return class_loss, acc_cls, rot_loss, cent_loss, acc_rot
 
 
 def step1(args, feature_extractor, rot_cls, obj_cls, get_rotation_classifiers, source_loader, device):
-    cls_criterion = nn.CrossEntropyLoss()
-    rot_criterion_ce = nn.CrossEntropyLoss()
-    if args.center_loss and args.cl_lambda > 0:
-        #rot_criterion_cl = CenterLoss(num_classes=4, feat_dim=1024, use_gpu=torch.cuda.is_available())
-        criterion_center = CenterLoss(num_classes=4, feat_dim=256, use_gpu=True, device=device) #version 2: features from first layer of R1
-        #optimizer_center = torch.optim.SGD(criterion_center.parameters(), lr=args.learning_rate_center) #version a: used a specified LR for center loss
-
-    def _rot_criterion():
-        a1, l = args.weight_RotTask_step1, args.cl_lambda
-        def rot_criterion(scores, labels, feat_maps, center_loss):
-            # Does this have to use both, or... ?
-            loss_ce = rot_criterion_ce(scores, labels) * a1
-            loss_cl = criterion_center(feat_maps, labels) * l if args.center_loss else 0.0
-            for param in center_loss.parameters():
-                param.grad.data *= (args.learning_rate_center / (args.cl_lambda * args.learning_rate))
-            return loss_ce, loss_cl
-        return rot_criterion
-
-    rot_criterion = _rot_criterion()
-
-    optimizer, scheduler = get_optim_and_scheduler(feature_extractor, rot_cls, obj_cls, args.epochs_step1, args.learning_rate, args.train_all, args.multihead, args.center_loss, criterion_center)
-
-
+    optimizer, scheduler = get_optim_and_scheduler(feature_extractor, rot_cls, obj_cls, args.epochs_step1, args.learning_rate, args.train_all, args.multihead)
     feature_extractor.train()
     obj_cls.train()
 
@@ -99,7 +102,7 @@ def step1(args, feature_extractor, rot_cls, obj_cls, get_rotation_classifiers, s
 
     for epoch in range(args.epochs_step1):
         print(f'Epoch {epoch+1}/{args.epochs_step1}')
-        class_loss, acc_cls, loss_ce, loss_cl, acc_rot = _do_epoch(args, feature_extractor, rot_cls, obj_cls, get_rotation_classifiers, source_loader, optimizer, device, cls_criterion, rot_criterion,criterion_center)
+        class_loss, acc_cls, loss_ce, loss_cl, acc_rot = _do_epoch(args, feature_extractor, rot_cls, obj_cls, get_rotation_classifiers, source_loader, optimizer, device)
         print(f"\tClass Loss    : {class_loss.item():.4f}")
         print(f"\tRot   Loss    : {loss_ce.item():.4f}")
         if args.center_loss:
