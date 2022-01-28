@@ -18,7 +18,7 @@ def _do_epoch(args, feature_extractor, rot_cls, obj_cls, get_rotation_classifier
     '''
     cls_criterion = nn.CrossEntropyLoss()
     rot_criterion_ce = nn.CrossEntropyLoss()
-    if args.center_loss and args.weight_cent > 0:
+    if args.center_loss and args.cl_lambda > 0:
         criterion_center = CenterLoss(num_classes=4, feat_dim=256, use_gpu=True, device=device) #version 2: features from first layer of R1
         optimizer_center = torch.optim.SGD(criterion_center.parameters(), lr=args.learning_rate_center) #version a: used a specified LR for center loss
 
@@ -35,7 +35,7 @@ def _do_epoch(args, feature_extractor, rot_cls, obj_cls, get_rotation_classifier
 
     for data, data_label, data_rot, data_rot_label in tqdm(source_loader):
         optimizer.zero_grad()
-        if args.center_loss and args.weight_cent > 0:
+        if args.center_loss and args.cl_lambda > 0:
             optimizer_center.zero_grad()
         data    , data_label     = data.to(device)    , data_label.to(device),
         data_rot, data_rot_label = data_rot.to(device), data_rot_label.to(device)
@@ -58,9 +58,9 @@ def _do_epoch(args, feature_extractor, rot_cls, obj_cls, get_rotation_classifier
 
         class_loss  = cls_criterion(obj_cls_output, data_label)
         rot_loss    = rot_criterion_ce(rot_cls_output, data_rot_label) * args.weight_RotTask_step1
-        if args.center_loss and args.weight_cent > 0:
-            #cent_loss  = criterion_center(output_rot_output_cat, data_rot_label) * args.weight_cent  #version 1: features from feature extractor
-            cent_loss = criterion_center(features, data_rot_label) * args.weight_cent               #version 2: features from first layer of R1
+        if args.center_loss and args.cl_lambda > 0:
+            #cent_loss  = criterion_center(output_rot_output_cat, data_rot_label) * args.cl_lambda  #version 1: features from feature extractor
+            cent_loss = criterion_center(features, data_rot_label) * args.cl_lambda               #version 2: features from first layer of R1
         else:
             cent_loss = 0.0
         loss        = class_loss + rot_loss + cent_loss
@@ -68,10 +68,10 @@ def _do_epoch(args, feature_extractor, rot_cls, obj_cls, get_rotation_classifier
 
         loss.backward()
         optimizer.step()
-        # by doing so, weight_cent would not impact on the learning of centers
-        if args.center_loss and args.weight_cent > 0:
+        # by doing so, cl_lambda would not impact on the learning of centers
+        if args.center_loss and args.cl_lambda > 0:
             for param in criterion_center.parameters():
-                param.grad.data *= (1. / args.weight_cent)
+                param.grad.data *= (1. / args.cl_lambda)
             optimizer_center.step()
 
         preds        = torch.argmax(obj_cls_output, dim=1)
