@@ -38,9 +38,6 @@ def get_args():
     parser.add_argument("--image_size", type=int, default=222, help="Image size")
     parser.add_argument("--batch_size", type=int, default=128, help="Batch size")
     parser.add_argument("--learning_rate", type=float, default=0.001, help="Learning rate")
-    parser.add_argument("--image_size", type=int, default=222, help="Image size")
-    parser.add_argument("--batch_size", type=int, default=128, help="Batch size")
-    parser.add_argument("--learning_rate", type=float, default=0.001, help="Learning rate")
     parser.add_argument("--learning_rate_center", type=float, default=0.5, help="Learning rate for center loss")
 
     parser.add_argument("--epochs_step1", type=int, default=10, help="Number of epochs of step1 for known/unknown separation")
