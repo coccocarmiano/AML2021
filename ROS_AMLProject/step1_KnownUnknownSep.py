@@ -83,7 +83,7 @@ def step1(args, feature_extractor, rot_cls, obj_cls, get_rotation_classifiers, s
             # Does this have to use both, or... ?
             loss_ce = rot_criterion_ce(scores, labels) * a1
             loss_cl = criterion_center(feat_maps, labels) * l if args.center_loss else 0.0
-            for param in criterion_center.parameters():
+            for param in optimizer.param_groups[-1]['params']:
                 param.grad.data *= (args.learning_rate_center / (args.cl_lambda * args.learning_rate))
             return loss_ce, loss_cl
         return rot_criterion
