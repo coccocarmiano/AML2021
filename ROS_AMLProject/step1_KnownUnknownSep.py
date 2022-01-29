@@ -51,9 +51,8 @@ def _do_epoch(args, feature_extractor, rot_cls, obj_cls, get_rotation_classifier
         it             = range(len(classifiers))
 
         if args.center_loss:  
-            # Version 2: Using `Discriminator` classifier
 
-            # First we get a `zip` of both outputs and featurs
+            # First we get a `zip` of both outputs and features
             output_and_feats = [ classifiers[idx](rot_cls_output[idx]) for idx in it ]
 
             # Then we unzip it into two tuples and covert them into two lists and then into tensors
@@ -65,9 +64,7 @@ def _do_epoch(args, feature_extractor, rot_cls, obj_cls, get_rotation_classifier
             features = torch.vstack(features)                   
             rot_cls_output = torch.vstack(rot_cls_output)
 
-            # Single-head version (???)
-            # rot_cls_output,features = classifiers[0](rot_cls_output) 
-        else: #otherwise we are using Classifier here (also version 1: features from feature extractor)
+        else:
             rot_cls_output = torch.vstack([classifiers[idx](rot_cls_output[idx]) for idx in it])   
 
         class_loss  = cls_criterion(obj_cls_output, data_label)

@@ -77,7 +77,9 @@ def evaluation(args, feature_extractor, rot_cls, obj_cls, get_rotation_classifie
 
     normality_scores[mask_known] = 1
     normality_scores[mask_unknw] = 0
-    print(f"Marked Known: {normality_scores.sum().item()} Actually Known: {ground_truths.sum().item()}")
+    # Sometimes the first term > second term
+    # How??
+    print(f"Marked Known: {mask_known.sum().item()} Actually Known: {ground_truths.sum().item()}")
 
     ## We now must save two datasets
     ## New Source Dataset, with Source + Unknown Samples

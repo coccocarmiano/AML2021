@@ -201,9 +201,8 @@ class Trainer:
         self.target_loader_train = data_helper.get_train_dataloader(self.args, target_path_file)
         self.target_loader_eval  = data_helper.get_val_dataloader(self.args, target_path_file)
 
-        print(f"Source Size (S+UNK): {len(self.source_loader.dataset)}")
-        print(f"Target Size (TRAIN): {len(self.target_loader_train.dataset)}")
-        print(f"Target Size (TEST ): {len(self.target_loader_eval.dataset)}")
+        print(f"Train Size (S+UNK): {len(self.source_loader.dataset)}")
+        print(f"Test  Size (KNOWN): {len(self.target_loader_eval.dataset)}")
 
         print("Step 2 -- Domain Adaptation")
         os, unk, hos, osd, rsd = step2(self.args, self.feature_extractor, self.rot_cls_step2, self.obj_cls, self.get_rotation_classifiers(),
@@ -225,7 +224,7 @@ class Trainer:
         self.traner_step2()
 
     def get_file_names(self):
-        common  = f"S-{self.args.source}-T-{self.args.target}-MH-{self.args.multihead}-CL-{self.args.center_loss}"
+        common  = f"S-{self.args.source}-T-{self.args.target}-MH-{self.args.multihead}-CL-{self.args.center_loss}-"
         common += f"L-{self.args.cl_lambda}-A1-{self.args.weight_RotTask_step1}-A2-{self.args.weight_RotTask_step2}-NE-{self.args.epochs_step1}-R-{self.rand}.pickle"
         return "obj-s1-" + common, "rot-s1-" + common, "obj-s2-" + common, "rot-s2-" + common 
 
