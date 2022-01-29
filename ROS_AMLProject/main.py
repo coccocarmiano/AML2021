@@ -89,6 +89,12 @@ class Trainer:
         self.obj_cls = self.obj_classifier
         self.rot_cls = self.rot_classifier
 
+        # For Step II 
+        if args.center_loss:
+            self.rot_cls_step2 = Discriminator(1024, 4).to(self.device)
+        else:
+            self.rot_cls_step2 = Classifier(1024, 4).to(self.device)
+
         source_path_file = f"txt_list/{args.source}_known.txt" 
         self.source_loader = data_helper.get_train_dataloader(args, source_path_file)
 
@@ -200,7 +206,7 @@ class Trainer:
         print(f"Target Size (TEST ): {len(self.target_loader_eval.dataset)}")
 
         print("Step 2 -- Domain Adaptation")
-        os, unk, hos, osd, rsd = step2(self.args, self.feature_extractor, self.rot_cls, self.obj_cls, self.get_rotation_classifiers(),
+        os, unk, hos, osd, rsd = step2(self.args, self.feature_extractor, self.rot_cls_step2, self.obj_cls, self.get_rotation_classifiers(),
                                        self.source_loader, self.target_loader_train, self.target_loader_eval, self.device)
         print("Saving best performing model based on HOS")
         
