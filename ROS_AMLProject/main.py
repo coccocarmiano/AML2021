@@ -48,7 +48,7 @@ def get_args():
     parser.add_argument("--weight_RotTask_step1", type=float, default=0.5, help="Weight for the rotation loss in step1")
     parser.add_argument("--weight_RotTask_step2", type=float, default=0.5, help="Weight for the rotation loss in step2")
     parser.add_argument("--threshold", type=float, default=0.5, help="Threshold for the known/unkown separation")
-    parser.add_argument("--cl_lambda", type=float, default=0.0, help="Weight for the center loss in step1")   
+    parser.add_argument("--cl_lambda", type=float, default=0.1, help="Weight for the center loss in step1")   
 
     # tensorboard logger
     parser.add_argument("--tf_logger", type=bool, default=True, help="If true will save tensorboard compatible logs")
@@ -72,6 +72,8 @@ class Trainer:
         self.obj_classifier = Classifier(512, self.args.n_classes_known+1).to(self.device)
 
         if args.center_loss: # CenterLoss v2: 2FC only for the rotation classifier
+            if args.cl_lambda == .0:
+                raise Exception("Center-Loss Lambda value can't be equal to 0")
             if args.multihead:
                 self.rot_classifier = [ Discriminator(1024, 4).to(self.device) for _ in range(args.n_classes_known+1) ]
             else:
@@ -218,7 +220,7 @@ class Trainer:
 
     def get_file_names(self):
         common  = f"S-{self.args.source}-T-{self.args.target}-MH-{self.args.multihead}-CL-{self.args.center_loss}"
-        common += f"L-{self.args.cl_lambda}-A1-{self.args.weight_RotTask_step1}-A2-{self.args.weight_RotTask_step2}-NE-{self.args.n_epochs}-R-{self.args.random}.pickle"
+        common += f"L-{self.args.cl_lambda}-A1-{self.args.weight_RotTask_step1}-A2-{self.args.weight_RotTask_step2}-NE-{self.args.epochs_step1}-R-{self.rand}.pickle"
         return "obj-s1-" + common, "rot-s1-" + common, "obj-s2-" + common, "rot-s2-" + common 
 
 def main():

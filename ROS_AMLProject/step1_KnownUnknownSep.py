@@ -9,16 +9,10 @@ from tqdm import tqdm
 
 def _do_epoch(args, feature_extractor, rot_cls, obj_cls, get_rotation_classifiers, source_loader, optimizer, device):
 
-    '''
-    if args.center_loss:
-        _obj_criterion = CenterLoss(num_classes=4, feat_dim=1024, use_gpu=torch.cuda.is_available)
-        obj_criterion = lambda x, y: _obj_criterion(x, y) * args.cl_lambda;
-    else:
-        obj_criterion = nn.CrossEntropyLoss()
-    '''
     cls_criterion = nn.CrossEntropyLoss()
     rot_criterion_ce = nn.CrossEntropyLoss()
-    if args.center_loss and args.cl_lambda > 0:
+
+    if args.center_loss:
         criterion_center = CenterLoss(num_classes=4, feat_dim=256, use_gpu=True, device=device) #version 2: features from first layer of R1
         optimizer_center = torch.optim.SGD(criterion_center.parameters(), lr=args.learning_rate_center) #version a: used a specified LR for center loss
 
@@ -34,42 +28,66 @@ def _do_epoch(args, feature_extractor, rot_cls, obj_cls, get_rotation_classifier
     cls_correct, rot_correct, cls_tot, rot_tot = 0, 0, 0, 0
 
     for data, data_label, data_rot, data_rot_label in tqdm(source_loader):
+        
+        # Zero-out gradients
         optimizer.zero_grad()
-        if args.center_loss and args.cl_lambda > 0:
+        if args.center_loss:
             optimizer_center.zero_grad()
+
+        # Move data to GPU
         data    , data_label     = data.to(device)    , data_label.to(device),
         data_rot, data_rot_label = data_rot.to(device), data_rot_label.to(device)
         
+        # Extract Features
         feature_extractor_output     = feature_extractor(data)
         feature_extractor_output_rot = feature_extractor(data_rot)
 
-        obj_cls_output        = obj_cls(feature_extractor_output)
-        output_rot_output_cat = torch.cat((feature_extractor_output, feature_extractor_output_rot), dim=1)
+        # Acquire scores for C1/R1
+        obj_cls_output = obj_cls(feature_extractor_output)
+        rot_cls_output = torch.cat((feature_extractor_output, feature_extractor_output_rot), dim=1)
 
+        # Get the classifiers that shall predict the rotation and how many they are
         classifiers    = get_rotation_classifiers(data_label)
         it             = range(len(classifiers))
-        if args.center_loss:  #version 2: we are using Discriminator 
-            rot_cls_output,features = map(list,zip(*[classifiers[idx](output_rot_output_cat[idx]) for idx in it])) #version 2: features from first layer of R1
-            #rot_cls_output,features = classifiers[0](output_rot_output_cat) #versione per single-head
-            rot_cls_output = torch.vstack(rot_cls_output)
+
+        if args.center_loss:  
+            # Version 2: Using `Discriminator` classifier
+
+            # First we get a `zip` of both outputs and featurs
+            output_and_feats = [ classifiers[idx](rot_cls_output[idx]) for idx in it ]
+
+            # Then we unzip it into two tuples and covert them into two lists and then into tensors
+            rot_cls_output, features = zip(*output_and_feats) 
+
+            rot_cls_output = list(rot_cls_output)
+            features       = list(features)
+
             features = torch.vstack(features)                   
+            rot_cls_output = torch.vstack(rot_cls_output)
+
+            # Single-head version (???)
+            # rot_cls_output,features = classifiers[0](rot_cls_output) 
         else: #otherwise we are using Classifier here (also version 1: features from feature extractor)
-            rot_cls_output = torch.vstack([classifiers[idx](output_rot_output_cat[idx]) for idx in it])   
+            rot_cls_output = torch.vstack([classifiers[idx](rot_cls_output[idx]) for idx in it])   
 
         class_loss  = cls_criterion(obj_cls_output, data_label)
         rot_loss    = rot_criterion_ce(rot_cls_output, data_rot_label) * args.weight_RotTask_step1
-        if args.center_loss and args.cl_lambda > 0:
-            #cent_loss  = criterion_center(output_rot_output_cat, data_rot_label) * args.cl_lambda  #version 1: features from feature extractor
-            cent_loss = criterion_center(features, data_rot_label) * args.cl_lambda               #version 2: features from first layer of R1
-        else:
-            cent_loss = 0.0
-        loss        = class_loss + rot_loss + cent_loss
+        cent_loss   = .0
+
+        if args.center_loss:
+            # Version 1: Use `feature_extra` as input for Center Loss
+            #cent_loss  = criterion_center(rot_cls_output, data_rot_label) * args.cl_lambda  #version 1: features from feature extractor
+
+            #Version 2: Use `Discriminator` classifier output as input for Center Loss
+            cent_loss = criterion_center(features, data_rot_label) * args.cl_lambda
 
 
+        # Compute total loss, backward, step, etc
+        loss = class_loss + rot_loss + cent_loss
         loss.backward()
         optimizer.step()
         # by doing so, cl_lambda would not impact on the learning of centers
-        if args.center_loss and args.cl_lambda > 0:
+        if args.center_loss:
             for param in criterion_center.parameters():
                 param.grad.data *= (1. / args.cl_lambda)
             optimizer_center.step()
