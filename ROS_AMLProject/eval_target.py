@@ -10,7 +10,7 @@ import random
 
 #### Implement the evaluation on the target for the known/unknw separation
 
-def evaluation(args, feature_extractor, rot_cls, obj_cls, get_rotation_classifiers, target_loader_eval, device):
+def evaluation(args, feature_extractor, rot_cls, obj_cls, get_rotation_classifiers, target_loader_eval, device, rand):
     softmax = torch.nn.Softmax(dim=1)
     feature_extractor.eval()
     obj_cls.eval()
@@ -89,9 +89,7 @@ def evaluation(args, feature_extractor, rot_cls, obj_cls, get_rotation_classifie
     if not os.path.isdir('new_txt_list'):
         os.mkdir('new_txt_list')
 
-    # rand = args.rand ok so rand is not in args
-    # is in self which is not accessible so for now let's keep it random
-    rand = random.randint(0, 1e5)
+    # Rand is now a property of the `Trainer` class
 
     target_unknw = open(f'new_txt_list/{args.source}_known_{str(rand)}.txt', 'w')
     target_known = open(f'new_txt_list/{args.target}_known_{str(rand)}.txt', 'w')

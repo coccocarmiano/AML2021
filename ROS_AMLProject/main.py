@@ -150,7 +150,7 @@ class Trainer:
 
         print("Evaluation -- Known/Unknown Separation")
         rand = evaluation(self.args, self.feature_extractor, 
-                          self.rot_cls, self.obj_cls, self.get_rotation_classifiers(), self.target_loader_eval, self.device)
+                          self.rot_cls, self.obj_cls, self.get_rotation_classifiers(), self.target_loader_eval, self.device, self.rand)
 
         print(f"Random: {self.rand}")
 
