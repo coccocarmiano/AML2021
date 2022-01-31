@@ -85,7 +85,7 @@ def evaluation(args, feature_extractor, rot_cls, obj_cls, get_rotation_classifie
 
     print(f"Separation performed")
     print(f"Target samples identified as known: {mask_sep_known.sum()} - Actual known samples: {mask_known.sum()}")
-    print(f"Target samples identified as known: {mask_sep_unknw.sum()} - Actual unknown samples: {mask_unknw.sum()}")
+    print(f"Target samples identified as unknown: {mask_sep_unknw.sum()} - Actual unknown samples: {mask_unknw.sum()}")
 
     ## We now must build and save two datasets
     ## New Source Dataset, with Source + Target Unknown Samples
