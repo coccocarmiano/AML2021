@@ -57,7 +57,7 @@ def _do_epoch(args, feature_extractor, rot_cls, obj_cls, source_loader, target_l
         obj_cls_target_scores = obj_cls(feature_extractor_output_source)
 
         # For the target image, we want the scores from R2
-        discriminator_scores = rot_cls(feature_extractor_output_target_conc)
+        discriminator_scores = torch.vstack([rot_cls(sample)[0] for sample in feature_extractor_output_target_conc])
 
         # Evaluate losses
         class_loss  = cls_criterion(obj_cls_target_scores, data_source_label)
@@ -133,20 +133,33 @@ def step2(args, feature_extractor, rot_cls, obj_cls, source_loader, target_loade
     """
     optimizer, scheduler = get_optim_and_scheduler(feature_extractor, rot_cls, obj_cls, args.epochs_step2, args.learning_rate, args.train_all, False)
     best_values = (0, 0, 0, 0, 0)
-    best = .0
+    best_known_acc = 0.0
+    best_unk_acc = 0.0
     for epoch in range(args.epochs_step2):
         print(f"Epoch {epoch+1}/{args.epochs_step2}")
         known_acc, unknw_acc, hos = _do_epoch(args, feature_extractor, rot_cls, obj_cls, source_loader, target_loader_train, target_loader_eval, optimizer, device)
         print()
         print("Test Stats")
-        print(f"\tOS : {known_acc * 100:.2f}%")
-        print(f"\tUNK: {unknw_acc * 100:.2f}%")
-        print(f"\tHOS: {hos * 100:.2f}%")
+        print(f"\tOS : {known_acc * 100:.2f} %")
+        print(f"\tUNK: {unknw_acc * 100:.2f} %")
+        print(f"\tHOS: {hos * 100:.2f} %")
+
 
         if hos > best:
             best = hos
             best_values = (known_acc, unknw_acc, hos, obj_cls, rot_cls)
+
         scheduler.step()
-    
-    print(f"Last HOS: {hos*100:.2f}\nBest HOS {best*100:.2f}")
+        if known_acc > best_known_acc:
+            best_known_acc = known_acc
+        if unknw_acc > best_unk_acc:
+            best_unk_acc = unknw_acc
+
+    print(f"Best HOS:\n\tHOS: {best_values[2]*100:.2f} %\n\tOS: {best_values[0]*100:.2f} %\n\tUNK: {best_values[1]*100:.2f} %")
+    print(f"Last HOS:\n\tHOS: {hos*100:.2f} %\n\tOS: {known_acc*100:.2f} %\n\tUNK: {unknw_acc*100:.2f} %")
+
+    print()
+    print(f"Best OS: {best_known_acc*100:.2f} %")
+    print(f"Best UNK: {best_unk_acc*100:.2f} %")
+
     return best_values
