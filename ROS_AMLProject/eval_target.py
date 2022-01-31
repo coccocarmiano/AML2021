@@ -34,10 +34,14 @@ def evaluation(args, feature_extractor, rot_cls, obj_cls, get_rotation_classifie
             feature_extractor_output_conc = torch.cat((feature_extractor_output, feature_extractor_output_rot), dim=1)
 
             # 2. Get the scores
+            # Get the object classifier predictions
+            obj_cls_scores = obj_cls(feature_extractor_output)
+            predicted_labels = torch.argmax(obj_cls_scores, dim=1)
+
             # Build a list of rotation classifiers, each belonging to a different sample in the batch
             # If multihead:     R1 will be the head corresponding to the inferred label
             # If not multihead: R1 will be the only existing head
-            classifiers = get_rotation_classifiers(data_label)
+            classifiers = get_rotation_classifiers(predicted_labels)
 
             # For the center loss version, we need to have both the features coming from the first layer of the discriminator
             # and the output scores coming out from the discriminator
