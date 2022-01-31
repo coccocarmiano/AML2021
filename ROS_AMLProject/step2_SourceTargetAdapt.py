@@ -139,7 +139,7 @@ def step2(args, feature_extractor, rot_cls, obj_cls, source_loader, target_loade
     for epoch in range(args.epochs_step2):
         print(f"Epoch {epoch+1}/{args.epochs_step2}")
         known_acc, unknw_acc, hos = _do_epoch(args, feature_extractor, rot_cls, obj_cls, source_loader, target_loader_train, target_loader_eval, optimizer, device)
-        
+        print()
         print("Test Stats")
         print(f"\tOS : {known_acc * 100:.2f}%")
         print(f"\tUNK: {unknw_acc * 100:.2f}%")
