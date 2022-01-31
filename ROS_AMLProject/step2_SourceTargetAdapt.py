@@ -135,6 +135,7 @@ def step2(args, feature_extractor, rot_cls, obj_cls, source_loader, target_loade
     best_values = (0, 0, 0, 0, 0)
     best_known_acc = 0.0
     best_unk_acc = 0.0
+    best = 0.0
     for epoch in range(args.epochs_step2):
         print(f"Epoch {epoch+1}/{args.epochs_step2}")
         known_acc, unknw_acc, hos = _do_epoch(args, feature_extractor, rot_cls, obj_cls, source_loader, target_loader_train, target_loader_eval, optimizer, device)
