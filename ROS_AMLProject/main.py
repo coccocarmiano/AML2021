@@ -71,55 +71,48 @@ class Trainer:
         self.feature_extractor = resnet18_feat_extractor()
         self.obj_classifier = Classifier(512, self.args.n_classes_known+1).to(self.device)
 
-        if args.center_loss: # CenterLoss v2: 2FC only for the rotation classifier
-            if args.cl_lambda == .0:
-                raise Exception("Center-Loss Lambda value can't be equal to 0")
-            if args.multihead:
-                self.rot_classifier = [ Discriminator(1024, 4).to(self.device) for _ in range(args.n_classes_known+1) ]
-            else:
-                self.rot_classifier = Discriminator(1024, 4).to(self.device)
+        # New: now the discriminator is always composed of two fully connected layers (one for deepening the features and one for the actual classification)
+        if args.multihead:
+            self.rot_classifier = [Discriminator(1024, 4).to(self.device) for _ in range(args.n_classes_known)]
         else:
-            if args.multihead:
-                self.rot_classifier = [ Classifier(1024, 4).to(self.device) for _ in range(args.n_classes_known+1) ]
-            else:
-                self.rot_classifier = Classifier(1024, 4).to(self.device)
-
+            self.rot_classifier = Discriminator(1024, 4).to(self.device)
 
         self.feature_extractor = self.feature_extractor.to(self.device)
         self.obj_cls = self.obj_classifier
         self.rot_cls = self.rot_classifier
 
-        # For Step II 
-        if args.center_loss:
-            self.rot_cls_step2 = Discriminator(1024, 4).to(self.device)
-        else:
-            self.rot_cls_step2 = Classifier(1024, 4).to(self.device)
+        # For Step II
+        # New: now the discriminator is always composed of two fully connected layers
+        self.rot_cls_step2 = Discriminator(1024, 4).to(self.device)
 
+
+        # Loading the source and target for the step1 (separation)
         source_path_file = f"txt_list/{args.source}_known.txt" 
         self.source_loader = data_helper.get_train_dataloader(args, source_path_file)
 
         target_path_file = f"txt_list/{args.target}.txt"
-        self.target_loader_train = data_helper.get_val_dataloader(args, target_path_file)
         self.target_loader_eval = data_helper.get_val_dataloader(args, target_path_file)
+        # -------------- #
+
         self.rand = randint(0, 1e5)
+
 
         print(f"Source known: {args.source} [{len(self.source_loader.dataset)}]")
 
         ### DEBUG andrea
-        data_helper.visualize_img(self.source_loader) #batch of 5 images
+        # data_helper.visualize_img(self.source_loader) #batch of 5 images
         ### DEBUG andrea
 
 
-        print(f"Target known+unknown: {args.target} [{len(self.target_loader_train.dataset)}]")
+        print(f"Target known+unknown: {args.target} [{len(self.target_loader_eval.dataset)}]")
 
         ### DEBUG andrea
-        data_helper.visualize_img(self.target_loader_train) #just one image
+        # data_helper.visualize_img(self.target_loader_train) #just one image
         ### DEBUG andrea
 
     def get_rotation_classifiers(self):
         # Wrapper Method
         multihead      = self.args.multihead
-        rot_classifier = self.rot_classifier
         def _get_rotation_classifiers(class_labels):
             ### Given a list of labels L_i [i_0, i_1, ...]
             ### Returns the classifier C_i [C[i_0]], C[i_1], ...] if multihead is enabled
@@ -127,7 +120,7 @@ class Trainer:
             if multihead:
                 classifiers = [ self.rot_classifier[i] for i in class_labels ]
             else:
-                classifiers = [ self.rot_classifier    for i in class_labels ]
+                classifiers = [ self.rot_classifier    for _ in class_labels ]
             return classifiers
 
         return _get_rotation_classifiers
@@ -137,10 +130,10 @@ class Trainer:
         step1(self.args, self.feature_extractor, self.rot_cls, self.obj_cls, self.get_rotation_classifiers(), self.source_loader, self.device)
 
         ### For Debug Purposes
-        with open("obj-s1.pickle", "wb") as f:
-            pickle.dump(self.obj_cls, f)
-        with open("rot-s1.pickle", "wb") as f:
-            pickle.dump(self.rot_cls, f)
+        # with open("obj-s1.pickle", "wb") as f:
+        #     pickle.dump(self.obj_cls, f)
+        # with open("rot-s1.pickle", "wb") as f:
+        #     pickle.dump(self.rot_cls, f)
         ### For Debug Purposes
 
 
@@ -148,14 +141,14 @@ class Trainer:
 
         ### For Debug Purposes
         ### Load Previous Trained Models
-        with open("obj-s1.pickle", "rb") as f:
-            self.obj_cls = pickle.load(f)
-        with open("rot-s1.pickle", "rb") as f:
-            self.rot_cls = pickle.load(f)
+        # with open("obj-s1.pickle", "rb") as f:
+        #     self.obj_cls = pickle.load(f)
+        # with open("rot-s1.pickle", "rb") as f:
+        #     self.rot_cls = pickle.load(f)
         ### For Debug Purposes
 
         print("Evaluation -- Known/Unknown Separation")
-        rand = evaluation(self.args, self.feature_extractor, 
+        evaluation(self.args, self.feature_extractor,
                           self.rot_cls, self.obj_cls, self.get_rotation_classifiers(), self.target_loader_eval, self.device, self.rand)
 
         print(f"Random: {self.rand}")
@@ -176,7 +169,7 @@ class Trainer:
 
         print("Adding source samples to known target samples... ", end="")
 
-        filepath = f'new_txt_list/{self.args.source}_known_{str(rand)}.txt'
+        filepath = f'new_txt_list/{self.args.source}_known_{str(self.rand)}.txt'
 
         with open(filepath, "a") as f:
             pairs = zip(self.source_loader.dataset.names, self.source_loader.dataset.labels)
@@ -184,28 +177,30 @@ class Trainer:
                 f.write(f"{file} {str(label)}\n")
 
         print("Done.")
-        return rand
+        return self.rand
 
     def trainer_step2(self):
         ### For Debug Purposes
         with open("lastrand", "r") as lastrand:
-            rand = int(lastrand.read())
-        print(f"Random: {rand}")
+            self.rand = int(lastrand.read())
+        print(f"Random: {self.rand}")
         ### For Debug Purposes
         
         # new dataloaders
-        source_path_file   = f"new_txt_list/{self.args.source}_known_{str(rand)}.txt"
+        # New source (source + target unknown)
+        source_path_file   = f"new_txt_list/{self.args.source}_known_{str(self.rand)}.txt"
         self.source_loader = data_helper.get_train_dataloader(self.args, source_path_file)
 
-        target_path_file = f"new_txt_list/{self.args.target}_known_{str(rand)}.txt"
+        # New target (target known, it may contain also misclassified images, that is unknown images)
+        target_path_file = f"new_txt_list/{self.args.target}_known_{str(self.rand)}.txt"
         self.target_loader_train = data_helper.get_train_dataloader(self.args, target_path_file)
         self.target_loader_eval  = data_helper.get_val_dataloader(self.args, target_path_file)
 
-        print(f"Train Size (S+UNK): {len(self.source_loader.dataset)}")
-        print(f"Test  Size (KNOWN): {len(self.target_loader_eval.dataset)}")
+        print(f"Train Size for C2 (Source + Target Unknown): {len(self.source_loader.dataset)}")
+        print(f"Train for R2 and Eval for C2 Size (Target known after separation): {len(self.target_loader_eval.dataset)}")
 
         print("Step 2 -- Domain Adaptation")
-        os, unk, hos, osd, rsd = step2(self.args, self.feature_extractor, self.rot_cls_step2, self.obj_cls, self.get_rotation_classifiers(),
+        os, unk, hos, osd, rsd = step2(self.args, self.feature_extractor, self.rot_cls_step2, self.obj_cls,
                                        self.source_loader, self.target_loader_train, self.target_loader_eval, self.device)
         print("Saving best performing model based on HOS")
         
@@ -221,7 +216,7 @@ class Trainer:
     def do_training(self):
         self.trainer_step1()
         self.trainer_evaluation()
-        self.traner_step2()
+        self.trainer_step2()
 
     def get_file_names(self):
         common  = f"S-{self.args.source}-T-{self.args.target}-MH-{self.args.multihead}-CL-{self.args.center_loss}-"
