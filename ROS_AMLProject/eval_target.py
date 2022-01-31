@@ -2,6 +2,7 @@ import torch
 import os
 from sklearn.metrics import roc_auc_score
 from tqdm import tqdm
+import numpy as np
 
 
 #### Implement the evaluation on the target for the known/unknw separation
@@ -64,6 +65,9 @@ def evaluation(args, feature_extractor, rot_cls, obj_cls, get_rotation_classifie
 
             ground_truths.append(data_label.item())
             normality_scores.append(n_score.item())
+
+    ground_truths = np.array(ground_truths, dtype=np.int)
+    normality_scores = np.array(normality_scores)
 
     # Convert to Binary Task : 1 is known, 0 in unknown
     mask_known = ground_truths < 45
