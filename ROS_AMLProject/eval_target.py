@@ -1,12 +1,9 @@
-
-from tqdm import tqdm
 import torch
-import numpy as np
 import os
 from sklearn.metrics import roc_auc_score
 from tqdm import tqdm
+import numpy as np
 
-import random
 
 #### Implement the evaluation on the target for the known/unknw separation
 
@@ -20,102 +17,104 @@ def evaluation(args, feature_extractor, rot_cls, obj_cls, get_rotation_classifie
             head.eval()
     else:
         rot_cls.eval()
-    
-    ground_truths    = []
+
+    ground_truths = []
     normality_scores = []
 
     with torch.no_grad():
         for data, data_label, data_rot, data_rot_label in tqdm(target_loader_eval):
-            data,     data_label     =  data.to(device),     data_label.to(device)
+            data, data_label = data.to(device), data_label.to(device)
             data_rot = data_rot.to(device)
 
-            data_label[data_label > 44] = 45
-
-            feature_extractor_output     = feature_extractor(data)
+            # 1. Extract features from E
+            # Extracting original image features from E
+            feature_extractor_output = feature_extractor(data)
+            # Extracting rotated image features from E
             feature_extractor_output_rot = feature_extractor(data_rot)
-            output_rot_output_cat        = torch.cat((feature_extractor_output, feature_extractor_output_rot), dim=1)
+            # Concatenate original+rotate features
+            feature_extractor_output_conc = torch.cat((feature_extractor_output, feature_extractor_output_rot), dim=1)
 
-            l_score   = obj_cls(feature_extractor_output)
-            l_preds   = torch.argmax(l_score, dim=1)
+            # 2. Get the scores
+            # Get the object classifier predictions
+            obj_cls_scores = obj_cls(feature_extractor_output)
+            predicted_labels = torch.argmax(obj_cls_scores, dim=1)
 
-            ### Using inferred lables for rotation prediction ###
-            rotation_classifiers = get_rotation_classifiers(l_preds)
-            it = range(len(rotation_classifiers))
-            if args.center_loss:  #version 2: we are using Discriminator 
-                rot_cls_output,features = map(list,zip(*[rotation_classifiers[idx](output_rot_output_cat[idx]) for idx in it])) #version 2: features from first layer of R1
-                #rot_cls_output,features = classifiers[0](output_rot_output_cat) #versione per single-head
-                rot_cls_output = torch.vstack(rot_cls_output)
-                features = torch.vstack(features)                   
-            else: #otherwise we are using Classifier here (also version 1: features from feature extractor)
-                rot_cls_output = torch.vstack([rotation_classifiers[idx](output_rot_output_cat[idx]) for idx in it])
+            # Build a list of rotation classifiers, each belonging to a different sample in the batch
+            # If multihead:     R1 will be the head corresponding to the inferred label
+            # If not multihead: R1 will be the only existing head
+            classifiers = get_rotation_classifiers(predicted_labels)
 
-            r_score   = rot_cls_output
+            # For the center loss version, we need to have both the features coming from the first layer of the discriminator
+            # and the output scores coming out from the discriminator
+            if args.center_loss:
+                # 1. Using the #batch_size discriminators (one for each sample), get the internal features and the output scores
+                discriminator_scores = []
+                for i in range(len(classifiers)):
+                    discriminator_sample_scores, discriminator_sample_features = classifiers[i](feature_extractor_output_conc[i])
+                    discriminator_scores.append(discriminator_sample_scores)
+
+                # 2. Transform them back again into tensors (#batch_size, #features_dim)
+                discriminator_scores = torch.vstack(discriminator_scores)
+            else:
+                discriminator_scores = torch.vstack([classifiers[i](feature_extractor_output_conc[i])[0] for i in range(len(classifiers))])
+
+            # Compute softmax and get the maximum probability as the normality score
+            r_score = discriminator_scores
             n_scores = softmax(r_score)
             n_score, _ = torch.max(n_scores, dim=1)
-            
+
             ground_truths.append(data_label.item())
             normality_scores.append(n_score.item())
-            
 
-    # Convert GTs and scores computed ( on inferred labels) into tensors
-    ground_truths = torch.tensor(ground_truths).to(device)
-    normality_scores = torch.tensor(normality_scores).to(device)
+    ground_truths = np.array(ground_truths, dtype=np.int)
+    normality_scores = np.array(normality_scores)
 
-    # Conert to Binary Task : 1 is known, 0 in unknown
+    # Convert to Binary Task : 1 is known, 0 in unknown
     mask_known = ground_truths < 45
     mask_unknw = ground_truths > 44
     ground_truths[mask_known] = 1
     ground_truths[mask_unknw] = 0
 
     ## Display ROC AUC Value
-    auc = roc_auc_score(ground_truths.cpu(), normality_scores.cpu())
+    auc = roc_auc_score(ground_truths, normality_scores)
     print(f"Computed ROC AUC: {auc:.4f}")
-    
 
-    mask_known = normality_scores >= args.threshold
-    mask_unknw = normality_scores <  args.threshold
+    # Perform the separation using the given threshold
+    mask_sep_known = normality_scores >= args.threshold
+    mask_sep_unknw = normality_scores < args.threshold
 
-    normality_scores[mask_known] = 1
-    normality_scores[mask_unknw] = 0
-    # Sometimes the first term > second term
-    # How??
-    print(f"Marked Known: {mask_known.sum().item()} Actually Known: {ground_truths.sum().item()}")
+    print(f"Separation performed")
+    print(f"Target samples identified as known: {mask_sep_known.sum()} - Actual known samples: {mask_known.sum()}")
+    print(f"Target samples identified as unknown: {mask_sep_unknw.sum()} - Actual unknown samples: {mask_unknw.sum()}")
 
-    ## We now must save two datasets
-    ## New Source Dataset, with Source + Unknown Samples
-    ## New Target Dataset, with only Known Samples
+    known_accuracy = (mask_sep_known == mask_known).sum() / mask_sep_known.shape[0]
+    unk_accuracy = (mask_sep_unknw == mask_unknw).sum() / mask_sep_unknw.shape[0]
 
-    file_names = target_loader_eval.dataset.names
-    labels = target_loader_eval.dataset.labels
+    print(f"Known separation accuracy: {known_accuracy*100:.2f} %")
+    print(f"Unknown separation accuracy: {unk_accuracy*100:.2f} %")
+
+    ## We now must build and save two datasets
+    ## New Source Dataset, with Source + Target Unknown Samples
+    ## New Target Dataset, with only Target Known Samples
 
     if not os.path.isdir('new_txt_list'):
         os.mkdir('new_txt_list')
 
-    # Rand is now a property of the `Trainer` class
-
-    target_unknw = open(f'new_txt_list/{args.source}_known_{str(rand)}.txt', 'w')
-    target_known = open(f'new_txt_list/{args.target}_known_{str(rand)}.txt', 'w')
+    # Build new files
+    # The new source will contain the original known source plus the unknown target after our separation
+    source_and_target_unknown_file = open(f'new_txt_list/{args.source}_known_{str(rand)}.txt', 'w')
+    # The new target will contain the known target after our separation
+    target_known_file = open(f'new_txt_list/{args.target}_known_{str(rand)}.txt', 'w')
 
     pairs = zip(target_loader_eval.dataset.names, target_loader_eval.dataset.labels)
-    # Ok so naming here is a little confusing so I'm leaving a note
-    # We must add UNKNOWN samples to the SOURCE
-    # UNKNWON samples are labeled as a 0
-    # SOURCE_KNOWN is SOURCE + UNKNOWN (???)
-    # Refer to `Project_OpenSet.pdf`
-    known = normality_scores >= args.threshold
+
     for it, (name, label) in enumerate(pairs):
-        if known[it] > 0:
-            target_known.write(f"{name} {str(label)}\n")
+        if mask_sep_known[it]:
+            # Known
+            target_known_file.write(f"{name} {str(label)}\n")
         else:
-            target_unknw.write(f"{name} {str(label)}\n")
-    
-    target_known.close()
-    target_unknw.close()
+            # Unknown
+            source_and_target_unknown_file.write(f"{name} {45}\n")
 
-    return rand
-
-
-
-
-
-
+    source_and_target_unknown_file.close()
+    target_known_file.close()

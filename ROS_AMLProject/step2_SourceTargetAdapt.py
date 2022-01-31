@@ -4,9 +4,8 @@ from optimizer_helper import get_optim_and_scheduler
 
 from itertools import cycle
 from tqdm import tqdm
-from center_loss import CenterLoss
 
-def _do_epoch(args, feature_extractor, rot_cls, obj_cls, get_rotation_classifiers, source_loader, target_loader_train, target_loader_eval, optimizer, device):
+def _do_epoch(args, feature_extractor, rot_cls, obj_cls, source_loader, target_loader_train, target_loader_eval, optimizer, device):
 
     # Set training on
     rot_cls.train()
@@ -25,10 +24,6 @@ def _do_epoch(args, feature_extractor, rot_cls, obj_cls, get_rotation_classifier
     cls_criterion = nn.CrossEntropyLoss(weight=w)
     rot_criterion = nn.CrossEntropyLoss()
 
-    if args.center_loss:
-        center_criterion = CenterLoss(num_classes=4, feat_dim=256, use_gpu=True, device=device)
-        center_optimizer = torch.optim.SGD(center_criterion.parameters(), lr=args.learning_rate_center)
-
     # We iterate over two datasets at once
     target_loader_train = cycle(target_loader_train)
     cls_correct, rot_correct = 0, 0
@@ -39,11 +34,6 @@ def _do_epoch(args, feature_extractor, rot_cls, obj_cls, get_rotation_classifier
 
         # Zero-out the gradients
         optimizer.zero_grad()
-        if args.center_loss:
-            center_optimizer.zero_grad()
-
-        # Set all labels over 44 to `unknown`
-        data_source_label[data_source_label > 44] = 45
 
         # Move everything to the used device ( CPU/GPU )
         data_source           = data_source.to(device)
@@ -52,52 +42,34 @@ def _do_epoch(args, feature_extractor, rot_cls, obj_cls, get_rotation_classifier
         data_source_label     = data_source_label.to(device)
         data_target_rot_label = data_target_rot_label.to(device)
 
-        # Extract:
-        # Class Label from Source Domain
-        # Rotation Label from Target Domain
+        # 1. Extract features from E
+        # Extracting source image features from E
         feature_extractor_output_source     = feature_extractor(data_source)
+        # Extracting original target image features from E
         feature_extractor_output_target     = feature_extractor(data_target)
+        # Extracting rotated target image features from E
         feature_extractor_output_target_rot = feature_extractor(data_target_rot)
+        # Concatenate original+rotate target features
+        feature_extractor_output_target_conc = torch.cat((feature_extractor_output_target, feature_extractor_output_target_rot), dim=1)
 
-        obj_cls_output = obj_cls(feature_extractor_output_source)
-        rot_cls_output = torch.cat((feature_extractor_output_target, feature_extractor_output_target_rot), dim=1)
+        # 2. Get the scores
+        # For the source image, we get the output scores from C2
+        obj_cls_target_scores = obj_cls(feature_extractor_output_source)
 
-        if args.center_loss:
-            # First we get a `zip` of both outputs and features, the classifier is only one for all classes
-            output_and_feats = [ rot_cls(sample) for sample in rot_cls_output ]
-
-            # Then we unzip it into two tuples and covert them into two lists and then into tensors
-            rot_cls_output, features = zip(*output_and_feats)
-
-            rot_cls_output = list(rot_cls_output)
-            features       = list(features)
-
-            features       = torch.vstack(features)
-            rot_cls_output = torch.vstack(rot_cls_output)
-        else:
-            rot_cls_output = torch.vstack( [ rot_cls(sample) for sample in rot_cls_output ] )
+        # For the target image, we want the scores from R2
+        discriminator_scores = torch.vstack([rot_cls(sample)[0] for sample in feature_extractor_output_target_conc])
 
         # Evaluate losses
-        class_loss  = cls_criterion(obj_cls_output, data_source_label)
-        rot_loss    = rot_criterion(rot_cls_output, data_target_rot_label) * args.weight_RotTask_step2
-        cent_loss   = .0
+        class_loss  = cls_criterion(obj_cls_target_scores, data_source_label)
+        rot_loss    = rot_criterion(discriminator_scores, data_target_rot_label) * args.weight_RotTask_step2
 
-        if args.center_loss:
-            cent_loss = center_criterion(features, data_target_rot_label) * args.cl_lambda
-
-        loss = class_loss + rot_loss + cent_loss
+        loss = class_loss + rot_loss
         loss.backward()
         optimizer.step()
 
-        # by doing so, cl_lambda would not impact on the learning of centers
-        if args.center_loss:
-            for param in center_criterion.parameters():
-                param.grad.data *= (1. / args.cl_lambda)
-            center_optimizer.step()
-
-        cls_pred     = torch.argmax(obj_cls_output, dim=1)
+        cls_pred     = torch.argmax(obj_cls_target_scores, dim=1)
         cls_correct += (cls_pred == data_source_label).sum().item()
-        rot_pred     = torch.argmax(rot_cls_output, dim=1)
+        rot_pred     = torch.argmax(discriminator_scores, dim=1)
         rot_correct += (rot_pred == data_target_rot_label).sum().item()
 
         cls_tot += data_source_label.size(0)
@@ -109,12 +81,11 @@ def _do_epoch(args, feature_extractor, rot_cls, obj_cls, get_rotation_classifier
     print("Train Dataset Stats:")
     print(f"\tClass  Loss: {class_loss.item():.4f}")
     print(f"\tRot    Loss: {rot_loss.item():.4f}")
-    if args.center_loss:
-        print(f"\tCenter Loss: {cent_loss.item():.4f}")
     print(f"\tRot    Acc.: {acc_rot:.2f}%")
     print(f"\tClass  Acc.: {acc_cls:.2f}%")
 
 
+    # Final evaluation on the target using only C2
     # Disable training
     feature_extractor.eval()
     obj_cls.eval()
@@ -129,8 +100,8 @@ def _do_epoch(args, feature_extractor, rot_cls, obj_cls, get_rotation_classifier
 
             data, class_l            = data.to(device), class_l.to(device)
             feature_extractor_output = feature_extractor(data)
-            obj_cls_output           = obj_cls(feature_extractor_output)
-            cls_pred                 = torch.argmax(obj_cls_output, dim=1)
+            obj_cls_target_scores           = obj_cls(feature_extractor_output)
+            cls_pred                 = torch.argmax(obj_cls_target_scores, dim=1)
 
 
             known_mask    = class_l < 45
@@ -151,7 +122,7 @@ def _do_epoch(args, feature_extractor, rot_cls, obj_cls, get_rotation_classifier
     return known_acc, unknw_acc, hos
 
 
-def step2(args, feature_extractor, rot_cls, obj_cls, get_rotation_classifiers, source_loader, target_loader_train, target_loader_eval, device):
+def step2(args, feature_extractor, rot_cls, obj_cls, source_loader, target_loader_train, target_loader_eval, device):
     """
     Returns: Tuple(OS, UNK, HOS, OSD, RSD), Tuple is selected based on the highest scoring HOS
     OS = Known Accuracy
@@ -162,20 +133,34 @@ def step2(args, feature_extractor, rot_cls, obj_cls, get_rotation_classifiers, s
     """
     optimizer, scheduler = get_optim_and_scheduler(feature_extractor, rot_cls, obj_cls, args.epochs_step2, args.learning_rate, args.train_all, False)
     best_values = (0, 0, 0, 0, 0)
-    best = .0
+    best_known_acc = 0.0
+    best_unk_acc = 0.0
+    best = 0.0
     for epoch in range(args.epochs_step2):
         print(f"Epoch {epoch+1}/{args.epochs_step2}")
-        known_acc, unknw_acc, hos = _do_epoch(args, feature_extractor, rot_cls, obj_cls, get_rotation_classifiers, source_loader, target_loader_train, target_loader_eval, optimizer, device)
-        
+        known_acc, unknw_acc, hos = _do_epoch(args, feature_extractor, rot_cls, obj_cls, source_loader, target_loader_train, target_loader_eval, optimizer, device)
+        print()
         print("Test Stats")
-        print(f"\tOS : {known_acc * 100:.2f}%")
-        print(f"\tUNK: {unknw_acc * 100:.2f}%")
-        print(f"\tHOS: {hos * 100:.2f}%")
+        print(f"\tOS : {known_acc * 100:.2f} %")
+        print(f"\tUNK: {unknw_acc * 100:.2f} %")
+        print(f"\tHOS: {hos * 100:.2f} %")
+
 
         if hos > best:
             best = hos
             best_values = (known_acc, unknw_acc, hos, obj_cls, rot_cls)
+
         scheduler.step()
-    
-    print(f"Last HOS: {hos*100:.2f}\nBest HOS {best*100:.2f}")
+        if known_acc > best_known_acc:
+            best_known_acc = known_acc
+        if unknw_acc > best_unk_acc:
+            best_unk_acc = unknw_acc
+
+    print(f"Best HOS:\n\tHOS: {best_values[2]*100:.2f} %\n\tOS: {best_values[0]*100:.2f} %\n\tUNK: {best_values[1]*100:.2f} %")
+    print(f"Last HOS:\n\tHOS: {hos*100:.2f} %\n\tOS: {known_acc*100:.2f} %\n\tUNK: {unknw_acc*100:.2f} %")
+
+    print()
+    print(f"Best OS: {best_known_acc*100:.2f} %")
+    print(f"Best UNK: {best_unk_acc*100:.2f} %")
+
     return best_values
