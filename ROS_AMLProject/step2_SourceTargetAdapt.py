@@ -57,8 +57,6 @@ def _do_epoch(args, feature_extractor, rot_cls, obj_cls, source_loader, target_l
         obj_cls_target_scores = obj_cls(feature_extractor_output_source)
 
         # For the target image, we want the scores from R2
-        # For the center loss version, we need to have both the features coming from the first layer of the discriminator
-        # and the output scores coming out from the discriminator
         discriminator_scores = torch.vstack([rot_cls(sample)[0] for sample in feature_extractor_output_target_conc])
 
         # Evaluate losses
