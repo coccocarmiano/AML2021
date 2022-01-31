@@ -57,7 +57,7 @@ def _do_epoch(args, feature_extractor, rot_cls, obj_cls, source_loader, target_l
         obj_cls_target_scores = obj_cls(feature_extractor_output_source)
 
         # For the target image, we want the scores from R2
-        discriminator_scores = torch.vstack([rot_cls(sample)[0] for sample in feature_extractor_output_target_conc])
+        discriminator_scores = rot_cls(feature_extractor_output_target_conc)
 
         # Evaluate losses
         class_loss  = cls_criterion(obj_cls_target_scores, data_source_label)
