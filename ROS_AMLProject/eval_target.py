@@ -91,7 +91,7 @@ def evaluation(args, feature_extractor, rot_cls, obj_cls, get_rotation_classifie
     unk_accuracy = (mask_sep_unknw == mask_unknw).sum() / mask_sep_unknw.shape[0]
 
     print(f"Known separation accuracy: {known_accuracy*100:.2f} %")
-    print(f"Unknown separation accuracy: {unk*100:.2f} %")
+    print(f"Unknown separation accuracy: {unk_accuracy*100:.2f} %")
 
     ## We now must build and save two datasets
     ## New Source Dataset, with Source + Target Unknown Samples
