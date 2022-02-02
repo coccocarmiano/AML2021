@@ -19,13 +19,14 @@ def _do_epoch(args, E, C, R, source_loader, device, optimizer, optimizer_CL=None
     for batch_samples, batch_labels, batch_samples_rot, batch_labels_rot in tqdm(source_loader):
         tot_batches += 1
         # Zero-out gradients
+        # Move data to GPU
+        batch_samples    , batch_labels     = batch_samples.to(device)    , batch_labels.to(device),
+        batch_samples_rot, batch_labels_rot = batch_samples_rot.to(device), batch_labels_rot.to(device)
+
         optimizer.zero_grad()
         if args.center_loss:
             optimizer_CL.zero_grad()
 
-        # Move data to GPU
-        batch_samples    , batch_labels     = batch_samples.to(device)    , batch_labels.to(device),
-        batch_samples_rot, batch_labels_rot = batch_samples_rot.to(device), batch_labels_rot.to(device)
 
         # 1. Extract features from E
         # Extracting original image features from E
@@ -42,7 +43,7 @@ def _do_epoch(args, E, C, R, source_loader, device, optimizer, optimizer_CL=None
         # Use R1 to get the scores
         # For the center loss version, we need to have both the features coming from the first layer of the discriminator
         # and the output scores coming out from the discriminator
-        if args.center_loss:  
+        if args.center_loss:
             R_features, R_scores = R.forward_extended(E_output_conc)
         else:
             R_scores = R(E_output_conc)
@@ -98,6 +99,10 @@ def step1(args, E, C, R, source_loader, device, optimizer, scheduler, optimizer_
     E.train()
     C.train()
     R.train()
+
+    E.to(device)
+    C.to(device)
+    R.to(device)
 
     history = {}
     history['tot_loss'] = []
