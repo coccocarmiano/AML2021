@@ -113,6 +113,16 @@ class RotationDiscriminator(nn.Module):
         for h in self.heads:
             h.to(device)
 
+    def custom_train(self):
+        self.train()
+        for h in self.heads:
+            h.train()
+
+    def custom_eval(self):
+        self.eval()
+        for h in self.heads:
+            h.eval()
+
 def resnet18_feat_extractor():
     """Constructs a ResNet-18 model.
     Args:

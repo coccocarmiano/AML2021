@@ -111,7 +111,7 @@ def step2(args, E, C, R, source_loader, target_loader_train, target_loader_eval,
         # Set the training mode
         E.train()
         C.train()
-        R.train()
+        R.custom_train()
 
         tot_loss, C_loss, R_loss, C_accuracy, R_accuracy = _do_epoch(args, E, C, R, source_loader, target_loader_train, optimizer, device)
         history['tot_loss'].append(tot_loss)

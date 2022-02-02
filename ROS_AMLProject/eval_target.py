@@ -16,7 +16,7 @@ def target_separation(args, E, C, R, target_loader_eval, device, rand):
 
     E.eval()
     C.eval()
-    R.eval()
+    R.custom_eval()
 
     E.to(device)
     C.to(device)
@@ -123,7 +123,7 @@ def target_evaluation(args, E, C, R, target_loader_eval, device):
     # Disable training
     E.eval()
     C.eval()
-    R.eval()
+    R.custom_eval()
 
     E.to(device)
     C.to(device)

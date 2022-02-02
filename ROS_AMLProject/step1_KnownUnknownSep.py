@@ -99,7 +99,7 @@ def step1(args, E, C, R, source_loader, device, optimizer, scheduler, optimizer_
     # Set the training mode
     E.train()
     C.train()
-    R.train()
+    R.custom_train()
 
     E.to(device)
     C.to(device)
