@@ -108,6 +108,11 @@ class RotationDiscriminator(nn.Module):
         features = [saf[0] for saf in scores_and_features]
         return torch.cat(features, dim=-1), torch.cat(scores, dim=-1)
 
+    def custom_to(self, device):
+        self.to(device)
+        for h in self.heads:
+            h.to(device)
+
 def resnet18_feat_extractor():
     """Constructs a ResNet-18 model.
     Args:

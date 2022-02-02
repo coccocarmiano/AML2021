@@ -103,7 +103,7 @@ def step1(args, E, C, R, source_loader, device, optimizer, scheduler, optimizer_
 
     E.to(device)
     C.to(device)
-    R.to(device)
+    R.custom_to(device)
 
     history = {}
     history['tot_loss'] = []

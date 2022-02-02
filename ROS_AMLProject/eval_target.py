@@ -18,6 +18,10 @@ def target_separation(args, E, C, R, target_loader_eval, device, rand):
     C.eval()
     R.eval()
 
+    E.to(device)
+    C.to(device)
+    R.custom_to(device)
+
     ground_truths = []
     normality_scores = []
 
@@ -120,6 +124,11 @@ def target_evaluation(args, E, C, R, target_loader_eval, device):
     E.eval()
     C.eval()
     R.eval()
+
+    E.to(device)
+    C.to(device)
+    R.custom_to(device)
+
 
     C_criterion = nn.CrossEntropyLoss()
 

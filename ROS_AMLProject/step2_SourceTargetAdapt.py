@@ -91,7 +91,7 @@ def step2(args, E, C, R, source_loader, target_loader_train, target_loader_eval,
 
     E.to(device)
     C.to(device)
-    R.to(device)
+    R.custom_to(device)
 
     history = {}
     history['tot_loss'] = []
