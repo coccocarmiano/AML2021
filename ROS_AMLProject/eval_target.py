@@ -69,6 +69,7 @@ def target_separation(args, E, C, R, target_loader_eval, device, rand):
 
     # Compute AUC-ROC value
     auc = roc_auc_score(ground_truths, normality_scores)
+    print("\n")
     print(f"Computed ROC AUC: {auc:.4f}")
 
     # Perform the separation using the given threshold
