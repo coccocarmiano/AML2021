@@ -79,6 +79,7 @@ class Trainer:
         self.args = args
 
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        torch.backends.cudnn.benchmark = True
 
         # ---- MODELS ----- #
         # Step 1
@@ -348,6 +349,5 @@ def main():
     trainer.save()
 
 if __name__ == "__main__":
-    print(torch.cuda.is_available())
-    # torch.backends.cudnn.benchmark = True
-    # main()
+    torch.backends.cudnn.benchmark = True
+    main()

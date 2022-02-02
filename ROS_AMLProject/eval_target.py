@@ -30,6 +30,11 @@ def target_separation(args, E, C, R, target_loader_eval, device, rand):
             batch_samples, batch_labels = batch_samples.to(device), batch_labels.to(device)
             batch_samples_rot = batch_samples_rot.to(device)
 
+            print(f"batch_samples size: {batch_samples.size()}")
+            print(f"batch_labels size: {batch_labels.size()}")
+            print(f"batch_samples_rot size: {batch_samples_rot.size()}")
+            print(f"batch_labels_rot size: {batch_labels_rot.size()}")
+
             # 1. Extract features from E
             # Extracting original image features from E
             E_output = E(batch_samples)
@@ -38,12 +43,21 @@ def target_separation(args, E, C, R, target_loader_eval, device, rand):
             # Concatenate original+rotate features
             E_output_conc = torch.cat((E_output, E_output_rot), dim=1)
 
+            print(f"E_output size: {E_output.size()}")
+            print(f"E_output_rot size: {E_output_rot.size()}")
+            print(f"E_output_conc size: {E_output_conc.size()}")
+
             # 2. Get the scores
-            obj_cls_scores = C(E_output)
-            predicted_labels = torch.argmax(obj_cls_scores, dim=1)
+            C_scores = C(E_output)
+            predicted_labels = torch.argmax(C_scores, dim=1)
+
+            print(f"C_scores size: {C_scores.size()}")
+            print(f"C predicted labels size: {predicted_labels.size()}")
 
             # Use R1 to get the scores
             R_scores = R(E_output_conc)
+
+            print(f"R_scores size: {R_scores.size()}")
 
             # TODO: select only one head or apply the softmax to the whole set of output scores from all the heads?
             # If R1 is multihead, we pick the head corresponding to the inferred label
@@ -53,12 +67,15 @@ def target_separation(args, E, C, R, target_loader_eval, device, rand):
                     sample_mask = list(range(sample_label * 4, sample_label * 4 + 4))
                     mask.append(sample_mask)
                 mask = torch.tensor(mask).to(device)
+                print(f"mask size: {mask.size()}")
                 R_scores = R_scores[mask]
-                print(f"Debug - R_scores with multihead: {R_scores.size()}")
+                print(f"R_scores with multihead after choosing one head: {R_scores.size()}")
 
             # Compute softmax and get the maximum probability as the normality score
             R_probabilities = softmax(R_scores)
+            print(f"R_probabilities size: {R_probabilities.size()}")
             n_score, _ = torch.max(R_probabilities, dim=1)
+            print(f"Normality score size: {n_score.size()}")
 
             ground_truths.append(batch_labels.item())
             normality_scores.append(n_score.item())
