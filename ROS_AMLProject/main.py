@@ -71,8 +71,8 @@ def get_args():
     parser.add_argument("--eval_only", default=False, action="store_true", help="Start the final evaluation only. It requires that try_load is set to true"
                                                                                 " and there must exist a previous run for this configuration")
 
-    #return parser.parse_known_args()[0]
-    return parser.parse_args()
+    return parser.parse_known_args()[0]
+    #return parser.parse_args()
 
 class Trainer:
     def __init__(self, args):
@@ -333,6 +333,7 @@ def main():
     trainer.trainer_step1()
     trainer.trainer_target_separation()
     trainer.trainer_step2()
+    trainer.save()
 
 if __name__ == "__main__":
     torch.backends.cudnn.benchmark = True
