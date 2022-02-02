@@ -61,7 +61,8 @@ def _do_epoch(args, E, C, R, source_loader, device, optimizer, optimizer_CL=None
         tot_avg_loss += loss.data.item()
         C_avg_loss += C_loss.data.item()
         R_avg_loss += R_loss.data.item()
-        CL_avg_loss += CL_loss.data.item()
+        if args.center_loss:
+            CL_avg_loss += CL_loss.data.item()
 
         # 3. Compute total loss, backward, step, etc
         loss.backward()
