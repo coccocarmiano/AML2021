@@ -71,20 +71,22 @@ def target_separation(args, E, C, R, target_loader_eval, device, rand):
     auc = roc_auc_score(ground_truths, normality_scores)
     print("\n")
     print(f"Computed ROC AUC: {auc:.4f}")
+    print()
 
     # Perform the separation using the given threshold
     mask_sep_known = normality_scores >= args.threshold
     mask_sep_unknw = normality_scores < args.threshold
 
-    print(f"Separation performed")
+    print(f"Separation performed using threshold: {args.threshold:.3f}")
     print(f"Target samples identified as known: {mask_sep_known.sum()} - Actual known samples: {mask_known.sum()}")
     print(f"Target samples identified as unknown: {mask_sep_unknw.sum()} - Actual unknown samples: {mask_unknw.sum()}")
 
     known_accuracy = (mask_sep_known == mask_known).sum() / mask_sep_known.shape[0]
-    unk_accuracy = (mask_sep_unknw == mask_unknw).sum() / mask_sep_unknw.shape[0]
+    # unk_accuracy = (mask_sep_unknw == mask_unknw).sum() / mask_sep_unknw.shape[0]
 
-    print(f"Known separation accuracy: {known_accuracy*100:.2f} %")
-    print(f"Unknown separation accuracy: {unk_accuracy*100:.2f} %")
+    print(f"Separation accuracy: {known_accuracy*100:.2f} %")
+    #print(f"Unknown separation accuracy: {unk_accuracy*100:.2f} %")
+    print()
 
     # We now must build and save two datasets
     # New Source Dataset, with Source + Target Unknown Samples
