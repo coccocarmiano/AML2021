@@ -196,7 +196,7 @@ class Trainer:
 
     def trainer_step2(self):
         # Before doing step2, deepcopying the E and C from step1
-        if not self.loaded:
+        if not self.loaded or len(self.history2['tot_loss']) < 5:
             self.E2 = copy.deepcopy(self.E1)
             self.C2 = copy.deepcopy(self.C1)
 

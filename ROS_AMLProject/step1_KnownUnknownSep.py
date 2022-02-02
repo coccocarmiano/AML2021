@@ -46,7 +46,6 @@ def _do_epoch(args, E, C, R, source_loader, device, optimizer, optimizer_CL=None
         if args.center_loss:
             R_features, R_scores = R.forward_extended(E_output_conc)
         else:
-            print(f"Debug: {E_output_conc.get_device()}")
             R_scores = R(E_output_conc)
 
         C_loss  = C_criterion(C_scores, batch_labels)
