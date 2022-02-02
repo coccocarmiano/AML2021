@@ -16,8 +16,9 @@ def get_optim_and_scheduler(E, C, R, epochs, lr, train_all):
 
     return optimizer, scheduler
 
-def get_optim_scheduler_loss_center_loss(lr, epochs, device):
-    criterion_center = CenterLoss(num_classes=4, feat_dim=256, use_gpu=True, device=device)
+def get_optim_scheduler_loss_center_loss(multihead, lr, epochs, device):
+    classes = 4 if not multihead else 4 * 45
+    criterion_center = CenterLoss(num_classes=classes, feat_dim=256, use_gpu=True, device=device)
     optimizer_center = optim.SGD(criterion_center.parameters(), weight_decay=.0005, momentum=.9, lr=lr)
     step_size = int(epochs * .8)
     scheduler = optim.lr_scheduler.StepLR(optimizer_center, step_size=step_size)

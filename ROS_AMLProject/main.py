@@ -6,7 +6,7 @@ import data_helper
 from resnet import resnet18_feat_extractor, Classifier, RotationDiscriminator
 from optimizer_helper import get_optim_and_scheduler, get_optim_scheduler_loss_center_loss
 from step1_KnownUnknownSep import step1
-from eval_target import target_separation
+from eval_target import target_separation, target_evaluation
 from step2_SourceTargetAdapt import step2
 from random import randint
 import pickle
@@ -93,7 +93,7 @@ class Trainer:
         # Optimizers and schedulers
         self.O1, self.scheduler1 = get_optim_and_scheduler(self.E1, self.C1, self.R1, args.epochs_step1, args.learning_rate, args.train_all)
         if args.center_loss:
-            self.O1_CL, self.scheduler1_CL, self.criterion_CL = get_optim_scheduler_loss_center_loss(args.learning_rate_center, args.epochs_step1, self.device)
+            self.O1_CL, self.scheduler1_CL, self.criterion_CL = get_optim_scheduler_loss_center_loss(args.multihead, args.learning_rate_center, args.epochs_step1, self.device)
         else:
             self.O1_CL, self.scheduler1_CL, self.criterion_CL = None, None, None
 
@@ -209,6 +209,9 @@ class Trainer:
         target_path_file = f"new_txt_list/{self.args.target}_known_{str(self.rand)}.txt"
         self.target_loader_train = data_helper.get_train_dataloader(self.args, target_path_file)
 
+        target_path_file = f"txt_list/{self.args.target}.txt"
+        self.target_loader_eval = data_helper.get_val_dataloader(self.args, target_path_file)
+
         print(f"Train Size for C2 (Source + Target Unknown): {len(self.source_loader.dataset)}")
         print(f"Train Size for R2 (Target known after separation): {len(self.target_loader_train.dataset)}")
 
@@ -225,6 +228,15 @@ class Trainer:
         self.history2['eval_OS'].extend(hist2['eval_OS'])
         self.history2['eval_UNK'].extend(hist2['eval_UNK'])
         self.history2['eval_C_loss'].extend(hist2['eval_C_loss'])
+
+    def trainer_target_evaluation(self):
+        HOS, OS, UNK, C_loss = target_evaluation(self.args, self.E2, self.C2, self.R2, self.target_loader_eval, self.device)
+        print()
+        print("Target Evaluation Stats")
+        print(f"\tClass Loss: {C_loss:.2f}")
+        print(f"\tOS : {OS * 100:.2f} %")
+        print(f"\tUNK: {UNK * 100:.2f} %")
+        print(f"\tHOS: {HOS * 100:.2f} %")
 
     def trainer_plot_step2(self):
         plot_step2_accuracy_loss(self.args, self.history2)
@@ -323,10 +335,10 @@ def main():
         return
     if args.step2_only:
         trainer.trainer_step2()
-        trainer.trainer_final_eval()
+        trainer.trainer_target_evaluation()
         return
     if args.eval_only:
-        trainer.trainer_final_eval()
+        trainer.trainer_target_evaluation()
         return
 
     # Do everything
@@ -336,5 +348,6 @@ def main():
     trainer.save()
 
 if __name__ == "__main__":
-    torch.backends.cudnn.benchmark = True
-    main()
+    print(torch.cuda.is_available())
+    # torch.backends.cudnn.benchmark = True
+    # main()

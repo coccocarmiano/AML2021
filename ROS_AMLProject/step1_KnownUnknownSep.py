@@ -23,6 +23,10 @@ def _do_epoch(args, E, C, R, source_loader, device, optimizer, optimizer_CL=None
         batch_samples    , batch_labels     = batch_samples.to(device)    , batch_labels.to(device),
         batch_samples_rot, batch_labels_rot = batch_samples_rot.to(device), batch_labels_rot.to(device)
 
+        # In case we have a Multi-head discriminator, we have to remap the rotation label i:
+        # i -> 4 * class_label + i
+        batch_labels_rot = batch_labels * 4 + batch_labels_rot
+
         optimizer.zero_grad()
         if args.center_loss:
             optimizer_CL.zero_grad()

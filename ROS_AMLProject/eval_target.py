@@ -39,17 +39,21 @@ def target_separation(args, E, C, R, target_loader_eval, device, rand):
             E_output_conc = torch.cat((E_output, E_output_rot), dim=1)
 
             # 2. Get the scores
-            # Get the object classifier predictions
             obj_cls_scores = C(E_output)
             predicted_labels = torch.argmax(obj_cls_scores, dim=1)
 
             # Use R1 to get the scores
-            # For the center loss version, we need to have both the features coming from the first layer of the discriminator
-            # and the output scores coming out from the discriminator
-            if args.center_loss:
-                R_features, R_scores = R.forward_extended(E_output_conc)
-            else:
-                R_scores = R(E_output_conc)
+            R_scores = R(E_output_conc)
+
+            # TODO: select only one head or apply the softmax to the whole set of output scores from all the heads?
+            # If R1 is multihead, we pick the head corresponding to the inferred label
+            mask = []
+            for sample_label in predicted_labels:
+                sample_mask = list(range(sample_label * 4, sample_label * 4 + 4))
+                mask.append(sample_mask)
+            mask = torch.tensor(mask).to(device)
+            R_scores = R_scores[mask]
+            print(f"Debug - R_scores with multihead: {R_scores.size()}")
 
             # Compute softmax and get the maximum probability as the normality score
             R_probabilities = softmax(R_scores)
