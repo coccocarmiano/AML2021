@@ -63,14 +63,20 @@ def target_separation(args, E, C, R, target_loader_eval, device, rand):
 
     ground_truths = np.array(ground_truths, dtype=np.int)
     normality_scores = np.array(normality_scores)
-    print(f"ground_truths: {ground_truths}")
-    print(f"normality scores: {normality_scores}")
 
     # Convert to Binary Task : 1 is known, 0 in unknown
     mask_known = ground_truths < 45
     mask_unknw = ground_truths > 44
     ground_truths[mask_known] = 1
     ground_truths[mask_unknw] = 0
+
+    print("ground_truths: ", end="")
+    for gt in ground_truths:
+        print(f"{gt}, ", end="")
+
+    print("normality_scores: ", end="")
+    for ns in normality_scores:
+        print(f"{ns:.3f}, ", end="")
 
     # Compute AUC-ROC value
     auc = roc_auc_score(ground_truths, normality_scores)
