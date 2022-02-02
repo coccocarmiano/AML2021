@@ -235,12 +235,12 @@ class Trainer:
     # ------ SAVING AND LOADING ------- #
     def get_config_file_name(self):
         s = f"S-{self.args.source}-T-{self.args.target}-MH-{self.args.multihead}-CL-{self.args.center_loss}-"
-        s += f"lr-{self.learning_rate:.5f}-"
+        s += f"lr-{self.args.learning_rate:.5f}-"
         if self.args.center_loss:
-            s += f"lr_cl-{self.learning_rate_center:.5f}-"
+            s += f"lr_cl-{self.args.learning_rate_CL:.5f}-"
         s += f"A1-{self.args.weight_RotTask_step1}-A2-{self.args.weight_RotTask_step2}"
         if self.args.center_loss:
-            s += f"-A_cl-{self.args.cl_lambda}"
+            s += f"-A_cl-{self.args.weight_CL}"
         s += ".tar"
         return s
 
