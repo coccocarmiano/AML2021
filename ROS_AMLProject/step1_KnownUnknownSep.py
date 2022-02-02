@@ -23,16 +23,10 @@ def _do_epoch(args, E, C, R, source_loader, device, optimizer, optimizer_CL=None
         batch_samples    , batch_labels     = batch_samples.to(device)    , batch_labels.to(device),
         batch_samples_rot, batch_labels_rot = batch_samples_rot.to(device), batch_labels_rot.to(device)
 
-        print(f"batch_samples size: {batch_samples.size()}")
-        print(f"batch_labels size: {batch_labels.size()}")
-        print(f"batch_samples_rot size: {batch_samples_rot.size()}")
-        print(f"batch_labels_rot size: {batch_labels_rot.size()}")
-
         # In case we have a Multi-head discriminator, we have to remap the rotation label i:
         # i -> 4 * class_label + i
         if args.multihead:
             batch_labels_rot = batch_labels * 4 + batch_labels_rot
-            print(f"batch_labels_rot after remapping: {batch_labels_rot.size()}")
 
         optimizer.zero_grad()
         if args.center_loss:
@@ -46,25 +40,17 @@ def _do_epoch(args, E, C, R, source_loader, device, optimizer, optimizer_CL=None
         # Concatenate original+rotate features
         E_output_conc = torch.cat((E_output, E_output_rot), dim=1)
 
-        print(f"E_output size: {E_output.size()}")
-        print(f"E_output_rot size: {E_output_rot.size()}")
-        print(f"E_output_conc size: {E_output_conc.size()}")
-
         # 2. Get the scores
         # Use C1 to get the scores (without softmax, the cross-entropy will do it)
         C_scores = C(E_output)
-        print(f"C_scores size: {C_scores.size()}")
 
         # Use R1 to get the scores
         # For the center loss version, we need to have both the features coming from the first layer of the discriminator
         # and the output scores coming out from the discriminator
         if args.center_loss:
             R_features, R_scores = R.forward_extended(E_output_conc)
-            print(f"R_features size: {R_features.size()}")
-            print(f"R_scores size: {R_scores.size()}")
         else:
             R_scores = R(E_output_conc)
-            print(f"R_scores size: {R_scores.size()}")
 
         C_loss  = C_criterion(C_scores, batch_labels)
         R_loss    = R_criterion(R_scores, batch_labels_rot) * args.weight_RotTask_step1
