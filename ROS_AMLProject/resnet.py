@@ -70,32 +70,31 @@ class Classifier(nn.Module):
 
         return self.class_classifier(x)
 
+class RotHead(nn.Module):
+    def __init__(self, input_size, hidden_size, out_classes):
+        super(RotHead, self).__init__()
+        self.fc1 = nn.Sequential(
+            nn.Linear(input_size, hidden_size),
+            nn.BatchNorm1d(hidden_size),
+            nn.LeakyReLU(0.2, inplace=True)
+        )
+        self.fc2 = nn.Linear(hidden_size, out_classes)
+
+    def forward(self, x):
+        x = self.fc1(x)
+        x = self.fc2(x)
+        return x
+
+    def forward_extended(self, x):
+        features = self.fc1(x)
+        output = self.fc2(features)
+        return features, output
+
 class RotationDiscriminator(nn.Module):
-    class Head(nn.Module):
-        def __init__(self, input_size, hidden_size, out_classes):
-            super(RotationDiscriminator.Head, self).__init__()
-            self.fc1 = nn.Sequential(
-                nn.Linear(input_size, hidden_size),
-                nn.BatchNorm1d(hidden_size),
-                nn.LeakyReLU(0.2, inplace=True)
-            )
-            self.fc2 = nn.Linear(hidden_size, out_classes)
-
-        def forward(self, x):
-            x = self.fc1(x)
-            x = self.fc2(x)
-            return x
-
-        def forward_extended(self, x):
-            features = self.fc1(x)
-            output = self.fc2(features)
-            return features, output
-
-
     def __init__(self, input_size, hidden_size, out_classes, n_heads):
         super(RotationDiscriminator, self).__init__()
 
-        self.heads = [RotationDiscriminator.Head(input_size, hidden_size, out_classes) for _ in range(n_heads)]
+        self.heads = [RotHead(input_size, hidden_size, out_classes) for _ in range(n_heads)]
 
     def forward(self, x):
         # Get the scores from all the heads and concatenate them in a single output (#batch_size, n_heads * 4)
