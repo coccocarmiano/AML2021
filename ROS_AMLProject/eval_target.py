@@ -47,13 +47,14 @@ def target_separation(args, E, C, R, target_loader_eval, device, rand):
 
             # TODO: select only one head or apply the softmax to the whole set of output scores from all the heads?
             # If R1 is multihead, we pick the head corresponding to the inferred label
-            mask = []
-            for sample_label in predicted_labels:
-                sample_mask = list(range(sample_label * 4, sample_label * 4 + 4))
-                mask.append(sample_mask)
-            mask = torch.tensor(mask).to(device)
-            R_scores = R_scores[mask]
-            print(f"Debug - R_scores with multihead: {R_scores.size()}")
+            if args.multihead:
+                mask = []
+                for sample_label in predicted_labels:
+                    sample_mask = list(range(sample_label * 4, sample_label * 4 + 4))
+                    mask.append(sample_mask)
+                mask = torch.tensor(mask).to(device)
+                R_scores = R_scores[mask]
+                print(f"Debug - R_scores with multihead: {R_scores.size()}")
 
             # Compute softmax and get the maximum probability as the normality score
             R_probabilities = softmax(R_scores)
