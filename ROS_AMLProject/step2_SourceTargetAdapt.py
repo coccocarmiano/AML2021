@@ -1,166 +1,193 @@
 import torch
 from torch import nn
-from optimizer_helper import get_optim_and_scheduler
-
+from eval_target import target_evaluation
 from itertools import cycle
 from tqdm import tqdm
+import matplotlib.pyplot as plt
 
-def _do_epoch(args, feature_extractor, rot_cls, obj_cls, source_loader, target_loader_train, target_loader_eval, optimizer, device):
+def _do_epoch(args, E, C, R, source_loader, target_loader_train, optimizer, device):
 
-    # Set training on
-    rot_cls.train()
-    obj_cls.train()
-    feature_extractor.train()
-
-    # Initialize a weight list
-    # By setting the last class weight to twice the other
-    # We achieve LR doubiling for the last class
+    # Double the learning rate for the unknown class
     w = [ 1.0 for _ in range(args.n_classes_known + 1) ]
     w[-1] = 2.0
     w = torch.tensor(w).to(device)
 
-    # Tensor type is automatically inferred. Should also take a `reduction` argument
-    # THEORETICALLY we should leave it as is, it means `none` thus no normalization
-    cls_criterion = nn.CrossEntropyLoss(weight=w)
-    rot_criterion = nn.CrossEntropyLoss()
+    C_criterion = nn.CrossEntropyLoss(weight=w)
+    R_criterion = nn.CrossEntropyLoss()
+
+    C_correct_preds, R_correct_preds, C_tot_preds, R_tot_preds = 0, 0, 0, 0
+    tot_avg_loss, C_avg_loss, R_avg_loss = 0.0, 0.0, 0.0
 
     # We iterate over two datasets at once
     target_loader_train = cycle(target_loader_train)
-    cls_correct, rot_correct = 0, 0
-    cls_tot,     rot_tot     = 0, 0
 
-    for data_source, data_source_label, _, _ in tqdm(source_loader):
-        (data_target, _, data_target_rot, data_target_rot_label) = next(target_loader_train)
+    tot_batches = 0
+    for source_batch_samples, source_batch_labels, _, _ in tqdm(source_loader):
+        (target_batch_samples, _, target_batch_samples_rot, target_batch_labels_rot) = next(target_loader_train)
+        tot_batches += 1
 
         # Zero-out the gradients
         optimizer.zero_grad()
 
         # Move everything to the used device ( CPU/GPU )
-        data_source           = data_source.to(device)
-        data_target           = data_target.to(device)
-        data_target_rot       = data_target_rot.to(device)
-        data_source_label     = data_source_label.to(device)
-        data_target_rot_label = data_target_rot_label.to(device)
+        source_batch_samples = source_batch_samples.to(device)
+        source_batch_labels = source_batch_labels.to(device)
+        target_batch_samples = target_batch_samples.to(device)
+        target_batch_samples_rot = target_batch_samples_rot.to(device)
+        target_batch_labels_rot = target_batch_labels_rot.to(device)
 
         # 1. Extract features from E
         # Extracting source image features from E
-        feature_extractor_output_source     = feature_extractor(data_source)
+        E_source_output     = E(source_batch_samples)
         # Extracting original target image features from E
-        feature_extractor_output_target     = feature_extractor(data_target)
+        E_target_output     = E(target_batch_samples)
         # Extracting rotated target image features from E
-        feature_extractor_output_target_rot = feature_extractor(data_target_rot)
+        E_target_output_rot = E(target_batch_samples_rot)
         # Concatenate original+rotate target features
-        feature_extractor_output_target_conc = torch.cat((feature_extractor_output_target, feature_extractor_output_target_rot), dim=1)
+        E_target_output_conc = torch.cat((E_target_output, E_target_output_rot), dim=1)
 
         # 2. Get the scores
-        # For the source image, we get the output scores from C2
-        obj_cls_target_scores = obj_cls(feature_extractor_output_source)
+        # For the source images, we get the output scores from C2
+        C_source_scores = C(E_source_output)
 
         # For the target image, we want the scores from R2
-        discriminator_scores = torch.vstack([rot_cls(sample)[0] for sample in feature_extractor_output_target_conc])
+        R_scores = R(E_target_output_conc)
 
         # Evaluate losses
-        class_loss  = cls_criterion(obj_cls_target_scores, data_source_label)
-        rot_loss    = rot_criterion(discriminator_scores, data_target_rot_label) * args.weight_RotTask_step2
+        C_loss  = C_criterion(C_source_scores, source_batch_labels)
+        R_loss    = R_criterion(R_scores, target_batch_labels_rot) * args.weight_RotTask_step2
+        loss = C_loss + R_loss
 
-        loss = class_loss + rot_loss
+        tot_avg_loss += loss.data.item()
+        C_avg_loss += C_loss.data.item()
+        R_avg_loss += R_loss.data.item()
+
         loss.backward()
         optimizer.step()
 
-        cls_pred     = torch.argmax(obj_cls_target_scores, dim=1)
-        cls_correct += (cls_pred == data_source_label).sum().item()
-        rot_pred     = torch.argmax(discriminator_scores, dim=1)
-        rot_correct += (rot_pred == data_target_rot_label).sum().item()
+        cls_pred     = torch.argmax(C_source_scores, dim=1)
+        C_correct_preds += (cls_pred == source_batch_labels).sum().item()
 
-        cls_tot += data_source_label.size(0)
-        rot_tot += data_target_rot_label.size(0)
+        rot_pred     = torch.argmax(R_scores, dim=1)
+        R_correct_preds += (rot_pred == target_batch_labels_rot).sum().item()
 
-    acc_cls = cls_correct / cls_tot * 100
-    acc_rot = rot_correct / rot_tot * 100
+        C_tot_preds += source_batch_labels.size(0)
+        R_tot_preds += target_batch_labels_rot.size(0)
 
-    print("Train Dataset Stats:")
-    print(f"\tClass  Loss: {class_loss.item():.4f}")
-    print(f"\tRot    Loss: {rot_loss.item():.4f}")
-    print(f"\tRot    Acc.: {acc_rot:.2f}%")
-    print(f"\tClass  Acc.: {acc_cls:.2f}%")
+    tot_avg_loss /= tot_batches
+    C_avg_loss /= tot_batches
+    R_avg_loss /= R_avg_loss
+    C_accuracy = C_correct_preds / C_tot_preds
+    R_accuracy = R_correct_preds / R_tot_preds
 
-
-    # Final evaluation on the target using only C2
-    # Disable training
-    feature_extractor.eval()
-    obj_cls.eval()
-    rot_cls.eval()
-
-    # kwn_acc   = OS*
-    # unknw_acc = UNK
-    tot_known, tot_unkwn, known_correct, unknw_correct  = 0, 0, 0, 0
-
-    with torch.no_grad():
-        for data, class_l, _, _ in tqdm(target_loader_eval):
-
-            data, class_l            = data.to(device), class_l.to(device)
-            feature_extractor_output = feature_extractor(data)
-            obj_cls_target_scores           = obj_cls(feature_extractor_output)
-            cls_pred                 = torch.argmax(obj_cls_target_scores, dim=1)
+    return tot_avg_loss, C_avg_loss, R_avg_loss, C_accuracy, R_accuracy
 
 
-            known_mask    = class_l < 45
-            unknw_mask    = class_l > 44
-
-            class_l[unknw_mask] = 45
-
-            tot_known    += known_mask.sum().item()
-            tot_unkwn    += unknw_mask.sum().item()
-            
-            known_correct   += (cls_pred[known_mask] == class_l[known_mask]).sum().item()
-            unknw_correct   += (cls_pred[unknw_mask] == class_l[unknw_mask]).sum().item()
-
-        known_acc = known_correct / tot_known
-        unknw_acc = unknw_correct / tot_unkwn
-        hos = 2 / ( 1.0 / float(known_acc) + 1.0 / float(unknw_acc) )
-
-    return known_acc, unknw_acc, hos
-
-
-def step2(args, feature_extractor, rot_cls, obj_cls, source_loader, target_loader_train, target_loader_eval, device):
+def step2(args, E, C, R, source_loader, target_loader_train, target_loader_eval, device, optimizer, scheduler):
     """
-    Returns: Tuple(OS, UNK, HOS, OSD, RSD), Tuple is selected based on the highest scoring HOS
-    OS = Known Accuracy
-    UNK = Unknown Accuracy
-    HOS = Harmonic Mean of OS and UNK
-    OSD = Object Classifier State Dict
-    RSD = Rotation Classifier State Dict
+    Performs the domain alignment through R2 while learning the unknown class using C2.
+    After each epoch, we evaluate the performance of C2 on the evaluation target dataset.
     """
-    optimizer, scheduler = get_optim_and_scheduler(feature_extractor, rot_cls, obj_cls, args.epochs_step2, args.learning_rate, args.train_all, False)
-    best_values = (0, 0, 0, 0, 0)
-    best_known_acc = 0.0
-    best_unk_acc = 0.0
-    best = 0.0
+
+    history = {}
+    history['tot_loss'] = []
+    history['C_loss'] = []
+    history['R_loss'] = []
+    history['C_acc'] = []
+    history['R_acc'] = []
+    history['eval_HOS'] = []
+    history['eval_OS'] = []
+    history['eval_UNK'] = []
+    history['eval_C_loss'] = []
+
     for epoch in range(args.epochs_step2):
         print(f"Epoch {epoch+1}/{args.epochs_step2}")
-        known_acc, unknw_acc, hos = _do_epoch(args, feature_extractor, rot_cls, obj_cls, source_loader, target_loader_train, target_loader_eval, optimizer, device)
-        print()
-        print("Test Stats")
-        print(f"\tOS : {known_acc * 100:.2f} %")
-        print(f"\tUNK: {unknw_acc * 100:.2f} %")
-        print(f"\tHOS: {hos * 100:.2f} %")
 
+        # TRAINING EPOCH
+        # Set the training mode
+        E.train()
+        C.train()
+        R.train()
 
-        if hos > best:
-            best = hos
-            best_values = (known_acc, unknw_acc, hos, obj_cls, rot_cls)
+        tot_loss, C_loss, R_loss, C_accuracy, R_accuracy = _do_epoch(args, E, C, R, source_loader, target_loader_train, optimizer, device)
+        history['tot_loss'].append(tot_loss)
+        history['C_loss'].append(C_loss)
+        history['R_loss'].append(R_loss)
+        history['C_acc'].append(C_accuracy)
+        history['R_acc'].append(R_accuracy)
 
         scheduler.step()
-        if known_acc > best_known_acc:
-            best_known_acc = known_acc
-        if unknw_acc > best_unk_acc:
-            best_unk_acc = unknw_acc
 
-    print(f"Best HOS:\n\tHOS: {best_values[2]*100:.2f} %\n\tOS: {best_values[0]*100:.2f} %\n\tUNK: {best_values[1]*100:.2f} %")
-    print(f"Last HOS:\n\tHOS: {hos*100:.2f} %\n\tOS: {known_acc*100:.2f} %\n\tUNK: {unknw_acc*100:.2f} %")
+        print("Train Stats:")
+        print(f"\tTotal Loss: {tot_loss:.4f}")
+        print(f"\tClass Loss: {C_loss:.4f}")
+        print(f"\tRot Loss: {R_loss:.4f}")
+        print(f"\tClass Accuracy: {R_accuracy:.2f} %")
+        print(f"\tRot Accuracy: {C_accuracy:.2f} %")
+        print()
 
-    print()
-    print(f"Best OS: {best_known_acc*100:.2f} %")
-    print(f"Best UNK: {best_unk_acc*100:.2f} %")
+        # EVAL EPOCH
+        HOS, OS, UNK, C_loss = target_evaluation(args, E, C, R, target_loader_eval, device)
+        history['eval_HOS'].append(HOS)
+        history['eval_OS'].append(OS)
+        history['eval_UNK'].append(UNK)
+        history['eval_C_loss'].append(C_loss)
 
-    return best_values
+        print()
+        print("Target Evaluation Stats")
+        print(f"\tClass Loss: {C_loss:.2f}")
+        print(f"\tOS : {OS * 100:.2f} %")
+        print(f"\tUNK: {UNK * 100:.2f} %")
+        print(f"\tHOS: {HOS * 100:.2f} %")
+
+    return history
+
+def plot_step2_accuracy_loss(args, history):
+    tot_loss = history['tot_loss']
+    C_loss = history['C_loss']
+    R_loss = history['R_loss']
+    C_accuracy = history['C_acc']
+    R_accuracy = history['R_acc']
+
+    epochs = range(1, len(tot_loss) + 1)
+
+    # Accuracy plot
+    plt.figure()
+    plt.title('(Training) Object classifier and rotation classifier accuracy over step2 epochs')
+    plt.plot(epochs, C_accuracy, 'b', label='Object classifier accuracy')
+    plt.plot(epochs, R_accuracy, 'r', label='Rotation classifier accuracy')
+    plt.legend()
+
+    # Loss plot
+    plt.figure()
+    plt.title('(Training) Object classifier and rotation classifier losses over step2 epochs')
+    plt.plot(epochs, tot_loss, 'm', label='Total classifier loss')
+    plt.plot(epochs, C_loss, 'b', label='Object classifier loss')
+    plt.plot(epochs, R_loss, 'r', label='Rotation classifier loss')
+    plt.legend()
+
+    plt.show()
+
+def plot_eval_performance(args, history):
+    HOS = history['eval_HOS']
+    OS = history['eval_OS']
+    UNK = history['eval_UNK']
+    C_loss = history['eval_C_loss']
+
+    epochs = range(1, len(HOS) + 1)
+
+    # Accuracy plot
+    plt.figure()
+    plt.title('Evaluation - HOS, OS, UNK over the target dataset')
+    plt.plot(epochs, HOS, 'b', label='HOS')
+    plt.plot(epochs, OS, 'r', label='OS')
+    plt.plot(epochs, UNK, 'r', label='UNK')
+    plt.legend()
+
+    # Loss plot
+    plt.figure()
+    plt.title('Evaluation - Object classifier loss')
+    plt.plot(epochs, C_loss, 'b', label='Object classifier loss')
+    plt.legend()
+
+    plt.show()

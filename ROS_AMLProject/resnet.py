@@ -1,3 +1,4 @@
+import torch
 from torch import nn
 from torch.utils import model_zoo
 from torchvision.models.resnet import BasicBlock, model_urls, Bottleneck
@@ -69,22 +70,44 @@ class Classifier(nn.Module):
 
         return self.class_classifier(x)
 
-class Discriminator(nn.Module):
-    def __init__(self,input_size,classes):
-        super(Discriminator, self).__init__()
-        self.fc1 = nn.Sequential(
-                nn.Linear(input_size, 256),
-                #nn.BatchNorm1d(256),
-                nn.LeakyReLU(0.2, inplace=True)    
+class RotationDiscriminator(nn.Module):
+    class Head(nn.Module):
+        def __init__(self, input_size, hidden_size, out_classes):
+            super(RotationDiscriminator.Head, self).__init__()
+            self.fc1 = nn.Sequential(
+                nn.Linear(input_size, hidden_size),
+                nn.BatchNorm1d(hidden_size),
+                nn.LeakyReLU(0.2, inplace=True)
             )
+            self.fc2 = nn.Linear(hidden_size, out_classes)
 
-        self.fc2 = nn.Linear(256, classes)
+        def forward(self, x):
+            x = self.fc1(x)
+            x = self.fc2(x)
+            return x
 
+        def forward_extended(self, x):
+            features = self.fc1(x)
+            output = self.fc2(features)
+            return features, output
+
+
+    def __init__(self, input_size, hidden_size, out_classes, n_heads):
+        super(RotationDiscriminator, self).__init__()
+
+        self.heads = [RotationDiscriminator.Head(input_size, hidden_size, out_classes) for _ in range(n_heads)]
 
     def forward(self, x):
-        features = self.fc1(x)
-        output = self.fc2(features)
-        return output, features
+        # Get the scores from all the heads and concatenate them in a single output (#batch_size, n_heads * 4)
+        scores = [h(x) for h in self.heads]
+        return torch.cat(scores, dim=-1)
+
+    def forward_extended(self, x):
+        # Get the scores and hidden features from all the heads and concatenate the scores and the features
+        scores_and_features = [h.forward_extended(x) for h in self.heads]
+        scores = [saf[1] for saf in scores_and_features]
+        features = [saf[0] for saf in scores_and_features]
+        return torch.cat(features, dim=-1), torch.cat(scores, dim=-1)
 
 def resnet18_feat_extractor():
     """Constructs a ResNet-18 model.
