@@ -8,11 +8,12 @@ import matplotlib.pyplot as plt
 def _do_epoch(args, E, C, R, source_loader, target_loader_train, optimizer, device):
 
     # Double the learning rate for the unknown class
-    w = [ 1.0 for _ in range(args.n_classes_known + 1) ]
+    # w = [ 1.0 for _ in range(args.n_classes_known + 1) ]
     # w[-1] = 2.0
-    w = torch.tensor(w).to(device)
+    # w = torch.tensor(w).to(device)
 
-    C_criterion = nn.CrossEntropyLoss(weight=w)
+    # C_criterion = nn.CrossEntropyLoss(weight=w)
+    C_criterion = nn.CrossEntropyLoss()
     R_criterion = nn.CrossEntropyLoss()
 
     C_correct_preds, R_correct_preds, C_tot_preds, R_tot_preds = 0, 0, 0, 0
@@ -152,8 +153,8 @@ def step2(args, E, C, R, source_loader, target_loader_train, target_loader_eval,
         print(f"\tTotal Loss: {tot_loss:.4f}")
         print(f"\tClass Loss: {C_loss:.4f}")
         print(f"\tRot Loss: {R_loss:.4f}")
-        print(f"\tClass Accuracy: {R_accuracy * 100:.2f} %")
-        print(f"\tRot Accuracy: {C_accuracy * 100:.2f} %")
+        print(f"\tClass Accuracy: {C_accuracy * 100:.2f} %")
+        print(f"\tRot Accuracy: {R_accuracy * 100:.2f} %")
         print()
 
         # EVAL EPOCH
@@ -191,7 +192,7 @@ def plot_step2_accuracy_loss(args, history):
     # Loss plot
     plt.figure()
     plt.title('(Training) Object classifier and rotation classifier losses over step2 epochs')
-    plt.plot(epochs, tot_loss, 'm', label='Total classifier loss')
+    plt.plot(epochs, tot_loss, 'm', label='Total loss')
     plt.plot(epochs, C_loss, 'b', label='Object classifier loss')
     plt.plot(epochs, R_loss, 'r', label='Rotation classifier loss')
     plt.legend()
@@ -211,7 +212,7 @@ def plot_eval_performance(args, history):
     plt.title('Evaluation - HOS, OS, UNK over the target dataset')
     plt.plot(epochs, HOS, 'b', label='HOS')
     plt.plot(epochs, OS, 'r', label='OS')
-    plt.plot(epochs, UNK, 'r', label='UNK')
+    plt.plot(epochs, UNK, 'm', label='UNK')
     plt.legend()
 
     # Loss plot
