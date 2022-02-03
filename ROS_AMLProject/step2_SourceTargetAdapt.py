@@ -76,7 +76,7 @@ def _do_epoch(args, E, C, R, source_loader, target_loader_train, optimizer, devi
 
     tot_avg_loss /= tot_batches
     C_avg_loss /= tot_batches
-    R_avg_loss /= R_avg_loss
+    R_avg_loss /= tot_batches
     C_accuracy = C_correct_preds / C_tot_preds
     R_accuracy = R_correct_preds / R_tot_preds
 

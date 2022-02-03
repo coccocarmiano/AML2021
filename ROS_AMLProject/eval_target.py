@@ -148,6 +148,9 @@ def target_evaluation(args, E, C, target_loader_eval, device):
     tot_known, tot_unkwn, known_correct, unknw_correct = 0, 0, 0, 0
     C_avg_loss = 0.0
     tot_batches = 0
+
+    tot_predicted_known, tot_predicted_unknown = 0, 0
+
     with torch.no_grad():
         for batch_samples, batch_labels, _, _ in tqdm(target_loader_eval):
             tot_batches += 1
@@ -168,13 +171,17 @@ def target_evaluation(args, E, C, target_loader_eval, device):
             tot_known += known_mask.sum().item()
             tot_unkwn += unknw_mask.sum().item()
 
-            print(f"Tot known: {tot_known}")
-            print(f"Known mask: {known_mask.sum().item()}")
-            print(f"Tot unknown: {tot_unkwn}")
-            print(f"Unknown mask: {unknw_mask.sum().item()}")
-
             known_correct += (C_preds[known_mask] == batch_labels[known_mask]).sum().item()
             unknw_correct += (C_preds[unknw_mask] == batch_labels[unknw_mask]).sum().item()
+
+            # debug
+            tot_predicted_known += (C_preds == 1).sum().item()
+            tot_predicted_unknown += (C_preds == 0).sum().item()
+
+    print(f"Tot predicted known (in general): {tot_predicted_known}")
+    print(f"Tot predicted unknown (in general): {tot_predicted_unknown}")
+    print(f"Total real known samples: {tot_known}")
+    print(f"Total real unknown samples: {tot_unkwn}")
 
     C_avg_loss /= tot_batches
     if int(tot_known) == 0:
