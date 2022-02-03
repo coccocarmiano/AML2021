@@ -52,7 +52,6 @@ def target_separation(args, E, C, R, target_loader_eval, device, rand):
                 for i, sample_label in enumerate(predicted_labels):
                     new_R_scores[i] = R_scores[i, sample_label * 4 : sample_label * 4 + 4]
                 R_scores = new_R_scores
-                print(f"R_scores with multihead after choosing one head: {R_scores.size()}")
 
             # Compute softmax and get the maximum probability as the normality score
             R_probabilities = softmax(R_scores)
