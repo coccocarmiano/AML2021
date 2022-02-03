@@ -158,8 +158,8 @@ def target_evaluation(args, E, C, R, target_loader_eval, device):
             C_scores = C(E_output)
             C_preds = torch.argmax(C_scores, dim=1)
 
-            C_loss = C_criterion(C_scores, batch_labels)
-            C_avg_loss += C_loss.data.item()
+            # C_loss = C_criterion(C_scores, batch_labels)
+            # C_avg_loss += C_loss.data.item()
 
             known_mask = batch_labels < 45
             unknw_mask = batch_labels > 44
