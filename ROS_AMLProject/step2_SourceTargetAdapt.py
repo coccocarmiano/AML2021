@@ -69,14 +69,14 @@ def _do_epoch(args, E, C, R, source_loader, target_loader_train, optimizer, devi
         C_avg_loss += C_loss.data.item()
         R_avg_loss += R_loss.data.item()
 
-        loss.backward()
-        optimizer.step()
-
         cls_pred     = torch.argmax(C_source_scores, dim=1)
         C_correct_preds += (cls_pred == source_batch_labels).sum().item()
 
         rot_pred     = torch.argmax(R_scores, dim=1)
         R_correct_preds += (rot_pred == target_batch_labels_rot).sum().item()
+
+        loss.backward()
+        optimizer.step()
 
         C_tot_preds += source_batch_labels.size(0)
         R_tot_preds += target_batch_labels_rot.size(0)

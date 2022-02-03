@@ -60,16 +60,6 @@ def _do_epoch(args, E, C, R, source_loader, device, optimizer, optimizer_CL=None
         if args.center_loss:
             CL_avg_loss += CL_loss.data.item()
 
-        # 3. Compute total loss, backward, step, etc
-        loss.backward()
-        optimizer.step()
-
-        # by doing so, weight_CL would not impact on the learning of centers
-        if args.center_loss:
-            for param in criterion_CL.parameters():
-                param.grad.data *= (1. / args.weight_CL)
-            optimizer_CL.step()
-
         # Extract class predictions
         preds        = torch.argmax(C_scores, dim=1)
         C_correct_preds += (preds == batch_labels).sum().item()
@@ -80,6 +70,16 @@ def _do_epoch(args, E, C, R, source_loader, device, optimizer, optimizer_CL=None
 
         C_tot_preds     += batch_labels.size(0)
         R_tot_preds     += batch_labels_rot.size(0)
+
+        # 3. Compute total loss, backward, step, etc
+        loss.backward()
+        optimizer.step()
+
+        # by doing so, weight_CL would not impact on the learning of centers
+        if args.center_loss:
+            for param in criterion_CL.parameters():
+                param.grad.data *= (1. / args.weight_CL)
+            optimizer_CL.step()
 
     tot_avg_loss /= tot_batches
     C_avg_loss /= tot_batches
