@@ -153,14 +153,14 @@ def plot_step1_accuracy_loss(args, history):
 
     # Accuracy plot
     plt.figure()
-    plt.title('Object classifier and rotation classifier accuracy over step1 epochs')
+    plt.title(f"Object classifier and rotation classifier accuracy over step1 epochs (MH: {args.multihead} - CL: {args.center_loss})")
     plt.plot(epochs, C_accuracy, 'b', label='Object classifier accuracy')
     plt.plot(epochs, R_accuracy, 'r', label='Rotation classifier accuracy')
     plt.legend()
 
     # Loss plot
     plt.figure()
-    plt.title('Object classifier and rotation classifier losses over step1 epochs')
+    plt.title(f'Object classifier and rotation classifier losses over step1 epochs (MH: {args.multihead} - CL: {args.center_loss})')
     plt.plot(epochs, tot_loss, 'm', label='Total loss')
     plt.plot(epochs, C_loss, 'b', label='Object classifier loss')
     plt.plot(epochs, R_loss, 'r', label='Rotation classifier loss')

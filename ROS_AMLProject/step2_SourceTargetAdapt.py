@@ -209,7 +209,7 @@ def plot_eval_performance(args, history):
 
     # Accuracy plot
     plt.figure()
-    plt.title('Evaluation - HOS, OS, UNK over the target dataset')
+    plt.title(f'Evaluation - HOS, OS, UNK over the target dataset (MH: {args.multihead} - CL: {args.center_loss})')
     plt.plot(epochs, HOS, 'b', label='HOS')
     plt.plot(epochs, OS, 'r', label='OS')
     plt.plot(epochs, UNK, 'm', label='UNK')
@@ -217,7 +217,7 @@ def plot_eval_performance(args, history):
 
     # Loss plot
     plt.figure()
-    plt.title('Evaluation - Object classifier loss')
+    plt.title(f'Evaluation - Object classifier loss (MH: {args.multihead} - CL: {args.center_loss})')
     plt.plot(epochs, C_loss, 'b', label='Object classifier loss')
     plt.legend()
 
