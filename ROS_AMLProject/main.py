@@ -95,7 +95,7 @@ class Trainer:
         # Optimizers and schedulers
         self.O1, self.scheduler1 = get_optim_and_scheduler(self.E1, self.C1, self.R1, args.epochs_step1, args.learning_rate, args.train_all)
         if args.center_loss:
-            self.O1_CL, self.scheduler1_CL, self.criterion_CL = get_optim_scheduler_loss_center_loss(args.multihead, args.learning_rate_center, args.epochs_step1, self.device)
+            self.O1_CL, self.scheduler1_CL, self.criterion_CL = get_optim_scheduler_loss_center_loss(args.multihead, args.learning_rate_CL, args.epochs_step1, self.device)
         else:
             self.O1_CL, self.scheduler1_CL, self.criterion_CL = None, None, None
 
