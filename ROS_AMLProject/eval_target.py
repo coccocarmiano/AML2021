@@ -175,11 +175,11 @@ def target_evaluation(args, E, C, R, target_loader_eval, device):
             unknw_correct += (C_preds[unknw_mask] == batch_labels[unknw_mask]).sum().item()
 
         C_avg_loss /= tot_batches
-        if tot_known == 0:
+        if int(tot_known) == 0:
             OS = 0.0
         else:
             OS = known_correct / tot_known
-        if tot_unkwn == 0:
+        if int(tot_unkwn) == 0:
             UNK = 0.0
         else:
             UNK = unknw_correct / tot_unkwn
