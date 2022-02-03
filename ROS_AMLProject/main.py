@@ -201,6 +201,7 @@ class Trainer:
         if from_scratch or self.args.step2_from_scratch or not self.loaded or len(self.history2['tot_loss']) < 5:
             self.E2 = copy.deepcopy(self.E1)
             self.C2 = copy.deepcopy(self.C1)
+            print("Step 2 will start from the Feature Extractor (E1) and the Object Classifier (C1) from the step 1..")
 
         # Build new dataloaders
         # New source (source + target unknown according to separation)

@@ -175,13 +175,16 @@ def target_evaluation(args, E, C, target_loader_eval, device):
             unknw_correct += (C_preds[unknw_mask] == batch_labels[unknw_mask]).sum().item()
 
             # debug
-            tot_predicted_known += (C_preds == 1).sum().item()
-            tot_predicted_unknown += (C_preds == 0).sum().item()
+            tot_predicted_known += (C_preds < 45).sum().item()
+            tot_predicted_unknown += (C_preds > 44).sum().item()
 
+    print()
     print(f"Tot predicted known (in general): {tot_predicted_known}")
     print(f"Tot predicted unknown (in general): {tot_predicted_unknown}")
     print(f"Total real known samples: {tot_known}")
     print(f"Total real unknown samples: {tot_unkwn}")
+    print(f"Known correct: {known_correct}")
+    print(f"Unknown correct: {unknw_correct}")
 
     C_avg_loss /= tot_batches
     if int(tot_known) == 0:
