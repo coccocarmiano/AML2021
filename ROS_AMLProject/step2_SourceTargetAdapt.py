@@ -152,8 +152,8 @@ def step2(args, E, C, R, source_loader, target_loader_train, target_loader_eval,
         print(f"\tTotal Loss: {tot_loss:.4f}")
         print(f"\tClass Loss: {C_loss:.4f}")
         print(f"\tRot Loss: {R_loss:.4f}")
-        print(f"\tClass Accuracy: {R_accuracy:.2f} %")
-        print(f"\tRot Accuracy: {C_accuracy:.2f} %")
+        print(f"\tClass Accuracy: {R_accuracy * 100:.2f} %")
+        print(f"\tRot Accuracy: {C_accuracy * 100:.2f} %")
         print()
 
         # EVAL EPOCH
