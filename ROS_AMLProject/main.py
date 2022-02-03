@@ -58,13 +58,14 @@ def get_args():
     # tensorboard logger
     parser.add_argument("--tf_logger", type=bool, default=True, help="If true will save tensorboard compatible logs")
     parser.add_argument("--folder_name", default=None, help="Used by the logger to save logs")
-    parser.add_argument("--try_load", default=False, action="store_true", help="Try to load the models from a previous run if the configuration matches")
 
     # variants
     parser.add_argument("--multihead", default=False, action="store_true", help="If true will use multi-head rotation classifier")
     parser.add_argument("--center_loss", default=False, action="store_true", help="If true will use center loss")
 
     # specific runs
+    parser.add_argument("--try_load", default=False, action="store_true", help="Try to load the models from a previous run if the configuration matches")
+    parser.add_argument("--step2_from_scratch", default=False, action="store_true", help="Even if E2, C2, R2 were loaded from file, it will start from E1, C1, R1.")
     parser.add_argument("--step1_only", default=False, action="store_true", help="Start the step1 only")
     parser.add_argument("--step2_only", default=False, action="store_true", help="Start the step2 only. It requires that try_load is set to true"
                                                                                  " and there must exist a previous run for this configuration")
@@ -197,7 +198,7 @@ class Trainer:
 
     def trainer_step2(self, from_scratch=False):
         # Before doing step2, deepcopying the E and C from step1
-        if from_scratch or not self.loaded or len(self.history2['tot_loss']) < 5:
+        if from_scratch or self.args.step2_from_scratch or not self.loaded or len(self.history2['tot_loss']) < 5:
             self.E2 = copy.deepcopy(self.E1)
             self.C2 = copy.deepcopy(self.C1)
 
