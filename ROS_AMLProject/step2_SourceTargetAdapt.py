@@ -89,9 +89,9 @@ def step2(args, E, C, R, source_loader, target_loader_train, target_loader_eval,
     After each epoch, we evaluate the performance of C2 on the evaluation target dataset.
     """
 
-    E.to(device)
-    C.to(device)
-    R.custom_to(device)
+    E = E.to(device)
+    C = C.to(device)
+    R = R.custom_to(device)
 
     history = {}
     history['tot_loss'] = []

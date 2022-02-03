@@ -20,9 +20,9 @@ def target_separation(args, E, C, R, target_loader_eval, device, rand):
     C.eval()
     R.custom_eval()
 
-    E.to(device)
-    C.to(device)
-    R.custom_to(device)
+    E = E.to(device)
+    C = C.to(device)
+    R = R.custom_to(device)
 
     ground_truths = []
     normality_scores = []

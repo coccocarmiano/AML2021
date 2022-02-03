@@ -109,9 +109,11 @@ class RotationDiscriminator(nn.Module):
         return torch.cat(features, dim=-1), torch.cat(scores, dim=-1)
 
     def custom_to(self, device):
-        self.to(device)
-        for h in self.heads:
-            h.to(device)
+        other = self.to(device)
+        for i, h in enumerate(other.heads):
+            other.heads[i] = h.to(device)
+
+        return other
 
     def custom_train(self):
         self.train()

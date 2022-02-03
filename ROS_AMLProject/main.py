@@ -89,7 +89,7 @@ class Trainer:
         self.E1 = resnet18_feat_extractor().to(self.device)
         self.C1 = Classifier(512, self.args.n_classes_known + 1).to(self.device)
         n_heads = 1 if not args.multihead else args.n_classes_known
-        self.R1 = RotationDiscriminator(input_size=1024, hidden_size=256, out_classes=4, n_heads=n_heads).to(self.device)
+        self.R1 = RotationDiscriminator(input_size=1024, hidden_size=256, out_classes=4, n_heads=n_heads).custom_to(self.device)
 
         # Optimizers and schedulers
         self.O1, self.scheduler1 = get_optim_and_scheduler(self.E1, self.C1, self.R1, args.epochs_step1, args.learning_rate, args.train_all)
@@ -121,7 +121,7 @@ class Trainer:
         # R2: Rotation classifier: it starts as a new classifier (single-head)
         self.E2 = resnet18_feat_extractor().to(self.device)
         self.C2 = Classifier(512, self.args.n_classes_known + 1).to(self.device)
-        self.R2 = RotationDiscriminator(input_size=1024, hidden_size=256, out_classes=4, n_heads=1).to(self.device)
+        self.R2 = RotationDiscriminator(input_size=1024, hidden_size=256, out_classes=4, n_heads=1).custom_to(self.device)
 
         self.O2, self.scheduler2 = get_optim_and_scheduler(self.E2, self.C2, self.R2, args.epochs_step2, args.learning_rate, args.train_all)
 

@@ -105,9 +105,9 @@ def step1(args, E, C, R, source_loader, device, optimizer, scheduler, optimizer_
     C.train()
     R.custom_train()
 
-    E.to(device)
-    C.to(device)
-    R.custom_to(device)
+    E = E.to(device)
+    C = C.to(device)
+    R = R.custom_to(device)
 
     history = {}
     history['tot_loss'] = []
