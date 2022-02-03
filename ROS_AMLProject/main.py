@@ -148,15 +148,9 @@ class Trainer:
         # -------------- #
 
         # ---- DATA LOADERS ---- #
-        # Loading the source and target for the step1 (separation)
-        # Source loader for the step 1 (known source in train mode)
-        source_path_file = f"txt_list/{args.source}_known.txt" 
-        self.source_loader = data_helper.get_train_dataloader(args, source_path_file)
-
         # This must remain untouched and it should be used only for the separation and for the final evaluation (whole target in eval mode)
         target_path_file = f"txt_list/{args.target}.txt"
         self.target_loader_eval = data_helper.get_val_dataloader(args, target_path_file)
-
         # -------------- #
 
         # PRINTING AND DEBUGGING
@@ -170,6 +164,10 @@ class Trainer:
 
 
     def trainer_step1(self):
+        # Source loader for the step 1 (known source in train mode)
+        source_path_file = f"txt_list/{self.args.source}_known.txt"
+        self.source_loader = data_helper.get_train_dataloader(self.args, source_path_file)
+
         print("Step One -- Training")
         hist1 = step1(self.args, self.E1, self.C1, self.R1, self.source_loader, self.device, self.O1, self.scheduler1,
                     optimizer_CL=self.O1_CL, scheduler_CL=self.scheduler1_CL, criterion_CL=self.criterion_CL)
