@@ -154,11 +154,10 @@ class Trainer:
         # -------------- #
 
         # PRINTING AND DEBUGGING
-        print(f"Source known: {args.source} [{len(self.source_loader.dataset)} samples]")
         print(f"Target known+unknown: {args.target} [{len(self.target_loader_eval.dataset)} samples]")
 
         # Visualize some images from the Known Source and from the Target (known or unknown)
-        data_helper.visualize_img(self.source_loader)
+        # data_helper.visualize_img(self.source_loader)
         data_helper.visualize_img(self.target_loader_eval)
         # ----------------- #
 
@@ -167,6 +166,7 @@ class Trainer:
         # Source loader for the step 1 (known source in train mode)
         source_path_file = f"txt_list/{self.args.source}_known.txt"
         self.source_loader = data_helper.get_train_dataloader(self.args, source_path_file)
+        print(f"Source known: {self.args.source} [{len(self.source_loader.dataset)} samples]")
 
         print("Step One -- Training")
         hist1 = step1(self.args, self.E1, self.C1, self.R1, self.source_loader, self.device, self.O1, self.scheduler1,
