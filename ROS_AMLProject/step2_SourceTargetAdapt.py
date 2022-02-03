@@ -98,7 +98,7 @@ def _do_epoch(args, E, C, R, source_loader, target_loader_train, optimizer, devi
     for i in range(4):
         print(f"Training - tot rot with label {i}: {tot_rot[i]}")
     for i in range(4):
-        print(f"Training - tot rot with label {i}: {tot_pred_rot[i]}")
+        print(f"Training - tot predicted rot with label {i}: {tot_pred_rot[i]}")
 
     tot_avg_loss /= tot_batches
     C_avg_loss /= tot_batches
