@@ -134,17 +134,14 @@ def target_separation(args, E, C, R, target_loader_eval, device, rand):
 
     return auc, known_accuracy
 
-def target_evaluation(args, E, C, R, target_loader_eval, device):
+def target_evaluation(args, E, C, target_loader_eval, device):
     # Final evaluation on the target using only C2
     # Disable training
     E.eval()
     C.eval()
-    R.custom_eval()
 
-    E.to(device)
-    C.to(device)
-    R.custom_to(device)
-
+    E = E.to(device)
+    C = C.to(device)
 
     C_criterion = nn.CrossEntropyLoss()
 
@@ -160,32 +157,37 @@ def target_evaluation(args, E, C, R, target_loader_eval, device):
             C_scores = C(E_output)
             C_preds = torch.argmax(C_scores, dim=1)
 
-            # C_loss = C_criterion(C_scores, batch_labels)
-            # C_avg_loss += C_loss.data.item()
-
             known_mask = batch_labels < 45
             unknw_mask = batch_labels > 44
 
             batch_labels[unknw_mask] = 45
 
+            C_loss = C_criterion(C_scores, batch_labels)
+            C_avg_loss += C_loss.data.item()
+
             tot_known += known_mask.sum().item()
             tot_unkwn += unknw_mask.sum().item()
+
+            print(f"Tot known: {tot_known}")
+            print(f"Known mask: {known_mask.sum().item()}")
+            print(f"Tot unknown: {tot_unkwn}")
+            print(f"Unknown mask: {unknw_mask.sum().item()}")
 
             known_correct += (C_preds[known_mask] == batch_labels[known_mask]).sum().item()
             unknw_correct += (C_preds[unknw_mask] == batch_labels[unknw_mask]).sum().item()
 
-        C_avg_loss /= tot_batches
-        if int(tot_known) == 0:
-            OS = 0.0
-        else:
-            OS = known_correct / tot_known
-        if int(tot_unkwn) == 0:
-            UNK = 0.0
-        else:
-            UNK = unknw_correct / tot_unkwn
-        if math.isclose(OS, 0.0) or math.isclose(UNK, 0.0):
-            HOS = 0.0
-        else:
-            HOS = 2 / (1.0 / float(OS) + 1.0 / float(UNK))
+    C_avg_loss /= tot_batches
+    if int(tot_known) == 0:
+        OS = 0.0
+    else:
+        OS = known_correct / tot_known
+    if int(tot_unkwn) == 0:
+        UNK = 0.0
+    else:
+        UNK = unknw_correct / tot_unkwn
+    if math.isclose(OS, 0.0) or math.isclose(UNK, 0.0):
+        HOS = 0.0
+    else:
+        HOS = 2 / (1.0 / float(OS) + 1.0 / float(UNK))
 
-        return HOS, OS, UNK, C_avg_loss
+    return HOS, OS, UNK, C_avg_loss

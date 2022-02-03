@@ -131,7 +131,7 @@ def step2(args, E, C, R, source_loader, target_loader_train, target_loader_eval,
         print()
 
         # EVAL EPOCH
-        HOS, OS, UNK, C_loss = target_evaluation(args, E, C, R, target_loader_eval, device)
+        HOS, OS, UNK, C_loss = target_evaluation(args, E, C, target_loader_eval, device)
         history['eval_HOS'].append(HOS)
         history['eval_OS'].append(OS)
         history['eval_UNK'].append(UNK)

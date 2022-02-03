@@ -195,9 +195,9 @@ class Trainer:
     def trainer_plot_step1(self):
         plot_step1_accuracy_loss(self.args, self.history1)
 
-    def trainer_step2(self):
+    def trainer_step2(self, from_scratch=False):
         # Before doing step2, deepcopying the E and C from step1
-        if not self.loaded or len(self.history2['tot_loss']) < 5:
+        if from_scratch or not self.loaded or len(self.history2['tot_loss']) < 5:
             self.E2 = copy.deepcopy(self.E1)
             self.C2 = copy.deepcopy(self.C1)
 
@@ -210,11 +210,9 @@ class Trainer:
         target_path_file = f"new_txt_list/{self.args.target}_known_{str(self.rand)}.txt"
         self.target_loader_train = data_helper.get_train_dataloader(self.args, target_path_file)
 
-        target_path_file = f"txt_list/{self.args.target}.txt"
-        self.target_loader_eval = data_helper.get_val_dataloader(self.args, target_path_file)
-
         print(f"Train Size for C2 (Source + Target Unknown): {len(self.source_loader.dataset)}")
         print(f"Train Size for R2 (Target known after separation): {len(self.target_loader_train.dataset)}")
+        print(f"Final evaluation target size: {len(self.target_loader_eval.dataset)}")
 
         print("Step 2 -- Domain Adaptation")
         hist2 = step2(self.args, self.E2, self.C2, self.R2, self.source_loader, self.target_loader_train,
@@ -231,7 +229,7 @@ class Trainer:
         self.history2['eval_C_loss'].extend(hist2['eval_C_loss'])
 
     def trainer_target_evaluation(self):
-        HOS, OS, UNK, C_loss = target_evaluation(self.args, self.E2, self.C2, self.R2, self.target_loader_eval, self.device)
+        HOS, OS, UNK, C_loss = target_evaluation(self.args, self.E2, self.C2, self.target_loader_eval, self.device)
         print()
         print("Target Evaluation Stats")
         print(f"\tClass Loss: {C_loss:.2f}")
