@@ -67,63 +67,38 @@ class Classifier(nn.Module):
         self.class_classifier = nn.Linear(input_size, classes)
 
     def forward(self, x):
-
         return self.class_classifier(x)
 
-class RotHead(nn.Module):
-    def __init__(self, input_size, hidden_size, out_classes):
-        super(RotHead, self).__init__()
-        self.fc1 = nn.Sequential(
-            nn.Linear(input_size, hidden_size),
-            nn.BatchNorm1d(hidden_size),
-            nn.LeakyReLU(0.2, inplace=True)
-        )
-        self.fc2 = nn.Linear(hidden_size, out_classes)
-
-    def forward(self, x):
-        x = self.fc1(x)
-        x = self.fc2(x)
-        return x
-
-    def forward_extended(self, x):
-        features = self.fc1(x)
-        output = self.fc2(features)
-        return features, output
 
 class RotationDiscriminator(nn.Module):
     def __init__(self, input_size, hidden_size, out_classes, n_heads):
         super(RotationDiscriminator, self).__init__()
 
-        self.heads = [RotHead(input_size, hidden_size, out_classes) for _ in range(n_heads)]
+        self.n_heads = n_heads
+        self.fc1 = nn.ModuleList([nn.Linear(input_size, hidden_size) for _ in range(n_heads)])
+        self.norm = nn.BatchNorm1d(256)
+        self.relu = nn.LeakyReLU(0.2, inplace=True)
+        self.fc2 = nn.ModuleList([nn.Linear(hidden_size, out_classes) for _ in range(n_heads)])
 
-    def forward(self, x):
-        # Get the scores from all the heads and concatenate them in a single output (#batch_size, n_heads * 4)
-        scores = [h(x) for h in self.heads]
-        return torch.cat(scores, dim=-1)
+    def forward(self, x, labels=None):
+        return self.forward_extended(x, labels)[1]
 
-    def forward_extended(self, x):
-        # Get the scores and hidden features from all the heads and concatenate the scores and the features
-        scores_and_features = [h.forward_extended(x) for h in self.heads]
-        scores = [saf[1] for saf in scores_and_features]
-        features = [saf[0] for saf in scores_and_features]
-        return torch.cat(features, dim=-1), torch.cat(scores, dim=-1)
+    def forward_extended(self, x, labels=None):
+        if self.n_heads > 1:
+            # For each sample, we select the correct head according to the label
+            x = [self.fc1[label](x[idx]) for idx, label in enumerate(labels)]
+            x = torch.vstack(x)
+            x = self.norm(x)
+            feats = self.relu(x)
+            scores = [self.fc2[label](feats[idx]) for idx, label in enumerate(labels)]
+            scores = torch.vstack(scores)
+        else:
+            x = self.fc1[0](x)
+            x = self.norm(x)
+            feats = self.relu(x)
+            scores = self.fc2[0](x)
 
-    def custom_to(self, device):
-        other = self.to(device)
-        for i, h in enumerate(other.heads):
-            other.heads[i] = h.to(device)
-
-        return other
-
-    def custom_train(self):
-        self.train()
-        for h in self.heads:
-            h.train()
-
-    def custom_eval(self):
-        self.eval()
-        for h in self.heads:
-            h.eval()
+        return feats, scores
 
 def resnet18_feat_extractor():
     """Constructs a ResNet-18 model.

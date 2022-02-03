@@ -18,11 +18,11 @@ def target_separation(args, E, C, R, target_loader_eval, device, rand):
 
     E.eval()
     C.eval()
-    R.custom_eval()
+    R.eval()
 
     E = E.to(device)
     C = C.to(device)
-    R = R.custom_to(device)
+    R = R.to(device)
 
     ground_truths = []
     normality_scores = []
@@ -45,15 +45,7 @@ def target_separation(args, E, C, R, target_loader_eval, device, rand):
             predicted_labels = torch.argmax(C_scores, dim=1)
 
             # Use R1 to get the scores
-            R_scores = R(E_output_conc)
-
-            # TODO: select only one head or apply the softmax to the whole set of output scores from all the heads?
-            # If R1 is multihead, we pick the head corresponding to the inferred label
-            # if args.multihead:
-            #     new_R_scores = torch.zeros((predicted_labels.size()[0], 4))
-            #     for i, sample_label in enumerate(predicted_labels):
-            #         new_R_scores[i] = R_scores[i, sample_label * 4 : sample_label * 4 + 4]
-            #     R_scores = new_R_scores
+            R_scores = R(E_output_conc, predicted_labels)
 
             # Compute softmax and get the maximum probability as the normality score
             R_probabilities = softmax(R_scores)
@@ -95,10 +87,8 @@ def target_separation(args, E, C, R, target_loader_eval, device, rand):
     print(f"Target samples identified as unknown: {mask_sep_unknw.sum()} - Actual unknown samples: {mask_unknw.sum()}")
 
     known_accuracy = (mask_sep_known == mask_known).sum() / mask_sep_known.shape[0]
-    # unk_accuracy = (mask_sep_unknw == mask_unknw).sum() / mask_sep_unknw.shape[0]
 
     print(f"Separation accuracy: {known_accuracy*100:.2f} %")
-    #print(f"Unknown separation accuracy: {unk_accuracy*100:.2f} %")
     print()
 
     # We now must build and save two datasets

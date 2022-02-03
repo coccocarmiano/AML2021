@@ -90,12 +90,12 @@ class Trainer:
         self.E1 = resnet18_feat_extractor().to(self.device)
         self.C1 = Classifier(512, self.args.n_classes_known + 1).to(self.device)
         n_heads = 1 if not args.multihead else args.n_classes_known
-        self.R1 = RotationDiscriminator(input_size=1024, hidden_size=256, out_classes=4, n_heads=n_heads).custom_to(self.device)
+        self.R1 = RotationDiscriminator(input_size=1024, hidden_size=256, out_classes=4, n_heads=n_heads).to(self.device)
 
         # Optimizers and schedulers
         self.O1, self.scheduler1 = get_optim_and_scheduler(self.E1, self.C1, self.R1, args.epochs_step1, args.learning_rate, args.train_all)
         if args.center_loss:
-            self.O1_CL, self.scheduler1_CL, self.criterion_CL = get_optim_scheduler_loss_center_loss(args.multihead, args.learning_rate_CL, args.epochs_step1, self.device)
+            self.O1_CL, self.scheduler1_CL, self.criterion_CL = get_optim_scheduler_loss_center_loss(args.learning_rate_CL, args.epochs_step1, self.device)
         else:
             self.O1_CL, self.scheduler1_CL, self.criterion_CL = None, None, None
 
@@ -118,11 +118,11 @@ class Trainer:
 
         # Step 2
         # E2: Feature extractor: start from the trained E1 from the step 1
-        # C2: Object classifier: start from the trained C1 from the step 1
+        # C2: Object classifier: start from the trained C1 from the step 1 (?)
         # R2: Rotation classifier: it starts as a new classifier (single-head)
         self.E2 = resnet18_feat_extractor().to(self.device)
         self.C2 = Classifier(512, self.args.n_classes_known + 1).to(self.device)
-        self.R2 = RotationDiscriminator(input_size=1024, hidden_size=256, out_classes=4, n_heads=1).custom_to(self.device)
+        self.R2 = RotationDiscriminator(input_size=1024, hidden_size=256, out_classes=4, n_heads=1).to(self.device)
 
         self.O2, self.scheduler2 = get_optim_and_scheduler(self.E2, self.C2, self.R2, args.epochs_step2, args.learning_rate, args.train_all)
 
@@ -196,7 +196,7 @@ class Trainer:
         plot_step1_accuracy_loss(self.args, self.history1)
 
     def trainer_step2(self, from_scratch=False):
-        # Before doing step2, deepcopying the E and C from step1
+        # Before doing step2, deepcopying the E and C (?) from step1
         if from_scratch or self.args.step2_from_scratch or not self.loaded or len(self.history2['tot_loss']) < 5:
             self.E2 = copy.deepcopy(self.E1)
             # self.C2 = copy.deepcopy(self.C1)
@@ -284,6 +284,8 @@ class Trainer:
         f_name = self.get_config_file_name()
         path = os.path.join(MODEL_PATH, f_name)
         torch.save(d, path)
+
+        print(f"Model saved in {path}")
 
     def try_load(self):
         f_name = self.get_config_file_name()

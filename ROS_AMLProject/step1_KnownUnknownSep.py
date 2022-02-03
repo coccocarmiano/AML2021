@@ -1,7 +1,5 @@
 import torch
 from torch import nn
-from optimizer_helper import get_optim_and_scheduler
-from center_loss import CenterLoss
 import matplotlib.pyplot as plt
 
 from tqdm import tqdm
@@ -23,11 +21,6 @@ def _do_epoch(args, E, C, R, source_loader, device, optimizer, optimizer_CL=None
         batch_samples    , batch_labels     = batch_samples.to(device)    , batch_labels.to(device),
         batch_samples_rot, batch_labels_rot = batch_samples_rot.to(device), batch_labels_rot.to(device)
 
-        # In case we have a Multi-head discriminator, we have to remap the rotation label i:
-        # i -> 4 * class_label + i
-        if args.multihead:
-            batch_labels_rot = batch_labels * 4 + batch_labels_rot
-
         optimizer.zero_grad()
         if args.center_loss:
             optimizer_CL.zero_grad()
@@ -48,9 +41,9 @@ def _do_epoch(args, E, C, R, source_loader, device, optimizer, optimizer_CL=None
         # For the center loss version, we need to have both the features coming from the first layer of the discriminator
         # and the output scores coming out from the discriminator
         if args.center_loss:
-            R_features, R_scores = R.forward_extended(E_output_conc)
+            R_features, R_scores = R.forward_extended(E_output_conc, batch_labels)
         else:
-            R_scores = R(E_output_conc)
+            R_scores = R(E_output_conc, batch_labels)
 
         C_loss  = C_criterion(C_scores, batch_labels)
         R_loss    = R_criterion(R_scores, batch_labels_rot) * args.weight_RotTask_step1
@@ -103,11 +96,11 @@ def step1(args, E, C, R, source_loader, device, optimizer, scheduler, optimizer_
     # Set the training mode
     E.train()
     C.train()
-    R.custom_train()
+    R.train()
 
     E = E.to(device)
     C = C.to(device)
-    R = R.custom_to(device)
+    R = R.to(device)
 
     history = {}
     history['tot_loss'] = []
