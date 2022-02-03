@@ -47,12 +47,12 @@ def target_separation(args, E, C, R, target_loader_eval, device, rand):
 
             # TODO: select only one head or apply the softmax to the whole set of output scores from all the heads?
             # If R1 is multihead, we pick the head corresponding to the inferred label
-            # if args.multihead:
-            #     new_R_scores = torch.zeros((predicted_labels.size()[0], 4))
-            #     for i, sample_label in enumerate(predicted_labels):
-            #         new_R_scores[i] = R_scores[i, sample_label * 4 : sample_label * 4 + 4]
-            #     R_scores = new_R_scores
-            #     print(f"R_scores with multihead after choosing one head: {R_scores.size()}")
+            if args.multihead:
+                new_R_scores = torch.zeros((predicted_labels.size()[0], 4), dtype=torch.int)
+                for i, sample_label in enumerate(predicted_labels):
+                    new_R_scores[i] = R_scores[i, sample_label * 4 : sample_label * 4 + 4]
+                R_scores = new_R_scores
+                print(f"R_scores with multihead after choosing one head: {R_scores.size()}")
 
             # Compute softmax and get the maximum probability as the normality score
             R_probabilities = softmax(R_scores)
@@ -73,10 +73,11 @@ def target_separation(args, E, C, R, target_loader_eval, device, rand):
     print("ground_truths: ", end="")
     for gt in ground_truths:
         print(f"{gt}, ", end="")
-
+    print()
     print("normality_scores: ", end="")
     for ns in normality_scores:
         print(f"{ns:.3f}, ", end="")
+    print()
 
     # Compute AUC-ROC value
     auc = roc_auc_score(ground_truths, normality_scores)
