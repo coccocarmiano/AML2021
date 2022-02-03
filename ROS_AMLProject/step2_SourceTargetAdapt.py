@@ -21,6 +21,9 @@ def _do_epoch(args, E, C, R, source_loader, target_loader_train, optimizer, devi
     # We iterate over two datasets at once
     target_loader_train = cycle(target_loader_train)
 
+    tot_known, tot_unknown = 0, 0
+    tot_predicted_known, tot_predicted_unknown = 0, 0
+
     tot_batches = 0
     for source_batch_samples, source_batch_labels, _, _ in tqdm(source_loader):
         (target_batch_samples, _, target_batch_samples_rot, target_batch_labels_rot) = next(target_loader_train)
@@ -73,6 +76,17 @@ def _do_epoch(args, E, C, R, source_loader, target_loader_train, optimizer, devi
 
         C_tot_preds += source_batch_labels.size(0)
         R_tot_preds += target_batch_labels_rot.size(0)
+
+        # debug
+        tot_known += (source_batch_labels < 45).sum().item()
+        tot_unknown += (source_batch_labels > 44).sum().item()
+        tot_predicted_known += (cls_pred < 45).sum().item()
+        tot_predicted_unknown += (cls_pred > 44).sum().item()
+
+    print(f"Training - tot known: {tot_known}")
+    print(f"Training - tot unknown: {tot_unknown}")
+    print(f"Training - tot predicted known: {tot_predicted_known}")
+    print(f"Training - tot predicted unknown: {tot_predicted_unknown}")
 
     tot_avg_loss /= tot_batches
     C_avg_loss /= tot_batches
