@@ -48,7 +48,7 @@ def target_separation(args, E, C, R, target_loader_eval, device, rand):
             # TODO: select only one head or apply the softmax to the whole set of output scores from all the heads?
             # If R1 is multihead, we pick the head corresponding to the inferred label
             if args.multihead:
-                new_R_scores = torch.zeros((predicted_labels.size()[0], 4), dtype=torch.int)
+                new_R_scores = torch.zeros((predicted_labels.size()[0], 4))
                 for i, sample_label in enumerate(predicted_labels):
                     new_R_scores[i] = R_scores[i, sample_label * 4 : sample_label * 4 + 4]
                 R_scores = new_R_scores
