@@ -1,3 +1,5 @@
+import math
+
 import torch
 import os
 from sklearn.metrics import roc_auc_score
@@ -175,6 +177,9 @@ def target_evaluation(args, E, C, R, target_loader_eval, device):
         C_avg_loss /= tot_batches
         OS = known_correct / tot_known
         UNK = unknw_correct / tot_unkwn
-        HOS = 2 / (1.0 / float(OS) + 1.0 / float(UNK))
+        if math.isclose(OS, 0.0) or math.isclose(UNK, 0.0):
+            HOS = 0.0
+        else:
+            HOS = 2 / (1.0 / float(OS) + 1.0 / float(UNK))
 
         return HOS, OS, UNK, C_avg_loss
