@@ -9,7 +9,7 @@ def _do_epoch(args, E, C, R, source_loader, target_loader_train, optimizer, devi
 
     # Double the learning rate for the unknown class
     w = [ 1.0 for _ in range(args.n_classes_known + 1) ]
-    w[-1] = 2.0
+    # w[-1] = 2.0
     w = torch.tensor(w).to(device)
 
     C_criterion = nn.CrossEntropyLoss(weight=w)
@@ -24,8 +24,8 @@ def _do_epoch(args, E, C, R, source_loader, target_loader_train, optimizer, devi
     tot_known, tot_unknown = 0, 0
     tot_predicted_known, tot_predicted_unknown = 0, 0
 
-    tot_rot = [0, 0, 0, 0]
-    tot_pred_rot = [0, 0, 0, 0]
+    # tot_rot = [0, 0, 0, 0]
+    # tot_pred_rot = [0, 0, 0, 0]
 
     tot_batches = 0
     for source_batch_samples, source_batch_labels, _, _ in tqdm(source_loader):
@@ -85,20 +85,20 @@ def _do_epoch(args, E, C, R, source_loader, target_loader_train, optimizer, devi
         tot_unknown += (source_batch_labels > 44).sum().item()
         tot_predicted_known += (cls_pred < 45).sum().item()
         tot_predicted_unknown += (cls_pred > 44).sum().item()
-        for blr in target_batch_labels_rot:
-            tot_rot[blr] += 1
-        for rp in rot_pred:
-            tot_pred_rot[rp] += 1
+        # for blr in target_batch_labels_rot:
+        #     tot_rot[blr] += 1
+        # for rp in rot_pred:
+        #     tot_pred_rot[rp] += 1
 
 
     print(f"Training - tot known: {tot_known}")
     print(f"Training - tot unknown: {tot_unknown}")
     print(f"Training - tot predicted known: {tot_predicted_known}")
     print(f"Training - tot predicted unknown: {tot_predicted_unknown}")
-    for i in range(4):
-        print(f"Training - tot rot with label {i}: {tot_rot[i]}")
-    for i in range(4):
-        print(f"Training - tot predicted rot with label {i}: {tot_pred_rot[i]}")
+    # for i in range(4):
+    #     print(f"Training - tot rot with label {i}: {tot_rot[i]}")
+    # for i in range(4):
+    #     print(f"Training - tot predicted rot with label {i}: {tot_pred_rot[i]}")
 
     tot_avg_loss /= tot_batches
     C_avg_loss /= tot_batches
