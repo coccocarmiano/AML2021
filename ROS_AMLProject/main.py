@@ -1,6 +1,4 @@
 import argparse
-import copy
-
 import torch
 import data_helper
 from resnet import resnet18_feat_extractor, Classifier, RotationDiscriminator
@@ -9,16 +7,25 @@ from step1_KnownUnknownSep import step1
 from eval_target import target_separation, target_evaluation
 from step2_SourceTargetAdapt import step2
 from random import randint
-import pickle
 import os
 from step1_KnownUnknownSep import plot_step1_accuracy_loss
 from step2_SourceTargetAdapt import plot_step2_accuracy_loss, plot_eval_performance
+import logging
+import sys
 
 SCRIPT_PATH = os.path.dirname(__file__)
 MODEL_PATH = os.path.join(SCRIPT_PATH, "models")
+LOG_PATH = os.path.join(SCRIPT_PATH, "logs")
+PLOT_PATH = os.path.join(SCRIPT_PATH, "plots")
 
 if not os.path.exists(MODEL_PATH):
     os.mkdir(MODEL_PATH)
+
+if not os.path.exists(LOG_PATH):
+    os.mkdir(LOG_PATH)
+
+if not os.path.exists(PLOT_PATH):
+    os.mkdir(PLOT_PATH)
 
 
 def get_args():
@@ -161,14 +168,38 @@ class Trainer:
         data_helper.visualize_img(self.target_loader_eval)
         # ----------------- #
 
+        # LOGGER
+        logger = logging.getLogger()
+        conf_name = self.get_config_file_name()
+        conf_name = conf_name[:-4]
+        conf_name += ".log"
+        f_path = os.path.join(LOG_PATH, conf_name)
+        filehand = logging.FileHandler(f_path, mode='a')
+        filehand.setLevel(logging.INFO)
+        fmt = logging.Formatter('%(message)s')
+        filehand.setFormatter(fmt)
+        stdout_handler = logging.StreamHandler(sys.stdout)
+        stdout_handler.setFormatter(fmt)
+        stdout_handler.setLevel(logging.INFO)
+        logger.addHandler(stdout_handler)
+        logger.addHandler(filehand)
+        logger.setLevel(logging.DEBUG)
+        args.logger = logger
+        self.logger = logger
+
+        # PLOT
+        conf_name = self.get_config_file_name()
+        conf_name = conf_name[:-4]
+        plot_path = os.path.join(PLOT_PATH, conf_name)
+        args.plot_path = plot_path
 
     def trainer_step1(self):
-        print("Step One -- Training")
+        self.logger.info("Step One -- Training")
 
         # Source loader for the step 1 (known source in train mode)
         source_path_file = f"txt_list/{self.args.source}_known.txt"
         self.source_loader = data_helper.get_train_dataloader(self.args, source_path_file)
-        print(f"Source known: {self.args.source} [{len(self.source_loader.dataset)} samples]")
+        self.logger.info(f"Source known: {self.args.source} [{len(self.source_loader.dataset)} samples]")
 
         hist1 = step1(self.args, self.E1, self.C1, self.R1, self.source_loader, self.device, self.O1, self.scheduler1,
                     optimizer_CL=self.O1_CL, scheduler_CL=self.scheduler1_CL, criterion_CL=self.criterion_CL)
@@ -181,16 +212,16 @@ class Trainer:
         self.history1['R_acc'].extend(hist1['R_acc'])
 
     def trainer_target_separation(self):
-        print("Target Known/Unknown Separation")
+        self.logger.info("Target Known/Unknown Separation")
         self.auc, self.separation_accuracy = target_separation(self.args, self.E1, self.C1, self.R1, self.target_loader_eval, self.device, self.rand)
 
-        print("Adding known source samples to the newly generated file... ", end="")
+        self.logger.info("Adding known source samples to the newly generated file... ", end="")
         filepath = f'new_txt_list/{self.args.source}_known_{str(self.rand)}.txt'
         with open(filepath, "a") as f:
             pairs = zip(self.source_loader.dataset.names, self.source_loader.dataset.labels)
             for (file, label) in pairs:
                 f.write(f"{file} {str(label)}\n")
-        print("Done.")
+        self.logger.info("Done.")
 
     def trainer_plot_step1(self):
         plot_step1_accuracy_loss(self.args, self.history1)
@@ -203,7 +234,7 @@ class Trainer:
             self.O2, self.scheduler2 = get_optim_and_scheduler(self.E2, self.C2, self.R2, self.args.epochs_step2,
                                                                self.args.learning_rate, self.args.train_all)
 
-            print("Step 2 will start from the Feature Extractor (E1) and the Object Classifier (C1) from the step 1..")
+            self.logger.info("Step 2 will start from the Feature Extractor (E1) and the Object Classifier (C1) from the step 1..")
 
         # Build new dataloaders
         # New source (source + target unknown according to separation)
@@ -214,11 +245,11 @@ class Trainer:
         target_path_file = f"new_txt_list/{self.args.target}_known_{str(self.rand)}.txt"
         self.target_loader_train = data_helper.get_train_dataloader(self.args, target_path_file)
 
-        print(f"Train Size for C2 (Source + Target Unknown): {len(self.source_loader.dataset)}")
-        print(f"Train Size for R2 (Target known after separation): {len(self.target_loader_train.dataset)}")
-        print(f"Final evaluation target size: {len(self.target_loader_eval.dataset)}")
+        self.logger.info(f"Train Size for C2 (Source + Target Unknown): {len(self.source_loader.dataset)}")
+        self.logger.info(f"Train Size for R2 (Target known after separation): {len(self.target_loader_train.dataset)}")
+        self.logger.info(f"Final evaluation target size: {len(self.target_loader_eval.dataset)}")
 
-        print("Step 2 -- Domain Adaptation")
+        self.logger.info("Step 2 -- Domain Adaptation")
         hist2 = step2(self.args, self.E2, self.C2, self.R2, self.source_loader, self.target_loader_train,
                                        self.target_loader_eval, self.device, self.O2, self.scheduler2)
 
@@ -234,12 +265,12 @@ class Trainer:
 
     def trainer_target_evaluation(self):
         HOS, OS, UNK, C_loss = target_evaluation(self.args, self.E2, self.C2, self.target_loader_eval, self.device)
-        print()
-        print("Target Evaluation Stats")
-        print(f"\tClass Loss: {C_loss:.2f}")
-        print(f"\tOS : {OS * 100:.2f} %")
-        print(f"\tUNK: {UNK * 100:.2f} %")
-        print(f"\tHOS: {HOS * 100:.2f} %")
+        self.logger.info("")
+        self.logger.info("Target Evaluation Stats")
+        self.logger.info(f"\tClass Loss: {C_loss:.2f}")
+        self.logger.info(f"\tOS : {OS * 100:.2f} %")
+        self.logger.info(f"\tUNK: {UNK * 100:.2f} %")
+        self.logger.info(f"\tHOS: {HOS * 100:.2f} %")
 
     def trainer_plot_step2(self):
         plot_step2_accuracy_loss(self.args, self.history2)
@@ -251,6 +282,7 @@ class Trainer:
     def get_config_file_name(self):
         s = f"S-{self.args.source}-T-{self.args.target}-MH-{self.args.multihead}-CL-{self.args.center_loss}-"
         s += f"lr-{self.args.learning_rate:.5f}-"
+        s += f"thrsh-{self.args.threshold:.3f}-"
         if self.args.center_loss:
             s += f"lr_cl-{self.args.learning_rate_CL:.5f}-"
         s += f"A1-{self.args.weight_RotTask_step1}-A2-{self.args.weight_RotTask_step2}"
@@ -288,7 +320,7 @@ class Trainer:
         path = os.path.join(MODEL_PATH, f_name)
         torch.save(d, path)
 
-        print(f"Model saved in {path}")
+        self.logger.info(f"Model saved in {path}")
 
     def try_load(self):
         f_name = self.get_config_file_name()
@@ -328,6 +360,8 @@ class Trainer:
             return True
         return False
 
+    def logging_shutdown(self):
+        logging.shutdown()
 
 def main():
     args = get_args()

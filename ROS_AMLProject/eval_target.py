@@ -74,22 +74,22 @@ def target_separation(args, E, C, R, target_loader_eval, device, rand):
 
     # Compute AUC-ROC value
     auc = roc_auc_score(ground_truths, normality_scores)
-    print("\n")
-    print(f"Computed ROC AUC: {auc:.4f}")
-    print()
+    args.logger.info("\n")
+    args.logger.info(f"Computed ROC AUC: {auc:.4f}")
+    args.logger.info()
 
     # Perform the separation using the given threshold
     mask_sep_known = normality_scores >= args.threshold
     mask_sep_unknw = normality_scores < args.threshold
 
-    print(f"Separation performed using threshold: {args.threshold:.3f}")
-    print(f"Target samples identified as known: {mask_sep_known.sum()} - Actual known samples: {mask_known.sum()}")
-    print(f"Target samples identified as unknown: {mask_sep_unknw.sum()} - Actual unknown samples: {mask_unknw.sum()}")
+    args.logger.info(f"Separation performed using threshold: {args.threshold:.3f}")
+    args.logger.info(f"Target samples identified as known: {mask_sep_known.sum()} - Actual known samples: {mask_known.sum()}")
+    args.logger.info(f"Target samples identified as unknown: {mask_sep_unknw.sum()} - Actual unknown samples: {mask_unknw.sum()}")
 
     known_accuracy = (mask_sep_known == mask_known).sum() / mask_sep_known.shape[0]
 
-    print(f"Separation accuracy: {known_accuracy*100:.2f} %")
-    print()
+    args.logger.info(f"Separation accuracy: {known_accuracy*100:.2f} %")
+    args.logger.info("")
 
     # We now must build and save two datasets
     # New Source Dataset, with Source + Target Unknown Samples
@@ -119,8 +119,8 @@ def target_separation(args, E, C, R, target_loader_eval, device, rand):
     source_and_target_unknown_file.close()
     target_known_file.close()
 
-    print(f"New source file containing known source and unknown target (according to the separation) written in {stu_fname}")
-    print(f"New target file containing known target (according to the separation) written in {tk_fname}")
+    args.logger.info(f"New source file containing known source and unknown target (according to the separation) written in {stu_fname}")
+    args.logger.info(f"New target file containing known target (according to the separation) written in {tk_fname}")
 
     return auc, known_accuracy
 
@@ -168,13 +168,13 @@ def target_evaluation(args, E, C, target_loader_eval, device):
             tot_predicted_known += (C_preds < 45).sum().item()
             tot_predicted_unknown += (C_preds > 44).sum().item()
 
-    print()
-    print(f"Tot predicted known (in general): {tot_predicted_known}")
-    print(f"Tot predicted unknown (in general): {tot_predicted_unknown}")
-    print(f"Total real known samples: {tot_known}")
-    print(f"Total real unknown samples: {tot_unkwn}")
-    print(f"Known correct: {known_correct}")
-    print(f"Unknown correct: {unknw_correct}")
+    args.logger.info()
+    args.logger.info(f"Tot predicted known (in general): {tot_predicted_known}")
+    args.logger.info(f"Tot predicted unknown (in general): {tot_predicted_unknown}")
+    args.logger.info(f"Total real known samples: {tot_known}")
+    args.logger.info(f"Total real unknown samples: {tot_unkwn}")
+    args.logger.info(f"Known correct: {known_correct}")
+    args.logger.info(f"Unknown correct: {unknw_correct}")
 
     C_avg_loss /= tot_batches
     if int(tot_known) == 0:

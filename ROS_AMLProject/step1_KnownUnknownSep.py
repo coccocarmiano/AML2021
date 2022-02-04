@@ -111,15 +111,15 @@ def step1(args, E, C, R, source_loader, device, optimizer, scheduler, optimizer_
     history['R_acc'] = []
 
     for epoch in range(args.epochs_step1):
-        print(f'Epoch {epoch+1}/{args.epochs_step1}')
+        args.logger.info(f'Epoch {epoch+1}/{args.epochs_step1}')
         tot_loss, C_loss, R_loss, CL_loss, C_accuracy, R_accuracy = _do_epoch(args, E, C, R, source_loader, device, optimizer, optimizer_CL=optimizer_CL, criterion_CL=criterion_CL)
-        print(f"\tTotal Loss: {tot_loss:.4f}")
-        print(f"\tClass Loss: {C_loss:.4f}")
-        print(f"\tRot Loss: {R_loss:.4f}")
+        args.logger.info(f"\tTotal Loss: {tot_loss:.4f}")
+        args.logger.info(f"\tClass Loss: {C_loss:.4f}")
+        args.logger.info(f"\tRot Loss: {R_loss:.4f}")
         if args.center_loss:
-            print(f"\tCenterLoss: {CL_loss:.4f}")
-        print(f"\tClass Accuracy: {C_accuracy*100:.2f} %")
-        print(f"\tRot Accuracy: {R_accuracy*100:.2f} %")
+            args.logger.info(f"\tCenterLoss: {CL_loss:.4f}")
+        args.logger.info(f"\tClass Accuracy: {C_accuracy*100:.2f} %")
+        args.logger.info(f"\tRot Accuracy: {R_accuracy*100:.2f} %")
 
         history['tot_loss'].append(tot_loss)
         history['C_loss'].append(C_loss)
@@ -150,6 +150,8 @@ def plot_step1_accuracy_loss(args, history):
     plt.plot(epochs, C_accuracy, 'b', label='Object classifier accuracy')
     plt.plot(epochs, R_accuracy, 'r', label='Rotation classifier accuracy')
     plt.legend()
+    fig_path = args.plot_path + "_s1_acc"
+    plt.savefig(fig_path)
 
     # Loss plot
     plt.figure()
@@ -161,6 +163,8 @@ def plot_step1_accuracy_loss(args, history):
         plt.plot(epochs, CL_loss, 'g', label='Center Loss')
 
     plt.legend()
+    fig_path = args.plot_path + "_s1_loss"
+    plt.savefig(fig_path)
 
     plt.show()
 
