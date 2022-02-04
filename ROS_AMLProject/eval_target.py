@@ -76,7 +76,7 @@ def target_separation(args, E, C, R, target_loader_eval, device, rand):
     auc = roc_auc_score(ground_truths, normality_scores)
     args.logger.info("\n")
     args.logger.info(f"Computed ROC AUC: {auc:.4f}")
-    args.logger.info()
+    args.logger.info("")
 
     # Perform the separation using the given threshold
     mask_sep_known = normality_scores >= args.threshold
@@ -168,7 +168,7 @@ def target_evaluation(args, E, C, target_loader_eval, device):
             tot_predicted_known += (C_preds < 45).sum().item()
             tot_predicted_unknown += (C_preds > 44).sum().item()
 
-    args.logger.info()
+    args.logger.info("")
     args.logger.info(f"Tot predicted known (in general): {tot_predicted_known}")
     args.logger.info(f"Tot predicted unknown (in general): {tot_predicted_unknown}")
     args.logger.info(f"Total real known samples: {tot_known}")
