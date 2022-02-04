@@ -202,8 +202,6 @@ class Trainer:
             self.C2.load_state_dict(self.C1.state_dict())
             self.O2, self.scheduler2 = get_optim_and_scheduler(self.E2, self.C2, self.R2, self.args.epochs_step2,
                                                                self.args.learning_rate, self.args.train_all)
-            self.O2.load_state_dict(self.O1.state_dict())
-            self.scheduler2.load_state_dict(self.scheduler1.state_dict())
 
             print("Step 2 will start from the Feature Extractor (E1) and the Object Classifier (C1) from the step 1..")
 
