@@ -132,7 +132,7 @@ def step2(args, E, C, R, source_loader, target_loader_train, target_loader_eval,
     history['eval_C_loss'] = []
 
     for epoch in range(args.epochs_step2):
-        print(f"Epoch {epoch+1}/{args.epochs_step2}")
+        args.logger.info(f"Epoch {epoch+1}/{args.epochs_step2}")
 
         # TRAINING EPOCH
         # Set the training mode
