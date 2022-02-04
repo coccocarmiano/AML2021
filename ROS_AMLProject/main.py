@@ -198,10 +198,12 @@ class Trainer:
     def trainer_step2(self, from_scratch=False):
         # Before doing step2, deepcopying the E and C (?) from step1
         if from_scratch or self.args.step2_from_scratch or not self.loaded or len(self.history2['tot_loss']) < 5:
-            self.E2 = copy.deepcopy(self.E1)
-            self.C2 = copy.deepcopy(self.C1)
+            self.E2.load_state_dict(self.E1.state_dict())
+            self.C2.load_state_dict(self.C1.state_dict())
             self.O2, self.scheduler2 = get_optim_and_scheduler(self.E2, self.C2, self.R2, self.args.epochs_step2,
                                                                self.args.learning_rate, self.args.train_all)
+            self.O2.load_state_dict(self.O1.state_dict())
+            self.scheduler2.load_state_dict(self.scheduler1.state_dict())
 
             print("Step 2 will start from the Feature Extractor (E1) and the Object Classifier (C1) from the step 1..")
 
