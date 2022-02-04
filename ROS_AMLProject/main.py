@@ -193,6 +193,20 @@ class Trainer:
         plot_path = os.path.join(PLOT_PATH, conf_name)
         args.plot_path = plot_path
 
+        self.logger.info(f"CONFIGURATION:")
+        self.logger.info(f"Source: {args.source}")
+        self.logger.info(f"Target: {args.target}")
+        self.logger.info(f"Multihead: {args.multihead}")
+        self.logger.info(f"Centerloss: {args.center_loss}")
+        self.logger.info(f"Alfa1: {args.weight_RotTask_step1}")
+        self.logger.info(f"Weight CL: {args.weight_CL}")
+        self.logger.info(f"Threshold: {args.threshold}")
+        self.logger.info(f"Alfa2: {args.weight_RotTask_step2}")
+        self.logger.info(f"Batch size: {args.batch_size}")
+        self.logger.info(f"Learning rate: {args.learning_rate}")
+        self.logger.info(f"Learning rate CL: {args.learning_rate_CL}")
+        self.logger.info("")
+
     def trainer_step1(self):
         self.logger.info("Step One -- Training")
 
