@@ -173,6 +173,7 @@ class Trainer:
         conf_name = self.get_config_file_name()
         conf_name = conf_name[:-4]
         conf_name += ".log"
+        print(conf_name)
         f_path = os.path.join(LOG_PATH, conf_name)
         filehand = logging.FileHandler(f_path, mode='a')
         filehand.setLevel(logging.INFO)
@@ -190,6 +191,7 @@ class Trainer:
         # PLOT
         conf_name = self.get_config_file_name()
         conf_name = conf_name[:-4]
+        print(conf_name)
         plot_path = os.path.join(PLOT_PATH, conf_name)
         args.plot_path = plot_path
 
