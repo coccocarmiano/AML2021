@@ -215,7 +215,7 @@ class Trainer:
         self.logger.info("Target Known/Unknown Separation")
         self.auc, self.separation_accuracy = target_separation(self.args, self.E1, self.C1, self.R1, self.target_loader_eval, self.device, self.rand)
 
-        self.logger.info("Adding known source samples to the newly generated file... ", end="")
+        self.logger.info("Adding known source samples to the newly generated file... ")
         filepath = f'new_txt_list/{self.args.source}_known_{str(self.rand)}.txt'
         with open(filepath, "a") as f:
             pairs = zip(self.source_loader.dataset.names, self.source_loader.dataset.labels)
