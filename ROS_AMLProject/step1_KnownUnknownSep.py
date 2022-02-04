@@ -150,7 +150,7 @@ def plot_step1_accuracy_loss(args, history):
     plt.plot(epochs, C_accuracy, 'b', label='Object classifier accuracy')
     plt.plot(epochs, R_accuracy, 'r', label='Rotation classifier accuracy')
     plt.legend()
-    fig_path = args.plot_path + "_s1_acc"
+    fig_path = args.plot_path + "_s1_acc.png"
     plt.savefig(fig_path)
 
     # Loss plot
@@ -163,7 +163,7 @@ def plot_step1_accuracy_loss(args, history):
         plt.plot(epochs, CL_loss, 'g', label='Center Loss')
 
     plt.legend()
-    fig_path = args.plot_path + "_s1_loss"
+    fig_path = args.plot_path + "_s1_loss.png"
     plt.savefig(fig_path)
 
     plt.show()

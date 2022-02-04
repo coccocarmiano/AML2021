@@ -188,7 +188,7 @@ def plot_step2_accuracy_loss(args, history):
     plt.plot(epochs, C_accuracy, 'b', label='Object classifier accuracy')
     plt.plot(epochs, R_accuracy, 'r', label='Rotation classifier accuracy')
     plt.legend()
-    fig_path = args.plot_path + "_s2_acc"
+    fig_path = args.plot_path + "_s2_acc.png"
     plt.savefig(fig_path)
 
     # Loss plot
@@ -198,7 +198,7 @@ def plot_step2_accuracy_loss(args, history):
     plt.plot(epochs, C_loss, 'b', label='Object classifier loss')
     plt.plot(epochs, R_loss, 'r', label='Rotation classifier loss')
     plt.legend()
-    fig_path = args.plot_path + "_s2_loss"
+    fig_path = args.plot_path + "_s2_loss.png"
     plt.savefig(fig_path)
 
     plt.show()
@@ -218,7 +218,7 @@ def plot_eval_performance(args, history):
     plt.plot(epochs, OS, 'r', label='OS')
     plt.plot(epochs, UNK, 'm', label='UNK')
     plt.legend()
-    fig_path = args.plot_path + "_eval_hos"
+    fig_path = args.plot_path + "_eval_hos.png"
     plt.savefig(fig_path)
 
     # Loss plot
@@ -226,7 +226,7 @@ def plot_eval_performance(args, history):
     plt.title(f'Evaluation - Object classifier loss (MH: {args.multihead} - CL: {args.center_loss})')
     plt.plot(epochs, C_loss, 'b', label='Object classifier loss')
     plt.legend()
-    fig_path = args.plot_path + "_eval_loss"
+    fig_path = args.plot_path + "_eval_loss.png"
     plt.savefig(fig_path)
 
     plt.show()
