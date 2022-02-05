@@ -82,13 +82,35 @@ def target_separation(args, E, C, R, target_loader_eval, device, rand):
     mask_sep_known = normality_scores >= args.threshold
     mask_sep_unknw = normality_scores < args.threshold
 
+    assignments = np.zeros(normality_scores.shape, dtype=np.int)
+    assignments[mask_sep_known] = 1
+    assignments[mask_sep_unknw] = 0
+
     args.logger.info(f"Separation performed using threshold: {args.threshold:.3f}")
     args.logger.info(f"Target samples identified as known: {mask_sep_known.sum()} - Actual known samples: {mask_known.sum()}")
     args.logger.info(f"Target samples identified as unknown: {mask_sep_unknw.sum()} - Actual unknown samples: {mask_unknw.sum()}")
 
-    known_accuracy = (mask_sep_known == mask_known).sum() / mask_sep_known.shape[0]
+    separation_accuracy = (assignments == ground_truths).sum() / ground_truths.shape[0]
+    correct_known = 0
+    tot_known = 0
+    correct_unknown = 0
+    tot_unknown = 0
+    for pred, actual in zip(assignments, ground_truths):
+        if actual == 1:
+            tot_known += 1
+            if pred == actual:
+                correct_known += 1
+        else:
+            tot_unknown += 1
+            if pred == actual:
+                correct_unknown += 1
 
-    args.logger.info(f"Separation accuracy: {known_accuracy*100:.2f} %")
+    known_accuracy = correct_known / tot_known
+    unknown_accuracy = correct_unknown / tot_unknown
+
+    args.logger.info(f"Separation accuracy: {separation_accuracy * 100:.2f} %")
+    args.logger.info(f"Known accuracy (TPR): {known_accuracy * 100:.2f} %")
+    args.logger.info(f"Unknown accuracy (TNR): {unknown_accuracy * 100:.2f} %")
     args.logger.info("")
 
     # We now must build and save two datasets
@@ -122,7 +144,7 @@ def target_separation(args, E, C, R, target_loader_eval, device, rand):
     args.logger.info(f"New source file containing known source and unknown target (according to the separation) written in {stu_fname}")
     args.logger.info(f"New target file containing known target (according to the separation) written in {tk_fname}")
 
-    return auc, known_accuracy
+    return auc, separation_accuracy
 
 def target_evaluation(args, E, C, target_loader_eval, device):
     # Final evaluation on the target using only C2

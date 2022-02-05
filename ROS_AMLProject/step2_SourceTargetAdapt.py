@@ -167,7 +167,7 @@ def step2(args, E, C, R, source_loader, target_loader_train, target_loader_eval,
         args.logger.info("")
         args.logger.info("Target Evaluation Stats")
         args.logger.info(f"\tClass Loss: {C_loss:.2f}")
-        args.logger.info(f"\tOS : {OS * 100:.2f} %")
+        args.logger.info(f"\tOS*: {OS * 100:.2f} %")
         args.logger.info(f"\tUNK: {UNK * 100:.2f} %")
         args.logger.info(f"\tHOS: {HOS * 100:.2f} %")
 
@@ -213,9 +213,9 @@ def plot_eval_performance(args, history):
 
     # Accuracy plot
     plt.figure()
-    plt.title(f'Evaluation - HOS, OS, UNK over the target dataset (MH: {args.multihead} - CL: {args.center_loss})')
+    plt.title(f'Evaluation - HOS, OS*, UNK over the target dataset (MH: {args.multihead} - CL: {args.center_loss})')
     plt.plot(epochs, HOS, 'b', label='HOS')
-    plt.plot(epochs, OS, 'r', label='OS')
+    plt.plot(epochs, OS, 'r', label='OS*')
     plt.plot(epochs, UNK, 'm', label='UNK')
     plt.legend()
     fig_path = args.plot_path + "_eval_hos.png"

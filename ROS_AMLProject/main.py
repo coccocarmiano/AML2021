@@ -277,6 +277,9 @@ class Trainer:
         self.history2['eval_UNK'].extend(hist2['eval_UNK'])
         self.history2['eval_C_loss'].extend(hist2['eval_C_loss'])
 
+        best_hos = max(hist2['eval_HOS'])
+        self.logger.info(f"Best HOS: {best_hos:.3f}")
+
     def trainer_target_evaluation(self):
         HOS, OS, UNK, C_loss = target_evaluation(self.args, self.E2, self.C2, self.target_loader_eval, self.device)
         self.logger.info("")
