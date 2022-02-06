@@ -146,7 +146,7 @@ def target_separation(args, E, C, R, target_loader_eval, device, rand):
     args.logger.info(f"New source file containing known source and unknown target (according to the separation) written in {stu_fname}")
     args.logger.info(f"New target file containing known target (according to the separation) written in {tk_fname}")
 
-    draw_ROC(normality_scores, ground_truths)
+    draw_ROC(args, normality_scores, ground_truths)
 
     return auc, separation_accuracy
 
@@ -172,7 +172,7 @@ def bayes_binary_optimal_classifier(llr, threshold=None):
     predictions = [1 if l >= threshold else 0 for l in llr]
     return predictions
 
-def draw_ROC(llr, labels, color=None, recognizer_name=""):
+def draw_ROC(args, llr, labels, color=None, recognizer_name=""):
     if llr.ndim > 1:
         llr = llr.flatten()
 
@@ -199,6 +199,8 @@ def draw_ROC(llr, labels, color=None, recognizer_name=""):
         plt.plot(FPRs, TPRs, label=f"{recognizer_name}")
 
     plt.legend(loc="lower right")
+    fig_path = args.plot_path + "_sep_roc.png"
+    plt.savefig(fig_path)
     plt.show()
 
 
