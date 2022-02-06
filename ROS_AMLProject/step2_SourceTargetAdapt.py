@@ -9,7 +9,7 @@ def _do_epoch(args, E, C, R, source_loader, target_loader_train, optimizer, devi
 
     # Adjust the learning rate for the unknown class
     w = [ 1.0 for _ in range(args.n_classes_known + 1) ]
-    w[-1] = 1/45
+    w[-1] = 1/20
     w = torch.tensor(w).to(device)
 
     C_criterion = nn.CrossEntropyLoss(weight=w)
