@@ -165,7 +165,7 @@ class Trainer:
 
         # Visualize some images from the Known Source and from the Target (known or unknown)
         # data_helper.visualize_img(self.source_loader)
-        data_helper.visualize_img(self.target_loader_eval)
+        # data_helper.visualize_img(self.target_loader_eval)
         # ----------------- #
 
         # LOGGER
