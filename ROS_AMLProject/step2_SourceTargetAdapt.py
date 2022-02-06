@@ -7,13 +7,13 @@ import matplotlib.pyplot as plt
 
 def _do_epoch(args, E, C, R, source_loader, target_loader_train, optimizer, device):
 
-    # Double the learning rate for the unknown class
-    # w = [ 1.0 for _ in range(args.n_classes_known + 1) ]
-    # w[-1] = 2.0
-    # w = torch.tensor(w).to(device)
+    # Adjust the learning rate for the unknown class
+    w = [ 1.0 for _ in range(args.n_classes_known + 1) ]
+    w[-1] = 1/45
+    w = torch.tensor(w).to(device)
 
-    # C_criterion = nn.CrossEntropyLoss(weight=w)
-    C_criterion = nn.CrossEntropyLoss()
+    C_criterion = nn.CrossEntropyLoss(weight=w)
+    # C_criterion = nn.CrossEntropyLoss()
     R_criterion = nn.CrossEntropyLoss()
 
     C_correct_preds, R_correct_preds, C_tot_preds, R_tot_preds = 0, 0, 0, 0
