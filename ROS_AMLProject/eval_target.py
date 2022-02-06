@@ -7,6 +7,8 @@ from tqdm import tqdm
 import numpy as np
 from torch import nn
 
+import matplotlib.pyplot as plt
+
 softmax = torch.nn.Softmax(dim=1)
 
 def target_separation(args, E, C, R, target_loader_eval, device, rand):
@@ -144,7 +146,61 @@ def target_separation(args, E, C, R, target_loader_eval, device, rand):
     args.logger.info(f"New source file containing known source and unknown target (according to the separation) written in {stu_fname}")
     args.logger.info(f"New target file containing known target (according to the separation) written in {tk_fname}")
 
+    draw_ROC(normality_scores, ground_truths)
+
     return auc, separation_accuracy
+
+def get_confusion_matrix(predicted_labels, true_labels, all_labels=None):
+    labels = all_labels
+    if all_labels is None:
+        labels = set(true_labels)
+        extended = set(predicted_labels)
+        labels = labels.union(extended)
+
+    label_to_index = {l: i for i, l in enumerate(labels)}
+    conf_matr = np.zeros((len(labels), len(labels)))
+    for p, t in zip(predicted_labels, true_labels):
+        p_i = label_to_index[p]
+        t_i = label_to_index[t]
+        conf_matr[p_i, t_i] = conf_matr[p_i, t_i] + 1
+
+    return conf_matr
+
+def bayes_binary_optimal_classifier(llr, threshold=None):
+    if (llr.ndim > 1):
+        llr = llr.flatten()
+    predictions = [1 if l >= threshold else 0 for l in llr]
+    return predictions
+
+def draw_ROC(llr, labels, color=None, recognizer_name=""):
+    if llr.ndim > 1:
+        llr = llr.flatten()
+
+    llr_sorted = np.sort(llr)
+    FPRs = []
+    TPRs = []
+    for t in llr_sorted:
+        predictions = bayes_binary_optimal_classifier(llr, threshold=t)
+        conf_matr = get_confusion_matrix(predictions, labels)
+        FNR = conf_matr[0, 1] / (conf_matr[0, 1] + conf_matr[1, 1])
+        TPR = 1 - FNR
+        FPR = conf_matr[1, 0] / (conf_matr[1, 0] + conf_matr[0, 0])
+        FPRs.append(FPR)
+        TPRs.append(TPR)
+    plt.figure()
+    plt.title("ROC")
+    plt.xlabel("FPR")
+    plt.ylabel("TPR")
+    plt.xlim([0, 1])
+    plt.ylim([0, 1])
+    if color is not None:
+        plt.plot(FPRs, TPRs, color=color, label=f"{recognizer_name}")
+    else:
+        plt.plot(FPRs, TPRs, label=f"{recognizer_name}")
+
+    plt.legend(loc="lower right")
+    plt.show()
+
 
 def target_evaluation(args, E, C, target_loader_eval, device):
     # Final evaluation on the target using only C2
