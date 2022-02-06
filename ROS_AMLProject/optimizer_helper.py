@@ -6,11 +6,16 @@ def get_optim_and_scheduler(E, C, R, epochs, lr, train_all):
     R_params = list(R.parameters())
 
     if train_all:
-        params = list(C.parameters()) + R_params + list(E.parameters())
+        E_C_params = list(C.parameters) + list(E.parameters)
+        R_params = list(R.parameters())
+        optimizer = optim.SGD([
+            {'params': E_C_params, 'lr': lr/10},
+            {'params': R_params}
+        ], weight_decay=.0005, momentum=.9, lr=lr)
     else:
         params = list(C.parameters()) + R_params
+        optimizer = optim.SGD(params, weight_decay=.0005, momentum=.9, lr=lr)
 
-    optimizer = optim.SGD(params, weight_decay=.0005, momentum=.9, lr=lr)
     step_size = int(epochs * .8)
     scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=step_size)
 
