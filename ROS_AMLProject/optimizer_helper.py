@@ -6,7 +6,7 @@ def get_optim_and_scheduler(E, C, R, epochs, lr, train_all):
     R_params = list(R.parameters())
 
     if train_all:
-        E_C_params = list(C.parameters) + list(E.parameters)
+        E_C_params = list(C.parameters()) + list(E.parameters())
         R_params = list(R.parameters())
         optimizer = optim.SGD([
             {'params': E_C_params, 'lr': lr/10},
