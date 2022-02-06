@@ -30,28 +30,51 @@ def target_separation(args, E, C, R, target_loader_eval, device, rand):
     normality_scores = []
 
     with torch.no_grad():
-        for batch_samples, batch_labels, batch_samples_rot, batch_labels_rot in tqdm(target_loader_eval):
+        for batch_samples, batch_labels, batch_samples_rot_0, batch_labels_rot_0, batch_samples_rot_90, batch_labels_rot_90,\
+            batch_samples_rot_180, batch_labels_rot_180, batch_samples_rot_270, batch_labels_rot_270 in tqdm(target_loader_eval):
+
             batch_samples, batch_labels = batch_samples.to(device), batch_labels.to(device)
-            batch_samples_rot = batch_samples_rot.to(device)
+            batch_samples_rot_0 = batch_samples_rot_0.to(device)
+            batch_samples_rot_90 = batch_samples_rot_90.to(device)
+            batch_samples_rot_180 = batch_samples_rot_180.to(device)
+            batch_samples_rot_270 = batch_samples_rot_270.to(device)
 
             # 1. Extract features from E
             # Extracting original image features from E
             E_output = E(batch_samples)
             # Extracting rotated image features from E
-            E_output_rot = E(batch_samples_rot)
+            E_output_rot_0 = E(batch_samples_rot_0)
+            E_output_rot_90 = E(batch_samples_rot_90)
+            E_output_rot_180 = E(batch_samples_rot_180)
+            E_output_rot_270 = E(batch_samples_rot_270)
+
             # Concatenate original+rotate features
-            E_output_conc = torch.cat((E_output, E_output_rot), dim=1)
+            E_output_conc_0 = torch.cat((E_output, E_output_rot_0), dim=1)
+            E_output_conc_90 = torch.cat((E_output, E_output_rot_90), dim=1)
+            E_output_conc_180 = torch.cat((E_output, E_output_rot_180), dim=1)
+            E_output_conc_270 = torch.cat((E_output, E_output_rot_270), dim=1)
 
             # 2. Get the scores
             C_scores = C(E_output)
             predicted_labels = torch.argmax(C_scores, dim=1)
 
             # Use R1 to get the scores
-            R_scores = R(E_output_conc, predicted_labels)
+            R_scores_0 = R(E_output_conc_0, predicted_labels)
+            R_scores_90 = R(E_output_conc_90, predicted_labels)
+            R_scores_180 = R(E_output_conc_180, predicted_labels)
+            R_scores_270 = R(E_output_conc_270, predicted_labels)
 
             # Compute softmax and get the maximum probability as the normality score
-            R_probabilities = softmax(R_scores)
-            n_score, _ = torch.max(R_probabilities, dim=1)
+            R_probabilities_0 = softmax(R_scores_0)
+            R_probabilities_90 = softmax(R_scores_90)
+            R_probabilities_180 = softmax(R_scores_180)
+            R_probabilities_270 = softmax(R_scores_270)
+
+            n_score_0, _ = torch.max(R_probabilities_0, dim=1)
+            n_score_90, _ = torch.max(R_probabilities_90, dim=1)
+            n_score_180, _ = torch.max(R_probabilities_180, dim=1)
+            n_score_270, _ = torch.max(R_probabilities_270, dim=1)
+            n_score = (n_score_0 + n_score_90 + n_score_180 + n_score_270) / 4
 
             ground_truths.append(batch_labels.item())
             normality_scores.append(n_score.item())
@@ -222,7 +245,7 @@ def target_evaluation(args, E, C, target_loader_eval, device):
     tot_predicted_known, tot_predicted_unknown = 0, 0
 
     with torch.no_grad():
-        for batch_samples, batch_labels, _, _ in tqdm(target_loader_eval):
+        for batch_samples, batch_labels, _, _, _, _, _, _, _, _ in tqdm(target_loader_eval):
             tot_batches += 1
             batch_samples, batch_labels = batch_samples.to(device), batch_labels.to(device)
 
