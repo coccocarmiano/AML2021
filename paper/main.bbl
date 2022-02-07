@@ -1,0 +1,27 @@
+\begin{thebibliography}{1}\itemsep=-1pt
+
+\bibitem{BucciROS}
+Silvia Bucci, Mohammad~Reza Loghmani, and Tatiana Tommasi.
+\newblock On the effectiveness of image rotation for open set domain
+  adaptation, 2020.
+
+\bibitem{CarlucciJigsaw}
+Fabio~Maria Carlucci, Antonio D'Innocente, Silvia Bucci, Barbara Caputo, and
+  Tatiana Tommasi.
+\newblock Domain generalization by solving jigsaw puzzles, 2019.
+
+\bibitem{OldROS}
+Spyros Gidaris, Praveer Singh, and Nikos Komodakis.
+\newblock Unsupervised representation learning by predicting image rotations,
+  2018.
+
+\bibitem{GeoTran}
+Izhak Golan and Ran El-Yaniv.
+\newblock Deep anomaly detection using geometric transformations, 2018.
+
+\bibitem{CenterLoss}
+Yandong Wen, Kaipeng Zhang, Zhifeng Li, and Yu Qiao.
+\newblock A discriminative feature learning approach for deep face recognition,
+  2016.
+
+\end{thebibliography}

@@ -250,6 +250,15 @@ class Trainer:
 
             self.logger.info("Step 2 will start from the Feature Extractor (E1) and the Object Classifier (C1) from the step 1..")
 
+        # Compute avg samples_label
+        source_path_file = f"txt_list/{self.args.source}_known.txt"
+        self.source_loader = data_helper.get_train_dataloader(self.args, source_path_file)
+        label_nsample = dict()
+        pairs = zip(self.source_loader.dataset.names, self.source_loader.dataset.labels)
+        for (_, label) in pairs:
+            label_nsample[label] = label_nsample.get(label,0) + 1
+        print(f"Pairs label-count:\n{label_nsample}") #debug
+        
         # Build new dataloaders
         # New source (source + target unknown according to separation)
         source_path_file   = f"new_txt_list/{self.args.source}_known_{str(self.rand)}.txt"
