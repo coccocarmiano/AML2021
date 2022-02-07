@@ -5,11 +5,11 @@ from itertools import cycle
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 
-def _do_epoch(args, E, C, R, source_loader, target_loader_train, optimizer, device):
+def _do_epoch(args, E, C, R, source_loader, target_loader_train, optimizer, device, den_w):
 
     # Adjust the learning rate for the unknown class
     w = [ 1.0 for _ in range(args.n_classes_known + 1) ]
-    w[-1] = 1/20
+    w[-1] = 1/den_w
     w = torch.tensor(w).to(device)
 
     C_criterion = nn.CrossEntropyLoss(weight=w)
@@ -110,7 +110,7 @@ def _do_epoch(args, E, C, R, source_loader, target_loader_train, optimizer, devi
     return tot_avg_loss, C_avg_loss, R_avg_loss, C_accuracy, R_accuracy
 
 
-def step2(args, E, C, R, source_loader, target_loader_train, target_loader_eval, device, optimizer, scheduler):
+def step2(args, E, C, R, source_loader, target_loader_train, target_loader_eval, device, optimizer, scheduler, den_w):
     """
     Performs the domain alignment through R2 while learning the unknown class using C2.
     After each epoch, we evaluate the performance of C2 on the evaluation target dataset.
@@ -140,7 +140,7 @@ def step2(args, E, C, R, source_loader, target_loader_train, target_loader_eval,
         C.train()
         R.train()
 
-        tot_loss, C_loss, R_loss, C_accuracy, R_accuracy = _do_epoch(args, E, C, R, source_loader, target_loader_train, optimizer, device)
+        tot_loss, C_loss, R_loss, C_accuracy, R_accuracy = _do_epoch(args, E, C, R, source_loader, target_loader_train, optimizer, device, den_w)
         history['tot_loss'].append(tot_loss)
         history['C_loss'].append(C_loss)
         history['R_loss'].append(R_loss)

@@ -119,6 +119,8 @@ class Trainer:
         # Separation performance
         self.auc = None
         self.separation_accuracy = None
+        self.n_unk_identified = None 
+        self.avg_source_for_label = None
 
         # Used for naming the known target dataset and the new source dataset after the separation
         self.rand = randint(0, 1e6)
@@ -227,7 +229,7 @@ class Trainer:
 
     def trainer_target_separation(self):
         self.logger.info("Target Known/Unknown Separation")
-        self.auc, self.separation_accuracy = target_separation(self.args, self.E1, self.C1, self.R1, self.target_loader_eval, self.device, self.rand)
+        self.auc, self.separation_accuracy, self.n_unk_identified = target_separation(self.args, self.E1, self.C1, self.R1, self.target_loader_eval, self.device, self.rand)
 
         self.logger.info("Adding known source samples to the newly generated file... ")
         filepath = f'new_txt_list/{self.args.source}_known_{str(self.rand)}.txt'
@@ -257,7 +259,13 @@ class Trainer:
         pairs = zip(self.source_loader.dataset.names, self.source_loader.dataset.labels)
         for (_, label) in pairs:
             label_nsample[label] = label_nsample.get(label,0) + 1
+        avg_source_for_label = sum(label_nsample.values())/len(label_nsample)
         print(f"Pairs label-count:\n{label_nsample}") #debug
+        print(f"Avg:{avg_source_for_label}") #debug
+        self.avg_source_for_label = avg_source_for_label
+        den_w = self.n_unk_identified/self.avg_source_for_label
+        print(f"N. unk identified: {self.n_unk_identified}")
+        print(f"Den weight: {den_w}\n")
         
         # Build new dataloaders
         # New source (source + target unknown according to separation)
@@ -274,7 +282,7 @@ class Trainer:
 
         self.logger.info("Step 2 -- Domain Adaptation")
         hist2 = step2(self.args, self.E2, self.C2, self.R2, self.source_loader, self.target_loader_train,
-                                       self.target_loader_eval, self.device, self.O2, self.scheduler2)
+                                       self.target_loader_eval, self.device, self.O2, self.scheduler2,den_w)
 
         self.history2['tot_loss'].extend(hist2['tot_loss'])
         self.history2['C_loss'].extend(hist2['C_loss'])

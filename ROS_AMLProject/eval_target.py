@@ -171,7 +171,7 @@ def target_separation(args, E, C, R, target_loader_eval, device, rand):
 
     draw_ROC(args, normality_scores, ground_truths)
 
-    return auc, separation_accuracy
+    return auc, separation_accuracy, mask_sep_unknw.sum()
 
 def get_confusion_matrix(predicted_labels, true_labels, all_labels=None):
     labels = all_labels
