@@ -60,23 +60,25 @@ Italy\\
 
 %%%%%%%%% ABSTRACT
 \begin{abstract}
-   
+  Lorem ipsum dolor sit amet, consectetur adipisci elit, sed do eiusmod tempor incidunt ut labore et dolore magna aliqua.
+  Ut enim ad minim veniam, quis nostrum exercitationem ullamco laboriosam, nisi ut aliquid ex ea commodi consequatur.
+  Duis aute irure reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
+  Excepteur sint obcaecat cupiditat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
 \end{abstract}
 
 %%%%%%%%% BODY TEXT
-\section{Introduction}
-\label{sec:intro}
+\section{Notes}
+\label{sec:notes}
 
-Start write here
-
-%-------------------------------------------------------------------------
-\subsection{Notes}
 %---------- LANGUAGE ----------
+\subsection{Language}
 All manuscripts must be in English.
 %---------- PAPER LENGTH ----------
+\subsection{Paper length}
 Papers, excluding the references section, must be no longer than eight pages in length.
 The references section will not be included in the page count, and there is no limit on the length of the references section.
 %---------- MATH ----------
+\subsection{Math}
 Please number all of your sections and displayed equations as in these examples:
 \begin{equation}
   E = m\cdot c^2
@@ -90,6 +92,7 @@ and
 All authors will benefit from reading Mermin's description of how to write mathematics:
 \url{http://www.pamitc.org/documents/mermin.pdf}.
 %---------- BLIND VIEW ----------
+\subsection{Blind View}
 Blind review means that you do not use the words ``my'' or ``our'' when citing previous work.
 
 Saying ``this builds on the work of Lucy Smith [1]'' does not say that you are Lucy Smith;
@@ -127,6 +130,7 @@ Thus, you may say in the body of the paper ``further details may be found in~\ci
 Then submit the tech report as supplemental material.
 Again, you may not assume the reviewers will read this material.
 %---------- CAPTION EXAMPLE ----------
+\subsection{Caption Example}
 \begin{figure}[t]
   \centering
   \fbox{\rule{0pt}{2in} \rule{0.9\linewidth}{0pt}}
@@ -137,6 +141,7 @@ Again, you may not assume the reviewers will read this material.
    \label{fig:onecol}
 \end{figure}
 %---------- MISCELLANEOUS: E.G., ET AL. ----------
+\subsection{Miscellaneous: e.g., et al.}
 The space after \eg, meaning ``for example'', should not be a sentence-ending space.
 So \eg is correct, {\em e.g.} is not.
 The provided \verb'\eg' macro takes care of this.
@@ -145,6 +150,7 @@ When citing a multi-author paper, you may save space by using ``et alia'', short
 If you use the \verb'\etal' macro provided, then you need not worry about double periods when used at the end of a sentence as in Alpher \etal.
 However, use it only when there are three or more authors.
 %---------- SUB-FIGURES EXAMPLE ----------
+\subsection{Sub-Figures examples}
 \begin{figure*}
   \centering
   \begin{subfigure}{0.68\linewidth}
@@ -162,14 +168,17 @@ However, use it only when there are three or more authors.
   \label{fig:short}
 \end{figure*}
 %---------- FORMATTING ----------
+\subsection{Formatting}
 All text must be in a two-column format.
 %---------- FOOTNOTES ----------
+\subsection{Footnotes}
 Please use footnotes\footnote{This is what a footnote looks like.
 It often distracts the reader from the main flow of the argument.} sparingly.
 Indeed, try to avoid footnotes altogether and include necessary peripheral observations in the text (within parentheses, if you prefer, as in this sentence).
 If you wish to use a footnote, place it at the bottom of the column on the page on which it is referenced.
 Use Times 8-point type, single-spaced.
 %---------- CROSS-REFERENCES ----------
+\subsection{Cross-references}
 For the benefit of author(s) and readers, please use the
 {\small\begin{verbatim}
   \cref{...}
@@ -189,6 +198,7 @@ command. Here is an example:
   \Cref{fig:onecol} is also quite important.
 \end{quotation}
 %---------- CAPTION REFERENCES ----------
+\subsection{Caption References}
 % Update the cvpr.cls to do the following automatically.
 % For this citation style, keep multiple citations in numerical (not
 % chronological) order, so prefer \cite{Alpher03,Alpher02,Authors14} to
@@ -200,6 +210,7 @@ Where appropriate, include page numbers and the name(s) of editors of referenced
 When you cite multiple papers at once, please make sure that you cite them in numerical order like this \cite{Alpher02,Alpher03,Alpher05,Authors14b,Authors14}.
 If you use the template as advised, this will be taken care of automatically.
 %---------- TABLE EXAMPLE ----------
+\subsection{Table Example}
 \begin{table}
   \centering
   \begin{tabular}{@{}lc@{}}
@@ -215,6 +226,7 @@ If you use the template as advised, this will be taken care of automatically.
   \label{tab:example}
 \end{table}
 %---------- CENTERING GRAPHICS ----------
+\subsection{Cenetring Graphics}
 All graphics should be centered.
 In \LaTeX, avoid using the \texttt{center} environment for this purpose, as this adds potentially unwanted whitespace.
 Instead use
@@ -231,10 +243,72 @@ When placing figures in \LaTeX, it's almost always best to use \verb+\includegra
 \end{verbatim}
 }
 %---------- COLOR ----------
+\subsection{Color}
 If you use color in your plots, please keep in mind that a significant subset of reviewers and readers may have a color vision deficiency; red-green blindness is the most frequent kind.
 Hence avoid relying only on color as the discriminative feature in plots (such as red \vs green lines), but add a second discriminative feature to ease disambiguation.
 
+%------------------------------------------------------------------------
+\section{Introduction}
+\label{sec:intro}
+Classical Machine Learning in the past years have made some oversimplified assumptions actually detached 
+from the usage of Artificial Intelligent systems in everyday real world and the problems they bring.
 
+The firt assumption is that the training and test sets come from the same distributions.
+Therefore, a model learned from the labeled training data is expected to perform well on the test data.
+However, this assumption may not always hold in real-world applications where the training and the 
+test data fall from different distributions and in this case naively applying the trained model on 
+the new dataset may cause degradation in the performance. To solve this problem we can make use of 
+Domain Adaptation, where our goal is to train a neural network on a source dataset for which labels 
+are available, and test a good accuracy on the target dataset, which is related but
+significantly different from the source dataset, and whose label or annotation is not available. 
+Generally it seeks to learn a model from a source labeled data that can be generalized to a target domain
+by minimizing the difference between domain distributions and enforcing feature extractor to extract 
+similar features for source and target domain images.
+As underlined in \cite{domainAdaptFarahani}, feature-based adaptation approaches aim to map the source data into the target data
+by learning a transformation that extracts invariant feature representation across domains, transforming
+the original features into a new feature space and then minimize the gap between domains in the new
+representation space in an optimization procedure, while preserving the underlying structure of the
+original data. 
+
+Secondly, in real-world recognition/classification tasks it is usually difficult to collect 
+training samples to exhaust all classes when training a recognizer or classifier.
+A more realistic scenario is open set recognition (OSR) \cite{OSRsurvey}, where incomplete knowledge
+of the world exists at training time, and unknown classes can be submitted to an algorithm
+during testing, requiring the classifiers to not only accurately classify the seen classes
+but also effectively deal with unseen ones, which otherwise drastically weakens the robustness
+of the methods. On the contrary this system should reject unknown/unseen classes at test time and separate
+the known and unknown samples.
+As underlined by \cite{OSRclassRec}, existing open-set classifiers rely on deep networks trained in 
+a supervised manner on known classes in the training set; this causes specialization of learned
+representations to known classes and makes it hard to distinguish unknowns from knowns.
+
+To solve these significant issues this method is focused on a self-supervised task. 
+Self-supervised Learning is an unsupervised learning method where the supervised learning 
+task is created out of the unlabelled input data. This task could be as simple as given 
+the upper-half of the image, predict the lower-half of the same image.
+Supervised learning requires usually a lot of labelled data and getting good quality labelled 
+data is an expensive and time-consuming task. On the other hand, the unlabelled data is readily
+available in abundance.
+The fundamental idea for self-supervised learning is to create some auxiliary pre-text task
+for the model from the input data itself such that while solving the auxiliary task,
+the model learns the underlying structure of the data (for instance the high-level knowledge, correlations,
+metadata embedded in the data).
+This type of learning was recently used for Domain Adaptation, learning robust cross-domain features
+and supporting generalization \cite{CarlucciJigsaw,SelfSupervisedXu}, and also for some Open Set problems specialized for anomaly detection
+and discriminate normal and anomalous data \cite{bergman2020classificationbased,dectionGeometric}.
+
+The approach presented in this paper brings these topics together in the so called Open-Set Domain 
+Adaptation (OSDA) problem. A two-stage method is hence proposed, aiming to identify and isolate unknown
+class samples in the first stage, before reducing in the second stage the domain shift between the source 
+domain and the knwon target domain to avoid negative transfer.
+All this is done in both stages using a modified version of the rotation task as self-supervised model,
+predicting the relative rotation between an image and its rotated version.
+Finally a classifier is used to predict if each target sample belongs either to one of the knwon classes
+or to an unknown class, being in the latter case rejected.
+
+The method was evaluated on the Office-Home benchmark \cite{venkateswara2017deep} with a specific OSDA metric.
+
+ADD HERE RESULTS AND A BRIEF OF CONCLUSIVE IDEAS (ALSO POSSIBLE FUTURE WORKS)!!
 
 %------------------------------------------------------------------------
 \section{Related Work}
