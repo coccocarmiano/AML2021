@@ -160,7 +160,6 @@ class Trainer:
         # Source loader for the step 1 (known source in train mode)
         source_path_file = f"txt_list/{self.args.source}_known.txt"
         self.source_loader = data_helper.get_train_dataloader(self.args, source_path_file)
-        self.logger.info(f"Source known: {self.args.source} [{len(self.source_loader.dataset)} samples]")
 
         # This must remain untouched and it should be used only for the separation and for the final evaluation (whole target in eval mode)
         target_path_file = f"txt_list/{args.target}.txt"
