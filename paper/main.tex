@@ -25,6 +25,7 @@
 % (Or just hit 'q' on the first LaTeX run, let it finish, and you
 %  should be clear).
 \usepackage[pagebackref,breaklinks,colorlinks]{hyperref}
+\usepackage{multirow}
 
 
 % Support for easy cross-referencing
@@ -65,188 +66,6 @@ Italy\\
   Excepteur sint obcaecat cupiditat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
 \end{abstract}
 
-%%%%%%%%% BODY TEXT
-\section{Notes}
-\label{sec:notes}
-
-%---------- LANGUAGE ----------
-\subsection{Language}
-All manuscripts must be in English.
-%---------- PAPER LENGTH ----------
-\subsection{Paper length}
-Papers, excluding the references section, must be no longer than eight pages in length.
-The references section will not be included in the page count, and there is no limit on the length of the references section.
-%---------- MATH ----------
-\subsection{Math}
-Please number all of your sections and displayed equations as in these examples:
-\begin{equation}
-  E = m\cdot c^2
-  \label{eq:important}
-\end{equation}
-and
-\begin{equation}
-  v = a\cdot t.
-  \label{eq:also-important}
-\end{equation}
-All authors will benefit from reading Mermin's description of how to write mathematics:
-\url{http://www.pamitc.org/documents/mermin.pdf}.
-%---------- BLIND VIEW ----------
-\subsection{Blind View}
-Blind review means that you do not use the words ``my'' or ``our'' when citing previous work.
-
-Saying ``this builds on the work of Lucy Smith [1]'' does not say that you are Lucy Smith;
-it says that you are building on her work.
-If you are Smith and Jones, do not say ``as we show in [7]'', say ``as Smith and Jones show in [7]'' and at the end of the paper, include reference 7 as you would any other cited work.
-
-An example of a bad paper just asking to be rejected:
-\begin{quote}
-\begin{center}
-    An analysis of the frobnicatable foo filter.
-\end{center}
-
-   In this paper we present a performance analysis of our previous paper [1], and show it to be inferior to all previously known methods.
-   Why the previous paper was accepted without this analysis is beyond me.
-
-   [1] Removed for blind review
-\end{quote}
-
-
-An example of an acceptable paper:
-\begin{quote}
-\begin{center}
-     An analysis of the frobnicatable foo filter.
-\end{center}
-
-   In this paper we present a performance analysis of the  paper of Smith \etal [1], and show it to be inferior to all previously known methods.
-   Why the previous paper was accepted without this analysis is beyond me.
-
-   [1] Smith, L and Jones, C. ``The frobnicatable foo filter, a fundamental contribution to human knowledge''. Nature 381(12), 1-213.
-\end{quote}
-
-Finally, you may feel you need to tell the reader that more details can be found elsewhere, and refer them to a technical report.
-For conference submissions, the paper must stand on its own, and not {\em require} the reviewer to go to a tech report for further details.
-Thus, you may say in the body of the paper ``further details may be found in~\cite{Authors14b}''.
-Then submit the tech report as supplemental material.
-Again, you may not assume the reviewers will read this material.
-%---------- CAPTION EXAMPLE ----------
-\subsection{Caption Example}
-\begin{figure}[t]
-  \centering
-  \fbox{\rule{0pt}{2in} \rule{0.9\linewidth}{0pt}}
-   %\includegraphics[width=0.8\linewidth]{egfigure.eps}
-
-   \caption{Example of caption.
-   It is set in Roman so that mathematics (always set in Roman: $B \sin A = A \sin B$) may be included without an ugly clash.}
-   \label{fig:onecol}
-\end{figure}
-%---------- MISCELLANEOUS: E.G., ET AL. ----------
-\subsection{Miscellaneous: e.g., et al.}
-The space after \eg, meaning ``for example'', should not be a sentence-ending space.
-So \eg is correct, {\em e.g.} is not.
-The provided \verb'\eg' macro takes care of this.
-
-When citing a multi-author paper, you may save space by using ``et alia'', shortened to ``\etal'' (not ``{\em et.\ al.}'' as ``{\em et}'' is a complete word).
-If you use the \verb'\etal' macro provided, then you need not worry about double periods when used at the end of a sentence as in Alpher \etal.
-However, use it only when there are three or more authors.
-%---------- SUB-FIGURES EXAMPLE ----------
-\subsection{Sub-Figures examples}
-\begin{figure*}
-  \centering
-  \begin{subfigure}{0.68\linewidth}
-    \fbox{\rule{0pt}{2in} \rule{.9\linewidth}{0pt}}
-    \caption{An example of a subfigure.}
-    \label{fig:short-a}
-  \end{subfigure}
-  \hfill
-  \begin{subfigure}{0.28\linewidth}
-    \fbox{\rule{0pt}{2in} \rule{.9\linewidth}{0pt}}
-    \caption{Another example of a subfigure.}
-    \label{fig:short-b}
-  \end{subfigure}
-  \caption{Example of a short caption, which should be centered.}
-  \label{fig:short}
-\end{figure*}
-%---------- FORMATTING ----------
-\subsection{Formatting}
-All text must be in a two-column format.
-%---------- FOOTNOTES ----------
-\subsection{Footnotes}
-Please use footnotes\footnote{This is what a footnote looks like.
-It often distracts the reader from the main flow of the argument.} sparingly.
-Indeed, try to avoid footnotes altogether and include necessary peripheral observations in the text (within parentheses, if you prefer, as in this sentence).
-If you wish to use a footnote, place it at the bottom of the column on the page on which it is referenced.
-Use Times 8-point type, single-spaced.
-%---------- CROSS-REFERENCES ----------
-\subsection{Cross-references}
-For the benefit of author(s) and readers, please use the
-{\small\begin{verbatim}
-  \cref{...}
-\end{verbatim}}  command for cross-referencing to figures, tables, equations, or sections.
-This will automatically insert the appropriate label alongside the cross-reference as in this example:
-\begin{quotation}
-  To see how our method outperforms previous work, please see \cref{fig:onecol} and \cref{tab:example}.
-  It is also possible to refer to multiple targets as once, \eg~to \cref{fig:onecol,fig:short-a}.
-  You may also return to \cref{sec:formatting} or look at \cref{eq:also-important}.
-\end{quotation}
-If you do not wish to abbreviate the label, for example at the beginning of the sentence, you can use the
-{\small\begin{verbatim}
-  \Cref{...}
-\end{verbatim}}
-command. Here is an example:
-\begin{quotation}
-  \Cref{fig:onecol} is also quite important.
-\end{quotation}
-%---------- CAPTION REFERENCES ----------
-\subsection{Caption References}
-% Update the cvpr.cls to do the following automatically.
-% For this citation style, keep multiple citations in numerical (not
-% chronological) order, so prefer \cite{Alpher03,Alpher02,Authors14} to
-% \cite{Alpher02,Alpher03,Authors14}.
-List and number all bibliographical references at the end of your paper.
-When referenced in the text, enclose the citation number in square brackets, for
-example~\cite{Authors14}.
-Where appropriate, include page numbers and the name(s) of editors of referenced books.
-When you cite multiple papers at once, please make sure that you cite them in numerical order like this \cite{Alpher02,Alpher03,Alpher05,Authors14b,Authors14}.
-If you use the template as advised, this will be taken care of automatically.
-%---------- TABLE EXAMPLE ----------
-\subsection{Table Example}
-\begin{table}
-  \centering
-  \begin{tabular}{@{}lc@{}}
-    \toprule
-    Method & Frobnability \\
-    \midrule
-    Theirs & Frumpy \\
-    Yours & Frobbly \\
-    Ours & Makes one's heart Frob\\
-    \bottomrule
-  \end{tabular}
-  \caption{Results.   Ours is better.}
-  \label{tab:example}
-\end{table}
-%---------- CENTERING GRAPHICS ----------
-\subsection{Cenetring Graphics}
-All graphics should be centered.
-In \LaTeX, avoid using the \texttt{center} environment for this purpose, as this adds potentially unwanted whitespace.
-Instead use
-{\small\begin{verbatim}
-  \centering
-\end{verbatim}}
-at the beginning of your figure.
-
-When placing figures in \LaTeX, it's almost always best to use \verb+\includegraphics+, and to specify the figure width as a multiple of the line width as in the example below
-{\small\begin{verbatim}
-   \usepackage{graphicx} ...
-   \includegraphics[width=0.8\linewidth]
-                   {myfile.pdf}
-\end{verbatim}
-}
-%---------- COLOR ----------
-\subsection{Color}
-If you use color in your plots, please keep in mind that a significant subset of reviewers and readers may have a color vision deficiency; red-green blindness is the most frequent kind.
-Hence avoid relying only on color as the discriminative feature in plots (such as red \vs green lines), but add a second discriminative feature to ease disambiguation.
-
-%------------------------------------------------------------------------
 \section{Introduction}
 \label{sec:intro}
 Classical Machine Learning in the past years have made some oversimplified assumptions actually detached 
@@ -345,11 +164,11 @@ Alternatively, instead to have the model predict the rotation of a sample for an
 \subsection{Step I: Sample Separation}
 
 To separate samples we train the model on an enhanced version of $\mathcal{D}_s$, $\tilde{\mathcal{D}_s} = \{({\bf x}_i^s, {\bf \tilde x}_i^s, z_i^s)\}_{i=1}^{N_s}$ where ${\bf \tilde x}_i^s$ is the rotated version of ${\bf x}_i^s$ and $z_i^s$ is the rotation index associated to image $i$.
-The network is composed by an extractor $E$ and two heads, $R_1$ and $C_1$ in its standard form.
-When using a multi-head rotation predictor, it is composed of $|\mathcal{C}_s|+1$ heads for the rotation task, and an additional one for the classification task.
-For the roation index prediction, we both use the single-head and multi-head architecture.
+The network is composed by an extractor $E$ and two classifiers, $R_1$ and $C_1$ in its standard form.
+When using a multi-head rotation classifier, it is composed of $|\mathcal{C}_s|+1$ heads for the rotation task, and an additional one for the classification task.
+When using a multi-head predictor, which head to use during separation is chosen by the object classifier $C_1$.
 The features of both original and rotated image are used to predict the rotation as ${\bf \tilde z}_s = softmax(R_1([E({\bf x}^s), E({\bf\tilde x}^s)]))$ in the single-head case and using the $j$-th head as ${\bf\tilde{z}}_s = softmax(R_{1,j}[E({\bf x}^s), E({\bf\tilde{x}}^s)])$ in the multi-head case.
-Classes are predicted only using un-rotated features as $\tilde{\bf y}^s = softmax(C_1(E({\bf x}^s)))$.
+Classes are predicted only using un-rotated features as $\tilde{\bf y}^s = softmax(C_1(E({\bf x}_i^s)))$.
 The model is training by minimizing an objective function defined as $\mathcal{L}_1 = \mathcal{L}_{C_1} + \mathcal{L}_{R_1}$.
 This is the sum of two cross-entropy loss functions as in:
 
@@ -389,6 +208,9 @@ Then we can simply separate as:
 When employing a multi-head architecture, we need to choose which one of the $|\mathcal{C}_s|$ heads to use for the classification task.
 Head $R_{1,j}$ is used by picking $j$ as $\displaystyle j = \arg\max_j {\bf\tilde{y}}_i^t$.
 
+\subsection{Step II: Domain Alignment}
+\label{sec:domain_alignment}
+
 \subsection{Performance Metric}
 \label{sec:performance_metric}
 
@@ -408,106 +230,146 @@ This type of mean is more biased towards the lowest of the two scores, resulting
 Our model is tested on the {\it Office-Home} dataset\cite{OfficeHomeDataset}, which features $65$ classes of images over four different domains: Art (A), Clipart (C), Product (P) and Real World (R).
 We set the first $45$ classes to be known while the remaining $20$ are unknown.
 After each epoch performed during the domain alignment phase, a validation run is performed on the entire original target dataset.
-For each experiment, we report both the best achieved {\it HOS} as $HOS_{Best}$ and the one achieved by the last epoch as $HOS$.
+For each experiment, we report both the best achieved HOS and the last reported HOS.
 As separation is crucial for the model effectiveness, we also report the computer AUROC score for the first part.
 
 \subsection{Results}
 \label{sec:results}
-All the 12 source-to-target $S\to T$ shift are considered.
-Results are reported separately for each possible mode of execution, Multi-Head ON/OFF and Center-Loss ON/OFF.
-Each mode has a specific configuration, please refer to \ref{sec:implementation_and_ablation}.
+Table \ref{tab:results} contains the results for all 12 (ne abbiamo provati davvero 12???) possible domain shifts, as well as perfomance differences when using multi-head rotation classifiers and center loss.
+Each mode has a specific configuration further discussed in \ref{sec:ablation_study}.
+
+\begin{table}
+  \centering
+  \begin{tabular}[t]{||c|c|c||c|c||}
+    \hline
+    \multicolumn{5}{||c||}{Single-Head, CE Loss} \\
+    \hline
+    Source & Target & AUROC & HOS & HOS$_{Best}$ \\
+    S & T & 50\% & 30\% & 30\% \\
+    S & T & 50\% & 30\% & 30\% \\
+    S & T & 50\% & 30\% & 30\% \\
+    \hline
+    \hline
+    \multicolumn{5}{||c||}{Multi-Head, CE Loss} \\
+    \hline
+    Source & Target & AUROC & HOS & HOS$_{Best}$ \\
+    S & T & 50\% & 30\% & 30\% \\
+    S & T & 50\% & 30\% & 30\% \\
+    S & T & 50\% & 30\% & 30\% \\
+    \hline
+    \hline
+    \multicolumn{5}{||c||}{Single-Head, CE+C Loss} \\
+    \hline
+    Source & Target & AUROC & HOS & HOS$_{Best}$ \\
+    S & T & 50\% & 30\% & 30\% \\
+    S & T & 50\% & 30\% & 30\% \\
+    S & T & 50\% & 30\% & 30\% \\
+    \hline
+    \hline
+    \multicolumn{5}{||c||}{Multi-Head, CE+C Loss} \\
+    \hline
+    Source & Target & AUROC & HOS & HOS$_{Best}$ \\
+    S & T & 50\% & 30\% & 30\% \\
+    S & T & 50\% & 30\% & 30\% \\
+    S & T & 50\% & 30\% & 30\% \\
+    \hline 
+    \hline
+    \multicolumn{5}{||c||}{No Rotation} \\
+    \hline
+    Source & Target & AUROC & HOS & HOS$_{Best}$ \\
+    S & T & 50\% & 30\% & 30\% \\
+    S & T & 50\% & 30\% & 30\% \\
+    S & T & 50\% & 30\% & 30\% \\
+    \hline
+  \end{tabular}
+  \caption{\label{tab:results}Test Caption}
+\end{table}
+
+\section{Implementation Details}
+\subsection{Model Parameters}
+\label{sec:model_parameters}
+
+All models were run using a Stochastic Gradient Descent with batch size 32, a weight decay of 0.0005 and momentum set to 0.9.
+For single-headed models, the base learning rate is set to 0.001 and for multi-headed models it is set to 0.003.
+This is because multi-headed models take a longer time to converge.
+All rotation classifier have the learning rate set to a tenth of the base learning rate.
+Learning rates are reduced by a factor of 10 after 90\% of epochs.
+All models are run for 50 epochs for the first step described in \ref{eq:sample_separation} and for 25 epochs for the second step described in \ref{sec:domain_alignment}.
+For model using the center loss, a centroid learning rate of 0.5 is used.
+Other parameters are configuration-sepcific and reported in table \ref{tab:params}.
+When considering a "No Rotation" model, it is meant that $\alpha_2 = 0$ is used.
 
 
-\begin{center}
-  \begin{table}
-    \begin{tabular}[h]{||c|c|c||c|c||}
-      \hline
-      \multicolumn{5}{||c||}{Single-Head, CE Loss} \\
-      \hline
-      Source & Target & $AUC_{ROC}$ & $HOS$ & $HOS_{Best}$ \\
-      S & T & 50\% & 30\% & 30\% \\
-      S & T & 50\% & 30\% & 30\% \\
-      S & T & 50\% & 30\% & 30\% \\
-      \hline
-      \hline
-      \multicolumn{5}{||c||}{Multi-Head, CE Loss} \\
-      \hline
-      Source & Target & $AUC_{ROC}$ & $HOS$ & $HOS_{Best}$ \\
-      S & T & 50\% & 30\% & 30\% \\
-      S & T & 50\% & 30\% & 30\% \\
-      S & T & 50\% & 30\% & 30\% \\
-      \hline
-      \hline
-      \multicolumn{5}{||c||}{Single-Head, CE+C Loss} \\
-      \hline
-      Source & Target & $AUC_{ROC}$ & $HOS$ & $HOS_{Best}$ \\
-      S & T & 50\% & 30\% & 30\% \\
-      S & T & 50\% & 30\% & 30\% \\
-      S & T & 50\% & 30\% & 30\% \\
-      \hline
-      \hline
-      \multicolumn{5}{||c||}{Multi-Head, CE+C Loss} \\
-      \hline
-      Source & Target & $AUC_{ROC}$ & $HOS$ & $HOS_{Best}$ \\
-      S & T & 50\% & 30\% & 30\% \\
-      S & T & 50\% & 30\% & 30\% \\
-      S & T & 50\% & 30\% & 30\% \\
-      \hline 
+\begin{table}
+  \centering
+  \begin{tabular}[b]{||c|c|c|c|c|c||}
+    \hline
+    MH & CL & $\alpha_1$ & $\alpha_2$ & $\lambda_1$ & $\mathcal{\tilde N}$ \\
+    \hline
+    Off & Off & 0.0 & 0.0 & 0.0 & 0.0 \\
+    On & Off & 0.0 & 0.0 & 0.0 & 0.0 \\
+    Off & On & 0.0 & 0.0 & 0.0 & 0.0 \\
+    On & On & 0.0 & 0.0 & 0.0 & 0.0 \\
+    \hline
+  \end{tabular}
+  \caption{\label{tab:params}Model Parameters}
+\end{table}
 
-    \end{tabular}
-    \caption{\label{tab:resoffoff}Test Caption}
-  \end{table}
-\end{center}
+\subsection{Ablation Study}
+\label{sec:ablation_study}
+As shown by table \ref{tab:results}, different architectures greatly improve performance, and as shown by table \ref{tab:params} each one has its set of optimal parameters.
+To choose the best parameters, a sequential approach is followed, by optimizing one parameter at the time.
+The order of optimization followed is: $\alpha_1$, $\lambda_1$, $\mathcal{\tilde N}$, $\alpha_2$.
+Models not using center loss skip the $\lambda_1$ optimization.
+Ablation study were run on two domain shift, Art $\to$ Clipart and Clipart $\to$ Art.
+In table \ref{tab:ablation_params} we report the steps followed, picking the parameter that gives the highest mean HOS between the two shifts.
+All other settings follow what is reported in \ref{sec:model_parameters}.
+For compactness, here are the final results of the data otherwise reported from \ref{tab:ablationoffoff} on.
 
 
-%------------------------------------------------------------------------
-\section{Method - Write name of proposal approach}
-\label{sec:method}
-%------------------------------------------------------------------------
-\subsection{Subsection 1}
-%------------------------------------------------------------------------
-\subsection{Subsection 2}
+\begin{table}
+  \centering
+  \begin{tabular}[h]{||c|c|c|c||c||}
+    \hline
+    \multicolumn{5}{||c||}{MH OFF CL OFF} \\
+    \hline
+    $\alpha_1$ & $\mathcal{\tilde N}$ & $\alpha_2$  & AUROC & HOS$_{mean}$\\    
+    \hline
+    \hline
+    \multicolumn{5}{||c||}{Picking $\alpha_1$} \\
+    \hline
+    1.0 & \multirow{4}{*}{0.5} & \multirow{4}{*}{3.0} & 0.5 & 30\% \\
+    3.0 & & & 0.5 & 30\% \\
+    5.0 & & & 0.5 & 30\% \\
+    10.0 & & & 0.5 & 30\% \\
+    \hline
+    \hline
+    \multicolumn{5}{||c||}{Picking $\mathcal{\tilde N}$} \\
+    \hline
+    \multirow{4}{*}{1.0} & 0.40 & \multirow{4}{*}{3.0} & 0.5 & 50\%\\
+    & 0.50 && 0.5 & 50\% \\
+    & 0.55 && 0.5 & 50\% \\
+    & 0.60 && 0.5 & 50\% \\
+    \hline
+    \hline
+    \multicolumn{5}{||c||}{Picking $\alpha_2$} \\
+    \hline
+    \multirow{4}{*}{1.0} & \multirow{4}{*}{0.6} & 1.0 & 0.5 & 50\%\\
+    && 3.0 & 0.5 & 50\% \\
+    && 5.0 & 0.5 & 50\% \\
+    && 10.0 & 0.5 & 50\% \\
+    \hline
+    \hline
+    \multicolumn{5}{||c||}{Final Parameters} \\
+    \hline
+    1.0 & 0.6 & 3.0 & 0.5 & 50\%\\
+    \hline
+  \end{tabular}
+  \caption{\label{tab:ablationoffoff} Ablation performed for OFF-OFF configuration}
+\end{table}
+\section{Future Work}
 
-%------------------------------------------------------------------------
-\section{Experiments}
-\label{sec:experiments}
-%------------------------------------------------------------------------
-\subsection{Subsection 1 - Setup}
-%------------------------------------------------------------------------
-\subsection{Subsection 2 - Implementation Details}
-%------------------------------------------------------------------------
-\subsection{Subsection 3 - Results}
-
-%------------------------------------------------------------------------
-\section{Conclusions (and Future Work)}
-\label{sec:conclusions}
-
-%%%%%%%%% APPENDIX - TAKEN FROM ANOTHER TEMPLATE!!
-\appendix
-\section{Appendices}
-\label{sec:appendix}
-Appendices are material that can be read, and include lemmas, formulas, proofs, and tables that are not critical to the reading and understanding of the paper. 
-Appendices should be \textbf{uploaded as supplementary material} when submitting the paper for review.
-Upon acceptance, the appendices come after the references, as shown here.
-
-\paragraph{\LaTeX-specific details:}
-Use {\small\verb|\appendix|} before any appendix section to switch the section numbering over to letters.
-
-
-\section{Supplemental Material}
-\label{sec:supplemental}
-Submissions may include\cite{GeoTran}\cite{CenterLoss}\cite{BucciROS}\cite{OldROS}\cite{CarlucciJigsaw} non-readable supplementary material used in the work and described in the paper.
-Any accompanying software and/or data should include licenses and documentation of research review as appropriate.
-Supplementary material may report preprocessing decisions, model parameters, and other details necessary for the replication of the experiments reported in the paper.
-Seemingly small preprocessing decisions can sometimes make a large difference in performance, so it is crucial to record such decisions to precisely characterize state-of-the-art methods. 
-
-Nonetheless, supplementary material should be supplementary (rather than central) to the paper.
-\textbf{Submissions that misuse the supplementary material may be rejected without review.}
-Supplementary material may include explanations or details of proofs or derivations that do not fit into the paper, lists of
-features or feature templates, sample inputs and outputs for a system, pseudo-code or source code, and data.
-(Source code and data should be separate uploads, rather than part of the paper).
-
-The paper should not rely on the supplementary material: while the paper may refer to and cite the supplementary material and the supplementary material will be available to the reviewers, they will not be asked to review the supplementary material.
+Here we should write how a better way of separation is required and more training might help.
 
 %%%%%%%%% REFERENCES
 {\small
