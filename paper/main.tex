@@ -15,7 +15,6 @@
 \usepackage{amssymb}
 \usepackage{booktabs}
 
-
 % It is strongly recommended to use hyperref, especially for the review version.
 % hyperref with option pagebackref eases the reviewers' job.
 % Please disable hyperref *only* if you encounter grave issues, e.g. with the
@@ -388,7 +387,7 @@ Then we can simply separate as:
 \label{eq:sample_separation}
 
 When employing a multi-head architecture, we need to choose which one of the $|\mathcal{C}_s|$ heads to use for the classification task.
-Head $R_{1,j}$ is used by picking $j$ as $\displaystyle j = \arg\max_j {\bf\tilde{y}}_i^s$.
+Head $R_{1,j}$ is used by picking $j$ as $\displaystyle j = \arg\max_j {\bf\tilde{y}}_i^t$.
 
 \subsection{Performance Metric}
 \label{sec:performance_metric}
@@ -402,6 +401,63 @@ This type of mean is more biased towards the lowest of the two scores, resulting
 
 \section{Experiments}
 \label{sec:experiments}
+
+\subsection{Dataset}
+\label{sec:dataset}
+
+Our model is tested on the {\it Office-Home} dataset\cite{OfficeHomeDataset}, which features $65$ classes of images over four different domains: Art (A), Clipart (C), Product (P) and Real World (R).
+We set the first $45$ classes to be known while the remaining $20$ are unknown.
+After each epoch performed during the domain alignment phase, a validation run is performed on the entire original target dataset.
+For each experiment, we report both the best achieved {\it HOS} as $HOS_{Best}$ and the one achieved by the last epoch as $HOS$.
+As separation is crucial for the model effectiveness, we also report the computer AUROC score for the first part.
+
+\subsection{Results}
+\label{sec:results}
+All the 12 source-to-target $S\to T$ shift are considered.
+Results are reported separately for each possible mode of execution, Multi-Head ON/OFF and Center-Loss ON/OFF.
+Each mode has a specific configuration, please refer to \ref{sec:implementation_and_ablation}.
+
+
+\begin{center}
+  \begin{table}
+    \begin{tabular}[h]{||c|c|c||c|c||}
+      \hline
+      \multicolumn{5}{||c||}{Single-Head, CE Loss} \\
+      \hline
+      Source & Target & $AUC_{ROC}$ & $HOS$ & $HOS_{Best}$ \\
+      S & T & 50\% & 30\% & 30\% \\
+      S & T & 50\% & 30\% & 30\% \\
+      S & T & 50\% & 30\% & 30\% \\
+      \hline
+      \hline
+      \multicolumn{5}{||c||}{Multi-Head, CE Loss} \\
+      \hline
+      Source & Target & $AUC_{ROC}$ & $HOS$ & $HOS_{Best}$ \\
+      S & T & 50\% & 30\% & 30\% \\
+      S & T & 50\% & 30\% & 30\% \\
+      S & T & 50\% & 30\% & 30\% \\
+      \hline
+      \hline
+      \multicolumn{5}{||c||}{Single-Head, CE+C Loss} \\
+      \hline
+      Source & Target & $AUC_{ROC}$ & $HOS$ & $HOS_{Best}$ \\
+      S & T & 50\% & 30\% & 30\% \\
+      S & T & 50\% & 30\% & 30\% \\
+      S & T & 50\% & 30\% & 30\% \\
+      \hline
+      \hline
+      \multicolumn{5}{||c||}{Multi-Head, CE+C Loss} \\
+      \hline
+      Source & Target & $AUC_{ROC}$ & $HOS$ & $HOS_{Best}$ \\
+      S & T & 50\% & 30\% & 30\% \\
+      S & T & 50\% & 30\% & 30\% \\
+      S & T & 50\% & 30\% & 30\% \\
+      \hline 
+
+    \end{tabular}
+    \caption{\label{tab:resoffoff}Test Caption}
+  \end{table}
+\end{center}
 
 
 %------------------------------------------------------------------------
