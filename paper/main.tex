@@ -132,39 +132,65 @@ The method was evaluated on the Office-Home benchmark \cite{OfficeHomeDataset} w
 
 \subsection{Problem Formulation}
 \label{sec:problemformulation}
-Our starting point is the source dataset, defined as $\mathcal{D}_s = \{({\bf x}_i^s, y_i^s)\}_{i=1}^{N_S} \sim p_s$, where each element ${\bf x}_i^s$ belonging to any $y_i^s$ is a sample from the source domain $S$.
-This dataset has a target counterpart, $\mathcal{D}_t = \{{\bf x}_i^t\}_{i=1}^{N_t} \sim p_t$ which is unlabeled.
+Our starting point is the source dataset, 
+defined as $\mathcal{D}_s = \{({\bf x}_i^s, y_i^s)\}_{i=1}^{N_S} \sim p_s$, 
+where each element ${\bf x}_i^s$ belonging to class $y_i^s$ is a sample from the source domain {\it S}.
+This dataset has a target counterpart, 
+$\mathcal{D}_t = \{{\bf x}_i^t\}_{i=1}^{N_t} \sim p_t$ which is unlabeled instead.
 In OSDA we have that $p_s \neq p_t$.
-The source dataset $\mathcal{D}_s$ is associated with a set of known classes, $\mathcal{C}_s$, which can also be found in the target dataset $\mathcal{D}_t$, but is supposedly smaller.
-Hence we have that $|\mathcal{C}_s| < |\mathcal{C}_t|$ and that $\mathcal{C}_s \subset \mathcal{C}_t$.
-In a setting of domain adaptation, we further have that $p_t^s \neq p_s$, the target distribution of the known source classes
-A metric for measuring how different two domain are is the openness betweeen source and target domain\cite{bendale2015open}, defined as $\displaystyle \mathbb{O} = 1-\frac{\mathcal{C}_s}{\mathcal{C}_t}$.
+The source dataset $\mathcal{D}_s$ is associated with a set of known classes $\mathcal{C}_s$, 
+which can also be found in the target dataset $\mathcal{D}_t$ but is supposedly smaller.
+In other words,
+$|\mathcal{C}_s| < |\mathcal{C}_t|$ and $\mathcal{C}_s \subset \mathcal{C}_t$.
+In domain adaptation, 
+we further have that the target distribution of the known source classes differs from the target distribution of known classes,
+so $p_t^s \neq p_s$, 
+A metric to measure how different two domains are is the openness betweeen source and target domain\cite{bendale2015open}, 
+defined as $\displaystyle \mathbb{O} = 1-\frac{\mathcal{C}_s}{\mathcal{C}_t}$.
 When $\mathbb{O} > 0$, we're dealing with an OSDA problem.
 
 \subsection{Approach}
 \label{sec:apporach}
-To tackle the task, we chose to split it in two different steps.
-First we have to train the model to separate between the known classes ($\mathcal{C}_s$) and the unknown classes ($\mathcal{C}_{t\setminus s})$ in a reliable enough way.
-This is achieved by using a semi-supervised task, by training to model to both recognize a sample class and its correct orientation.
-The second step is similar to a classic CSDA problem, where we train the model on a union of both source and target datasets.
+The task is split in two separate stages.
+First, 
+we have to train the model to separate between the known classes ($\mathcal{C}_s$) and the unknown classes ($\mathcal{C}_{t\setminus s})$ in a reliable way.
+This is achieved via the self-supervised task,
+training the model to both recognize the class of a sample and its relative orientation.
+Secondly,
+we train the model on a union of both source and target datasets,
+to reject samples when they are not part of the known classes $\mathcal{C}_s$.
 
 \subsection{Rotation Recognition}
 
-Let's denote with $rot({\bf x}, i)$ the rotation of the sample image {\bf x} by $i\times 90$ degrees clockwise.
-This is the self-supervised part of our proposed model as rotations $i \in [0, 3]$ can be randomly generated and then predicted.
-To avoid situations where the objective orientation of a sample would be a too complicated task, even for a human being, we also feed in input to the model the un-rotated image features.
-Alternatively, instead to have the model predict the rotation of a sample for any class, we also try using a different head for each one of the known classes $\mathcal{C}_s$, along with different loss functions.
+We denote with $rot({\bf x}, k)$ the rotation of the sample image {\bf x} by $k\times 90$ degrees clockwise.
+This is the self-supervised part of our proposed model as rotation indices $k \in [0, 3]$ can be randomly generated and then predicted.
+Relative rotation,
+meaning that both original and rotated features are supplied to the model,
+is preferred over just using rotated features as some objects might not have an absolute correct orientation.
+Alternatively, 
+instead of having the model predict the rotation of a sample for any class using the same classifier, 
+we also try using a different head for each one of the known classes $\mathcal{C}_s$.
 
 \subsection{Step I: Sample Separation}
 
-To separate samples we train the model on an enhanced version of $\mathcal{D}_s$, $\tilde{\mathcal{D}_s} = \{({\bf x}_i^s, {\bf \tilde x}_i^s, z_i^s)\}_{i=1}^{N_s}$ where ${\bf \tilde x}_i^s$ is the rotated version of ${\bf x}_i^s$ and $z_i^s$ is the rotation index associated to image $i$.
-The network is composed by an extractor $E$ and two classifiers, $R_1$ and $C_1$ in its standard form.
-When using a multi-head rotation classifier, it is composed of $|\mathcal{C}_s|+1$ heads for the rotation task, and an additional one for the classification task.
-When using a multi-head predictor, which head to use during separation is chosen by the object classifier $C_1$.
-The features of both original and rotated image are used to predict the rotation as ${\bf \tilde z}_s = softmax(R_1([E({\bf x}^s), E({\bf\tilde x}^s)]))$ in the single-head case and using the $j$-th head as ${\bf\tilde{z}}_s = softmax(R_{1,j}[E({\bf x}^s), E({\bf\tilde{x}}^s)])$ in the multi-head case.
-Classes are predicted only using un-rotated features as $\tilde{\bf y}^s = softmax(C_1(E({\bf x}_i^s)))$.
-The model is training by minimizing an objective function defined as $\mathcal{L}_1 = \mathcal{L}_{C_1} + \mathcal{L}_{R_1}$.
-This is the sum of two cross-entropy loss functions as in:
+Separating samples requires iterating over $\tilde{\mathcal{D}_s} = \{({\bf x}_i^s, {\bf \tilde x}_i^s, z_i^s)\}_{i=1}^{N_s}$,
+where ${\bf \tilde x}_i^s$ is the $z_i^s\times 90$ degrees rotated version of ${\bf x}_i^s$.
+The network is composed by an extractor $E$ and two classifiers, 
+$R_1$ and $C_1$.
+$C_1$ is the object classifier, 
+assigning image labes $\tilde{y}_i^s \in \{0, \dots, |\mathcal{C}_s|\}$,
+while $R_1$ is the relative rotation classifier,
+assigning rotation indices $\tilde{z}_i^s \in [0, 3]$.
+${\bf\tilde{z}}_i^s$ and ${\bf\tilde{y}}_i^s$ are the vector representations of $\tilde{z}_i^s$ and $\tilde{y}_i^s$.
+The multi-head rotation classifier uses $|\mathcal{C}_s|$ heads for the rotation task.
+In this case, 
+which head to use during separation is up to the object classifier $C_1$.
+Object predictions are made as ${\bf\tilde{x}}_i^s = softmax(E({\bf x}_i^s))$,
+while relative rotation predictions are computed as ${\bf \tilde z}_s = softmax(R_1([E({\bf x}^s), E({\bf\tilde x}^s)]))$.
+If a multi-head rotation classifier is used,
+the $j = y_i^s$ head is used as ${\bf\tilde{z}}_s = softmax(R_{1,j}[E({\bf x}^s), E({\bf\tilde{x}}^s)])$.
+The model is trained to minimizing the objective function $\mathcal{L}_1 = \mathcal{L}_{C_1} + \mathcal{L}_{R_1}$.
+This is the sum of two cross-entropy loss functions:
 
 \begin{equation}
   \mathcal{L}_{C_1} = -\sum_{i\in\mathcal{D}_s} {\bf y}_i^s \log \tilde{\bf y}_i^s
@@ -177,53 +203,70 @@ This is the sum of two cross-entropy loss functions as in:
 \end{equation}
 
 Where $\alpha_1$ is a weight associated to the rotation task.
-We also try using an extended rotation objective function $\mathcal{L}_{R_1}^*$ also implementing a center loss function\cite{CenterLoss}:
+We also try using an extended rotation loss function $\mathcal{L}_{R_1}^*$ implementing an additional center loss\cite{CenterLoss} term:
 
 \begin{equation}
   \mathcal{L}_{R_1}^* = -\alpha_1\sum_{i\in\mathcal{D}_s} {\bf y}_i^s \log \tilde{{\bf z}}_i^s+\lambda_1||{\bf v}_i^s-\gamma({\bf z}_i^s)||_2^2
   \label{eq:center_loss}
 \end{equation}
 
-Here {\bf $v_i$} is the penultimate layer of the rotation classifier, called {\it features}, and $\gamma({\bf z}_i)$ gives the center of the features ${\bf v}_i$ associated to class $i$ and $||\cdot||_2^2$ is the $l$-2 norm and $\lambda_1$ is the weight associated with this extension of the loss function.
+Here ${\bf v_i}$ is the penultimate layer of the rotation classifier,
+called features, 
+$\gamma({\bf z}_i)$ is the center of the features associated to class $i$,
+$||\cdot||_2^2$ is the $l$-2 norm and $\lambda_1$ is the weight associated with the center loss term.
 
-When training is completed, we can start separating samples.
-To do so, we get the normality score $\mathcal{N}(\cdot)$ which is defined as the maximum prediction of the rotation classifier, $\mathcal{N}({\bf\tilde{x}}_i^s) = \max({\bf\tilde{z}}_i^t)$.
-To tell wheter a sample belongs to the known samples of the target domain $\mathcal{D}_t^{knw}$ or the unknown one $\mathcal{D}_t^{unk}$ requires choosing a threshold $\tilde{\mathcal{N}}$.
-Then we can simply separate as:
+When training is completed, 
+we can start separating samples.
+To do so,
+normality scores $\mathcal{N}(\cdot)$ are used,
+defined as the maximum prediction of the rotation classifier:
+$\mathcal{N}({\bf\tilde{x}}_i) = \max({\bf\tilde{z}}_i)$.
+To predict wheter a sample belongs to the known samples of the target domain $\mathcal{D}_t^{knw}$ or the unknown ones $\mathcal{D}_t^{unk}$ requires picking a threshold $\tilde{\mathcal{N}}$.
+The separation is then done as:
 
 \begin{equation}
   \begin{cases}
-    {\bf\tilde x}_i^t \in \mathcal{D}_t^{knw} & \text{ if } \mathcal{N}({\bf\tilde x}_i^s) \geq \tilde{\mathcal{N}} \\
-    {\bf\tilde x}_i^t \in \mathcal{D}_t^{unk} & \text{ if } \mathcal{N}({\bf\tilde x}_i^s) < \tilde{\mathcal{N}}
+    {\bf x}_i^t \in \mathcal{D}_t^{knw} & \text{ if } \mathcal{N}({\bf\tilde x}_i^t) \geq \tilde{\mathcal{N}} \\
+    {\bf x}_i^t \in \mathcal{D}_t^{unk} & \text{ if } \mathcal{N}({\bf\tilde x}_i^t) < \tilde{\mathcal{N}}
   \end{cases}
   \label{eq:sample_separation}
 \end{equation}
 
-When employing a multi-head architecture, we need to choose which one of the $|\mathcal{C}_s|$ heads to use for the classification task.
-Head $R_{1,j}$ is used by picking $j$ as $\displaystyle j = \arg\max_j {\bf\tilde{y}}_i^t$.
+When using a multi-head rotation classifier, 
+it is required to choose among the $|\mathcal{C}_s|$ possible heads to make the prediction.
+Head $R_{1,j}$ is used by choosing $j$ as $\displaystyle j = \arg\max_j {\bf\tilde{y}}_i^t$.
 
 \subsection{Step II: Domain Alignment}
 \label{sec:domain_alignment}
 
-In this phase, two "new" datasets are used.
+In this phase,
+we build two "new" datasets.
 The first one is $\mathcal{D}_s^*$, composed as $\mathcal{D}_s \cup \mathcal{D}_t^{unk}$.
-Note that since $\mathcal{D}_t$ is an unlabeled dataset but $\mathcal{D}_s^*$ is a labeled one, all samples in $\mathcal{D}_t^{unk}$ are simply labeled as unknowns.
-The second one is $\mathcal{D}_t^{knw}$ which is still an unlabeled dataset.
-Here we also introduce two new classifiers, $C_2$ and $R_2$.
-$C_2$ is the object classifier, but while $C_1$ had a $|\mathcal{C}_s|$-dimensional output, having to accomodate the new "Unknown" class, it has a $|\mathcal{C}_s|+1$-dimensional output.
-$R_2$ instead is the rotation classifier, which in this step is always single-headed and has its own weight $\alpha_2$.
-These two classifiers try to minimize the objective function described in equations \ref{eq:baseloss_class} and \ref{eq:baseloss_rot}.
-One of the main differences between the two steps is that while in the first one we used $C_1$ to regularize the rotation task, here we use $R_2$ to regularize the main classification task.
+Since $\mathcal{D}_t$ is an unlabeled dataset but $\mathcal{D}_s^*$ is a labeled one,
+samples in $\mathcal{D}_t^{unk}$ are labeled as unknowns.
+The second one is $\mathcal{D}_t^{knw}$.
+Here we also use two new classifiers,
+$C_2$ and $R_2$,
+similarly to how they were used in the first phase but with $C_2$ predicting $|\mathcal{C}_s|+1$ classes to accomodate unknown predictions.
+In this step $R_2$ is always single-headed and has its own weight $\alpha_2$.
+The objective function is the same described in equations \ref{eq:baseloss_class} and \ref{eq:baseloss_rot}.
+The main difference here is that $C_2$ is actually trained to recognize unknown classes,
+on both domains.
 
 \subsection{Performance Metrics}
 \label{sec:performance_metrics}
 
 Evaluating model perfomance requires finding a balance between two values:
-{\it OS*}, the share of correctly classified samples;
-{\it UNK}, the share of correclty rejected samples.
-A model never confident enough to reject a sample as unknown could still achieve high {\it OS*} scores and near-zero {\it UNK}, while a model marking every given sample as unkwnown will achieve perfect {\it UNK} and zero {\it OS*}.
-To compare models in a robust manner, we picked an harmonic mean between {\it OS*} and {\it UNK}, defined as $HOS = 2\frac{OS^*\times UNK}{OS^*+UNK}$.
-This type of mean is more biased towards the lowest of the two scores, resulting in a more severe evaluation of models.
+{\it OS*}, 
+the fraction of correctly classified samples,
+and {\it UNK}, 
+the fraction of correclty rejected samples.
+A model not confident enough to reject a sample could still achieve high {\it OS*} values but near-zero {\it UNK},
+while a model rejecting every  sample as unkwnown will achieve perfect {\it UNK} and zero {\it OS*}.
+To compare models we use the harmonic mean between {\it OS*} and {\it UNK}, 
+defined as $HOS = 2\frac{OS^*\times UNK}{OS^*+UNK}$.
+This is because this kind of mean tends gives a bigger weight to the smaller values,
+resulting in a more severe evaluation of models.
 
 \section{Experiments}
 \label{sec:experiments}
@@ -231,16 +274,23 @@ This type of mean is more biased towards the lowest of the two scores, resulting
 \subsection{Dataset}
 \label{sec:dataset}
 
-Our model is tested on the {\it Office-Home} dataset\cite{OfficeHomeDataset}, which features $65$ classes of images over four different domains: Art (A), Clipart (C), Product (P) and Real World (R).
-We set the first $45$ classes to be known while the remaining $20$ are unknown.
-After each epoch performed during the domain alignment phase, a validation run is performed on the entire original target dataset.
-For each experiment, we report both the best achieved HOS and the last reported HOS.
-As separation is crucial for the model effectiveness, we also report the computer AUROC score for the first part.
+Our model is tested on the {\it Office-Home} dataset\cite{OfficeHomeDataset}, 
+which features 65 classes of images over four different domains: Art (A), Clipart (C), Product (P) and Real World (R).
+We set the first 45 classes to be known while the remaining 20 are unknown.
+For each experiment, 
+we report both the best achieved HOS as well as the last reported HOS.
+As separation is crucial for the model effectiveness,
+ we also report the computer AUROC score for the first part.
 
 \subsection{Results}
 \label{sec:results}
-Table \ref{tab:results} contains the results for all 12 (ne abbiamo provati davvero 12???) possible domain shifts, as well as perfomance differences when using multi-head rotation classifiers and center loss.
-Each mode has a specific configuration further discussed in \ref{sec:ablation_study}.
+Table \ref{tab:results} contains the results for all 12 {\bf (ne abbiamo provati davvero 12???)} available domain shifts,
+as well as perfomance differences when using multi-head rotation classifiers and center loss.
+Further details are to be found in \ref{sec:ablation_study}.
+We can notice that multi-headed models are more capable of correctly discriminating between known and unknown samples,
+ultimately resulting in better domain alignment.
+A further advantage is given when combined with center loss.
+
 
 \begin{table}
   \centering
