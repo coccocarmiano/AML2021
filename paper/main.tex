@@ -283,7 +283,7 @@ Where $\alpha_1$ is a weight associated to the rotation task.
 We also try using an extended rotation loss function $\mathcal{L}_{R_1}^*$ implementing an additional center loss\cite{CenterLoss} term:
 
 \begin{equation}
-  \mathcal{L}_{R_1}^* = -\alpha_1\sum_{i\in\mathcal{\tilde{D}}_s} {\bf z}_i^s \log \hat{{\bf z}}_i^s+\lambda_1||{\bf v}_i^s-\gamma({\bf z}_i^s)||_2^2
+  \mathcal{L}_{R_1}^* = \sum_{i\in\mathcal{\tilde{D}}_s} -\alpha_1{\bf z}_i^s \log \hat{{\bf z}}_i^s+\lambda_1||{\bf v}_i^s-\gamma({\bf z}_i^s)||_2^2
   \label{eq:center_loss}
 \end{equation}
 
