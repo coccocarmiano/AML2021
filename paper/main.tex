@@ -293,13 +293,14 @@ $\gamma({\bf z}_i)$ is the centroid of the features associated to class $i$
 $||\cdot||_2^2$ is the $l$-2 norm and $\lambda$ is the weight associated with the center loss term.
 
 When training is completed, 
-we can start separating samples.
+we can start separating the target samples into known and unknown.
 To do so,
-normality scores $\mathcal{N}(\cdot)$ are used,
+{\it normality scores} $\mathcal{N}(\cdot)$ are used,
 defined as the maximum prediction of the rotation classifier:
-$\mathcal{N}({\bf\tilde{x}}_i) = \max({\bf\tilde{z}}_i)$.
-To predict wheter a sample belongs to the known samples of the target domain $\mathcal{D}_t^{knw}$ or the unknown ones $\mathcal{D}_t^{unk}$ requires picking a threshold $\tilde{\mathcal{N}}$.
-The separation is then done as:
+$\mathcal{N}({\bf\tilde{x}}_i) = \max({\bf\hat{z}}_i)$.
+Notice that, for each target sample, all the four rotations are applied and the resulting normality score for the sample
+is computed as the mean of the four normality scores.
+To decide if a target sample belongs to a known semantic class or not, we compare the normality score with a threshold $\tilde{\mathcal{N}}$.
 
 \begin{equation}
   \begin{cases}
@@ -311,7 +312,8 @@ The separation is then done as:
 
 When using a multi-head rotation classifier, 
 it is required to choose among the $|\mathcal{C}_s|$ possible heads to make the prediction.
-Head $R_{1,j}$ is used by choosing $j$ as $\displaystyle j = \arg\max_j {\bf\tilde{y}}_i^t$.
+Head $R_{1,j}$ is used where $\displaystyle j = \arg\max_j \{{\bf\hat{y}}_{i, [j]}^t\}_{j=0}^{|\mathcal{C}_s|-1}$
+($j$ is the component $j$ of the vector).
 
 \subsection{Step II: Domain Alignment}
 \label{sec:domain_alignment}
