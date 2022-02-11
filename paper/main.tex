@@ -196,33 +196,32 @@ and the domain adaptation;
 
 \subsection{Problem Formulation}
 \label{sec:problemformulation}
-Our starting point is the source dataset, 
-defined as $\mathcal{D}_s = \{({\bf x}_i^s, y_i^s)\}_{i=1}^{N_S} \sim p_s$, 
-where each element ${\bf x}_i^s$ belonging to class $y_i^s$ is a sample from the source domain {\it S}.
-This dataset has a target counterpart, 
-$\mathcal{D}_t = \{{\bf x}_i^t\}_{i=1}^{N_t} \sim p_t$ which is unlabeled instead.
-In OSDA we have that $p_s \neq p_t$.
-The source dataset $\mathcal{D}_s$ is associated with a set of known classes $\mathcal{C}_s$, 
-which can also be found in the target dataset $\mathcal{D}_t$ but is supposedly smaller.
+We define as $\mathcal{D}_s = \{({\bf x}_i^s, y_i^s)\}_{i=1}^{N_S} \sim p_s$ the source dataset whose distribution of samples and labels is $p_s$,
+while $\mathcal{D}_t = \{{\bf x}_i^t\}_{i=1}^{N_t} \sim p_t$ is the unlabeled target dataset drawn from distribution $p_t$. 
+
+The source dataset $\mathcal{D}_s$ is associated with a set of known classes $\mathcal{C}_s$,
+whereas the target dataset $\mathcal{D}_t$ contains a set of classes $\mathcal{C}_t = \mathcal{C}_s \cup \mathcal{C}_{t \setminus s}$.
 In other words,
-$|\mathcal{C}_s| < |\mathcal{C}_t|$ and $\mathcal{C}_s \subset \mathcal{C}_t$.
-In domain adaptation, 
-we further have that the target distribution of the known source classes differs from the target distribution of known classes,
-so $p_t^s \neq p_s$, 
-A metric to measure how different two domains are is the openness betweeen source and target domain\cite{bendale2015open}, 
+$|\mathcal{C}_s| < |\mathcal{C}_t|$ and $\mathcal{C}_s \subset \mathcal{C}_t$. 
+
+In OSDA we have that $p_s \neq p_t$.
+Moreover, it holds that $p_s \neq p_t^{\mathcal{C}_s}$, where $p_t^{\mathcal{C}_s}$ denotes the distribution of the target domain if we restrict to
+the shared classes $\mathcal{C}_s$. 
+
+Summarizing, in OSDA tasks, we have both a domain gap ($p_s \neq p_t^{\mathcal{C}_s}$)
+and a category gap ($\mathcal{C}_s \neq \mathcal{C}_t$). Moreover, the goal is to assign the target samples either to a category ${i \in \mathcal{C}_s}$,
+or to reject them as {\it unknown}.
+A metric to measure the complexity of the OSDA problem is the {\it openness} betweeen the source and the target domain \cite{bendale2015open}, 
 defined as $\displaystyle \mathbb{O} = 1-\frac{\mathcal{C}_s}{\mathcal{C}_t}$.
-When $\mathbb{O} > 0$, we're dealing with an OSDA problem.
+When $\mathbb{O} > 0$, we are dealing with an OSDA problem, otherwise we are in a in a CSDA setting.
 
 \subsection{Approach}
 \label{sec:apporach}
-The task is split in two separate stages.
-First, 
-we have to train the model to separate between the known classes ($\mathcal{C}_s$) and the unknown classes ($\mathcal{C}_{t\setminus s})$ in a reliable way.
-This is achieved via the self-supervised task,
-training the model to both recognize the class of a sample and its relative orientation.
-Secondly,
-we train the model on a union of both source and target datasets,
-to reject samples when they are not part of the known classes $\mathcal{C}_s$.
+The proposed method is split in two sequential stages. First, to avoid negative transfer during the domain alignment step, we want a model
+that is able to separate the target dataset into $\mathcal{D}_{t, unknown}$ and $\mathcal{D}_{t, known}$. To do that, we leverage the
+power of the rotation pre-text task to perform the separation.
+Next, in the second stage, we can close the gap between the source domain and the target domain exploiting $\mathcal{D}_{t, known}$
+using the same self-supervised task. Furthermore, we leverage $\mathcal{D}_{t, unknown}$ to learn the additional {\it unknown} class.
 
 \subsection{Rotation Recognition}
 
