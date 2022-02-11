@@ -217,10 +217,10 @@ When $\mathbb{O} > 0$, we are dealing with an OSDA problem, otherwise we are in 
 \subsection{Approach}
 \label{sec:apporach}
 The proposed method is split in two sequential stages. First, to avoid negative transfer during the domain alignment step, we want a model
-that is able to separate the target dataset into $\mathcal{D}_{t, unknown}$ and $\mathcal{D}_{t, known}$. To do that, we leverage the
+that is able to separate the target dataset into $\mathcal{D}_t^{unk}$ and $\mathcal{D}_t^{knw}$. To do that, we leverage the
 power of the rotation pre-text task to perform the separation.
-Next, in the second stage, we can close the gap between the source domain and the target domain exploiting $\mathcal{D}_{t, known}$
-using the same self-supervised task. Furthermore, we leverage $\mathcal{D}_{t, unknown}$ to learn the additional {\it unknown} class.
+Next, in the second stage, we can close the gap between the source domain and the target domain exploiting $\mathcal{D}_t^{knw}$
+using the same self-supervised task. Furthermore, we leverage $\mathcal{D}_t^{unk}$ to learn the additional {\it unknown} class.
 
 \subsection{Rotation Recognition}
 
@@ -253,34 +253,29 @@ w.r.t nose.
 The method and its effectiveness is further illustrated in \cite{OldROS}. 
 We will further discuss possible improvements and variants in {\bf PLEASE COMPLETE}.
 
-\subsection{Step I: Sample Separation}
+\subsection{Step I: target known/unknown separation}
 
-Separating samples requires iterating over $\tilde{\mathcal{D}_s} = \{({\bf x}_i^s, {\bf \tilde x}_i^s, z_i^s)\}_{i=1}^{N_s}$,
+To perform the target separation we train a CNN iterating on $\tilde{\mathcal{D}_s} = \{({\bf x}_i^s, {\bf \tilde x}_i^s, z_i^s)\}_{i=1}^{N_s}$,
 where ${\bf \tilde x}_i^s$ is the $z_i^s\times 90$ degrees rotated version of ${\bf x}_i^s$.
-The network is composed by an extractor $E$ and two classifiers, 
-$R_1$ and $C_1$.
-$C_1$ is the object classifier, 
-assigning image labes $\tilde{y}_i^s \in \{0, \dots, |\mathcal{C}_s|\}$,
-while $R_1$ is the relative rotation classifier,
-assigning rotation indices $\tilde{z}_i^s \in [0, 3]$.
-${\bf\tilde{z}}_i^s$ and ${\bf\tilde{y}}_i^s$ are the vector representations of $\tilde{z}_i^s$ and $\tilde{y}_i^s$.
-The multi-head rotation classifier uses $|\mathcal{C}_s|$ heads for the rotation task.
-In this case, 
-which head to use during separation is up to the object classifier $C_1$.
-Object predictions are made as ${\bf\tilde{x}}_i^s = softmax(E({\bf x}_i^s))$,
-while relative rotation predictions are computed as ${\bf \tilde z}_s = softmax(R_1([E({\bf x}^s), E({\bf\tilde x}^s)]))$.
-If a multi-head rotation classifier is used,
-the $j = y_i^s$ head is used as ${\bf\tilde{z}}_s = softmax(R_{1,j}[E({\bf x}^s), E({\bf\tilde{x}}^s)])$.
-The model is trained to minimizing the objective function $\mathcal{L}_1 = \mathcal{L}_{C_1} + \mathcal{L}_{R_1}$.
+The CNN is made of a feature extractor $E$ and two heads: $R_1$ and $C_1$.
+$C_1$ is the object classifier, which assigns to image ${\bf x}_i^s$ a predicted semantic class label,
+while $R_1$ is the relative rotation classifier, which assigns to the rotated image ${\bf \tilde x}_i^s$ a predicted rotation label.
+To keep the notation clear, we define as ${\bf y_i}$ and ${\bf z_i}$ the one-hot vector representations of the corresponding scalar labels.
+Notice that the multi-head rotation classifier internally uses $|\mathcal{C}_s|$ different heads for the rotation task.
+In this case, the head selected to perform the rotation prediction is up to the object classifier $C_1$ (during inference and not during training). 
+
+The object class vector of predicted probabilities is computed as ${\bf \hat{y}_i^s} = softmax(C_1(E({\bf x_i^s})))$, while the vector of predicted probabilities
+for rotation label is computed from the stacked features of the original and rotated image ${\bf \hat{z}_i^s} = softmax(R_1([E({\bf x_i^s}), E({\bf \tilde{x}_i^s})]))$.
+The model is trained to minimize the objective function $\mathcal{L}_1 = \mathcal{L}_{C_1} + \mathcal{L}_{R_1}$.
 This is the sum of two cross-entropy loss functions:
 
 \begin{equation}
-  \mathcal{L}_{C_1} = -\sum_{i\in\mathcal{D}_s} {\bf y}_i^s \log \tilde{\bf y}_i^s
+  \mathcal{L}_{C_1} = -\sum_{i\in\mathcal{D}_s} {\bf y}_i^s \log \hat{\bf y}_i^s
   \label{eq:baseloss_class}
 \end{equation}
 
 \begin{equation}
-  \mathcal{L}_{R_1} = -\alpha_1\sum_{i\in\mathcal{\tilde{D}}_s} {\bf y}_i^s \log \tilde{{\bf z}}_i^s
+  \mathcal{L}_{R_1} = -\alpha_1\sum_{i\in\mathcal{\tilde{D}}_s} {\bf y}_i^s \log \hat{{\bf z}}_i^s
   \label{eq:baseloss_rot}
 \end{equation}
 
@@ -288,13 +283,12 @@ Where $\alpha_1$ is a weight associated to the rotation task.
 We also try using an extended rotation loss function $\mathcal{L}_{R_1}^*$ implementing an additional center loss\cite{CenterLoss} term:
 
 \begin{equation}
-  \mathcal{L}_{R_1}^* = -\alpha_1\sum_{i\in\mathcal{D}_s} {\bf y}_i^s \log \tilde{{\bf z}}_i^s+\lambda_1||{\bf v}_i^s-\gamma({\bf z}_i^s)||_2^2
+  \mathcal{L}_{R_1}^* = -\alpha_1\sum_{i\in\mathcal{\tilde{D}}_s} {\bf y}_i^s \log \hat{{\bf z}}_i^s+\lambda_1||{\bf v}_i^s-\gamma({\bf z}_i^s)||_2^2
   \label{eq:center_loss}
 \end{equation}
 
-Here ${\bf v_i}$ is the penultimate layer of the rotation classifier,
-called features, 
-$\gamma({\bf z}_i)$ is the center of the features associated to class $i$,
+Here ${\bf v_i}$ is the output of the penultimate layer of $R_1$,
+$\gamma({\bf z}_i)$ is the centroid of the features associated to class $i$,
 $||\cdot||_2^2$ is the $l$-2 norm and $\lambda_1$ is the weight associated with the center loss term.
 
 When training is completed, 
