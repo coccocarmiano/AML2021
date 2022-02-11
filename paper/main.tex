@@ -49,7 +49,7 @@
 \author{Protopapa Andrea, Quarta Matteo, Ruggeri Giuseppe, Versace Alessandro\\
 Politecnico di Torino\\
 Italy\\
-{\tt\small \{s286302,s292477,s292459,292435\}@studenti.polito.it <- Riordinare}
+{\tt\small \{s286302,s292477,s292459,292435\}@studenti.polito.it}
 % For a paper whose authors are all at the same institution,
 % omit the following lines up until the closing ``}''.
 % Additional authors and addresses can be added with ``\and'',
@@ -195,7 +195,7 @@ and the domain adaptation;
 
 \subsection{Problem Formulation}
 \label{sec:problemformulation}
-We define as $\mathcal{D}_s = \{({\bf x}_i^s, y_i^s)\}_{i=1}^{N_S} \sim p_s$ the source dataset whose distribution of samples and labels is $p_s$,
+We define as $\mathcal{D}_s = \{({\bf x}_i^s, y_i^s)\}_{i=1}^{N_s} \sim p_s$ the source dataset whose distribution of samples and labels is $p_s$,
 while $\mathcal{D}_t = \{{\bf x}_i^t\}_{i=1}^{N_t} \sim p_t$ is the unlabeled target dataset drawn from distribution $p_t$. 
 
 The source dataset $\mathcal{D}_s$ is associated with a set of known classes $\mathcal{C}_s$,
@@ -275,7 +275,7 @@ This is the sum of two cross-entropy loss functions:
 \end{equation}
 
 \begin{equation}
-  \mathcal{L}_{R_1} = -\alpha_1\sum_{i\in\mathcal{\tilde{D}}_s} {\bf y}_i^s \log \hat{{\bf z}}_i^s
+  \mathcal{L}_{R_1} = -\alpha_1\sum_{i\in\mathcal{\tilde{D}}_s} {\bf z}_i^s \log \hat{{\bf z}}_i^s
   \label{eq:baseloss_rot}
 \end{equation}
 
@@ -283,7 +283,7 @@ Where $\alpha_1$ is a weight associated to the rotation task.
 We also try using an extended rotation loss function $\mathcal{L}_{R_1}^*$ implementing an additional center loss\cite{CenterLoss} term:
 
 \begin{equation}
-  \mathcal{L}_{R_1}^* = -\alpha_1\sum_{i\in\mathcal{\tilde{D}}_s} {\bf y}_i^s \log \hat{{\bf z}}_i^s+\lambda_1||{\bf v}_i^s-\gamma({\bf z}_i^s)||_2^2
+  \mathcal{L}_{R_1}^* = -\alpha_1\sum_{i\in\mathcal{\tilde{D}}_s} {\bf z}_i^s \log \hat{{\bf z}}_i^s+\lambda_1||{\bf v}_i^s-\gamma({\bf z}_i^s)||_2^2
   \label{eq:center_loss}
 \end{equation}
 
