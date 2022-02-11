@@ -79,62 +79,112 @@ Italy\\
 
 \section{Introduction}
 \label{sec:intro}
+Nowadays, the widespread usage of deep neural networks to accomplish computer vision tasks has brought huge benefits.
+In real world applications, as the tasks to cope with are becoming more and more challenging, machine learning methods commonly suffer of a gap between the performance
+obtained during the development, and the actual performance observed in real usages. 
 
+One of the problems which is causing this loss of performance is the domain gap between the training data and the actual observed data. Intuitively, if we train a model on a specific domain,
+such as employing real world pictures depicting real objects, for example to perform classification, we expect that the model will perform well on a fairly large variety of test cases.
+However, the actual data present a huge variety on the domains while still representing the same semantic classes that we want to predict.
+For example, we may want to be capable of predicting that both an image of a real elephant and a drawing of an elephant are containing the semantic class \textit{elephant}.
+Domain adaptation techniques have been developing in recent years to reduce the domain gap between a labeled source domain and one or more unlabeled target domains.
+Generally, this is done by enforcing the learning of domain-invariant patterns of both domains.
+As underlined in \cite{domainAdaptFarahani}, this is usually achieved by learning a transformation function which projects both the source and target domain data in a
+new space where we jointly maintain the underlying structure of the original data while reducing the domain gap by removing the domain-specific information.
 
+Another big issue encountered in real world usages is the presence of additional anomaly semantic classes on the observed data.
+The problem comes under the name of \textit{Open-Set Recognition (OSR)} \cite{OSRsurvey}, where we require not only to accurately classify the known seen classes, but also
+effectively deal with unknown ones, which would otherwise drastically weaken the robustness of the methods.
 
-Classical machine learning in the past years has made some oversimplified assumptions actually detached % Punteggiatura?
-from the usage of artificial intelligence systems in everyday real world and the problems they come with.
+The jointly presence and accounting of the two described problems has been emerged as a new sub-field of computer vision with the name of \textit{Open-Set Domain Adaptation (OSDA)}.
+As a consequence, if we try to reduce the domain gap between the whole target domain and the source domain, we will observe a negative adaptation due to the unwanted alignment between
+the data belonging to the anomaly semantic classes and the source classes we want to model and predict.
+For this reason, it is important to first perform anomaly detection of the additional set of novelty classes, translating the problem into a \textit{Closed-Set Domain Adaptation (CSDA)} one,
+and next do the alignment between the source and the target domain identified as known.
 
-The first assumption is that training and test sets come from the same distributions:
-a model trained on labeled data is expected to perform as well as on the test data.
-However, this assumption not always holds in real-world applications, 
-where naively applying the trained model on a new dataset may cause degradation in the performance.
-To solve this problem Domain Adaptation is widely used, 
-where the goal is to train a neural network on a source dataset for which labels are available and search for good performance on a target dataset, 
-which is related to but significantly different from the source dataset, 
-and whose label or annotation is not available. 
-Generally this is done by by minimizing the difference between domain distributions and enforcing the recognition of domain invariant patterns in both domains. 
-As underlined in \cite{domainAdaptFarahani}, 
-this is usually achieved by mapping source and target data by learning transformations for extracting such features and minimizing the gap between domains in the new representation space in an optimization procedure,
-while preserving the underlying structure of the original data. 
-
-Secondly, 
-in real-world classification tasks it is usually difficult to collect training samples to exhaust all classes when training a model.
-A more realistic scenario is open set recognition (OSR) \cite{OSRsurvey},
-where incomplete knowledge of the world exists at training time and unknown classes can be injected during testing, 
-requiring classifiers to not only accurately classify the seen classes but also effectively deal with unseen ones,
-which would otherwise drastically weaken the robustness of the methods.
-On the contrary this system should reject unknown classes at test time and separate the known and unknown samples.
-As underlined by \cite{OSRclassRec}, 
-existing open-set classifiers rely on deep networks trained in a supervised fashion on known classes in the training set;
-this causes specialization of learned representations to known classes and makes it hard to distinguish the unknowns from the knowns.
-
-To solve these significant issues our method is focused on a self-supervised task. 
-Self-supervised learning is an unsupervised learning technique where the supervised task is created out of the unlabeled input data. 
-This task could be as simple as predicting the lower half of an image being given the upper half of the same.
-Supervised learning requires both labeled and high quality data,
-usually very expensive, 
-whereas unlabeled data is often readily available in abundance.
-The fundamental idea behind self-supervised learning is creating some auxiliary task from input data so that,
-by solving such task,
-the model can learn the underlying structure of the data,
-for instance high-level knowledge, correlations, and metadata embedded in the data.
-This type of learning was recently used for Domain Adaptation, 
+Common machine learning methods usually leverage huge manually annotated datasets to perform well on the given tasks.
+However, acquiring annotated material is usually very costly and difficult, moreover, relying on such data may not be scalable in large applications on the long run.
+Thus, recently, unsupervised learning techniques are becoming crucial to cope with the aforementioned problems.
+One of those is self-supervised learning, which consists in creating new automatically labeled data starting from the original unlabeled data.
+The fundamental idea is creating some auxiliary task from input data so that,
+by solving such task, the model can learn the underlying structure of the data,
+for instance high-level knowledge, correlations, and metadata embedded.
+This type of learning has been recently used for Domain Adaptation, 
 learning robust cross-domain features and supporting generalization \cite{CarlucciJigsaw,SelfSupervisedXu},
-and also for some Open Set problems specialized in anomaly detection and discriminating anomalous data \cite{bergman2020classificationbased,dectionGeometric}.
+and also for some Open Set problems specialized in anomaly detection and discriminating anomalous data \cite{bergman2020classificationbased,dectionGeometric}. 
 
-The approach presented in this paper brings these topics together in the so called Open-Set Domain Adaptation (OSDA) problem. 
+The approach presented in this paper combines the power of the self-supervised learning with the standard supervised learning approach for semantic class recognition.
 A two-stage method is hence proposed, 
 aiming to identify and isolate unknown class samples in the first stage, 
 before reducing in the second stage the domain gap between the source domain and the known target domain to avoid negative transfer.
-This is done in both stages using a modified version of the rotation task as self-supervised model,
+This is done in both stages using a modified version of the rotation task as self-supervised method,
 predicting the relative rotation between an image and its rotated version.
-Finally a classifier is used to predict if each target sample belongs either to one of the knwon classes or to an unknown class, 
+Finally, a classifier is used to predict if each target sample belongs either to one of the knwon classes or to an unknown class, 
 being rejected in the latter case.
+We evaluate the method on the Office-Home benchmark \cite{OfficeHomeDataset} exploiting a new OSDA metric. 
 
-The method was evaluated on the Office-Home benchmark \cite{OfficeHomeDataset} with a specific OSDA metric.
+To wrap up, our \textbf{main contributions} are: 
+\begin{enumerate}
+  \item we define a new method to tackle OSDA problems which exploits the rotation recognition task to perform both the known/unknown target separation
+and the domain adaptation;
+  \item we introduce a new OSDA metric which properly balances the measure of both the performance on predicting the known classes and the performance on doing the unknown rejection;
+  \item we conduct an extensive ablation over the hyperparameters for different variants of the self-supervised task underlying the benefits of some techniques over others.
+\end{enumerate}
 
-{\bf ADD HERE RESULTS AND A BRIEF OF CONCLUSIVE IDEAS (ALSO POSSIBLE FUTURE WORKS)!!}
+
+% Classical machine learning in the past years has made some oversimplified assumptions actually detached % Punteggiatura?
+% from the usage of artificial intelligence systems in everyday real world and the problems they come with.
+
+% The first assumption is that training and test sets come from the same distributions:
+% a model trained on labeled data is expected to perform as well as on the test data.
+% However, this assumption not always holds in real-world applications, 
+% where naively applying the trained model on a new dataset may cause degradation in the performance.
+% To solve this problem Domain Adaptation is widely used, 
+% where the goal is to train a neural network on a source dataset for which labels are available and search for good performance on a target dataset, 
+% which is related to but significantly different from the source dataset, 
+% and whose label or annotation is not available. 
+% Generally this is done by by minimizing the difference between domain distributions and enforcing the recognition of domain invariant patterns in both domains. 
+% As underlined in \cite{domainAdaptFarahani}, 
+% this is usually achieved by mapping source and target data by learning transformations for extracting such features and minimizing the gap between domains in the new representation space in an optimization procedure,
+% while preserving the underlying structure of the original data. 
+
+% Secondly, 
+% in real-world classification tasks it is usually difficult to collect training samples to exhaust all classes when training a model.
+% A more realistic scenario is open set recognition (OSR) \cite{OSRsurvey},
+% where incomplete knowledge of the world exists at training time and unknown classes can be injected during testing, 
+% requiring classifiers to not only accurately classify the seen classes but also effectively deal with unseen ones,
+% which would otherwise drastically weaken the robustness of the methods.
+% On the contrary this system should reject unknown classes at test time and separate the known and unknown samples.
+% As underlined by \cite{OSRclassRec}, 
+% existing open-set classifiers rely on deep networks trained in a supervised fashion on known classes in the training set;
+% this causes specialization of learned representations to known classes and makes it hard to distinguish the unknowns from the knowns.
+
+% To solve these significant issues our method is focused on a self-supervised task. 
+% Self-supervised learning is an unsupervised learning technique where the supervised task is created out of the unlabeled input data. 
+% This task could be as simple as predicting the lower half of an image being given the upper half of the same.
+% Supervised learning requires both labeled and high quality data,
+% usually very expensive, 
+% whereas unlabeled data is often readily available in abundance.
+% The fundamental idea behind self-supervised learning is creating some auxiliary task from input data so that,
+% by solving such task,
+% the model can learn the underlying structure of the data,
+% for instance high-level knowledge, correlations, and metadata embedded in the data.
+% This type of learning was recently used for Domain Adaptation, 
+% learning robust cross-domain features and supporting generalization \cite{CarlucciJigsaw,SelfSupervisedXu},
+% and also for some Open Set problems specialized in anomaly detection and discriminating anomalous data \cite{bergman2020classificationbased,dectionGeometric}.
+
+% The approach presented in this paper brings these topics together in the so called Open-Set Domain Adaptation (OSDA) problem. 
+% A two-stage method is hence proposed, 
+% aiming to identify and isolate unknown class samples in the first stage, 
+% before reducing in the second stage the domain gap between the source domain and the known target domain to avoid negative transfer.
+% This is done in both stages using a modified version of the rotation task as self-supervised model,
+% predicting the relative rotation between an image and its rotated version.
+% Finally a classifier is used to predict if each target sample belongs either to one of the knwon classes or to an unknown class, 
+% being rejected in the latter case.
+
+% The method was evaluated on the Office-Home benchmark \cite{OfficeHomeDataset} with a specific OSDA metric.
+
+% {\bf ADD HERE RESULTS AND A BRIEF OF CONCLUSIVE IDEAS (ALSO POSSIBLE FUTURE WORKS)!!}
 
 %------------------------------------------------------------------------
 \section{Related Work}
