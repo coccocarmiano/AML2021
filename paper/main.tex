@@ -213,7 +213,7 @@ and a category gap ($\mathcal{C}_s \neq \mathcal{C}_t$). Moreover, the goal is t
 or to reject them as {\it unknown}.
 A metric to measure the complexity of the OSDA problem is the {\it openness} betweeen the source and the target domain \cite{bendale2015open}, 
 defined as $\displaystyle \mathbb{O} = 1-\frac{\mathcal{C}_s}{\mathcal{C}_t}$.
-When $\mathbb{O} > 0$, we are dealing with an OSDA problem, otherwise we are in a in a CSDA setting.
+When $\mathbb{O} > 0$, we are dealing with an OSDA problem, otherwise we are in a CSDA setting.
 
 \subsection{Approach}
 \label{sec:apporach}
@@ -225,14 +225,34 @@ using the same self-supervised task. Furthermore, we leverage $\mathcal{D}_{t, u
 
 \subsection{Rotation Recognition}
 
-We denote with $rot({\bf x}, k)$ the rotation of the sample image {\bf x} by $k\times 90$ degrees clockwise.
-This is the self-supervised part of our proposed model as rotation indices $k \in [0, 3]$ can be randomly generated and then predicted.
-Relative rotation,
-meaning that both original and rotated features are supplied to the model,
-is preferred over just using rotated features as some objects might not have an absolute correct orientation.
-Alternatively, 
-instead of having the model predict the rotation of a sample for any class using the same classifier, 
-we also try using a different head for each one of the known classes $\mathcal{C}_s$.
+We denote with $rot({\bf x}, k)$ the rotating function of a sample image {\bf x} by $k\times 90$ degrees clockwise.
+The self-supervised pre-text task consists in generating a random rotation index $k \in [0, 3]$ that then becomes
+the label for the rotated version of the image ${\bf \tilde{x}} = rot({\bf x}, k)$.
+Then, the task becomes a standard classification of the correct rotation index ($\mathcal{C}_r = \{0, 1, 2, 3\}$).
+
+{\it Relative orientation:}
+more precisely, we exploit a relative rotation task,
+implying that both the features of the original and rotated image are supplied to the rotation classifier.
+This is preferred over the absolute rotation task as some objects might not have an absolute coherent orientation
+inside the dataset
+(e.g. a pen may be present in different rotated versions inside the dataset). 
+
+{\it Multi-head rotation classifier:}
+alternatively, 
+instead of having a single rotation head predicting the rotation of a sample regardless of its semantic class, 
+we also try using a different head for each known class $\in \mathcal{C}_s$, each one responsible of predicting the rotation
+of the images belonging to that semantic class.
+This variation can mitigate the problem of trying to predict the rotation of a larger number
+of semantic classes. Infact, as the number of semantic classes grows,
+the problem of predicting the relative orientation becomes more difficult.
+The application of the rotation recognition pre-text task allows to effectively favor and force the model to learn
+domain-independent patterns, which are crucial to perform the novelty detection in a cross-domain fashion and, moreover,
+to successfully perform the domain alignment.
+To provide an explanation of why this applies, we can think that a rotation classifier needs to focus on discriminative patterns to
+successfully perform the rotation predictions, such as shapes, edges, and high-level object relative position like the position of the eyes
+w.r.t nose.
+The method and its effectiveness is further illustrated in \cite{OldROS}. 
+We will further discuss possible improvements and variants in {\bf PLEASE COMPLETE}.
 
 \subsection{Step I: Sample Separation}
 
