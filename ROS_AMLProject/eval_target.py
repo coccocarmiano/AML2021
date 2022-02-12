@@ -6,6 +6,7 @@ from sklearn.metrics import roc_auc_score
 from tqdm import tqdm
 import numpy as np
 from torch import nn
+#from tsnecuda import TSNE
 
 import matplotlib.pyplot as plt
 
@@ -81,7 +82,7 @@ def target_separation(args, E, C, R, target_loader_eval, device, rand):
             ground_truths.append(batch_labels.item())
             normality_scores.append(n_score.item())
 
-            all_features.append(R_features_0.data.numpy())
+            all_features.append(R_features_0.data.cpu().numpy())
 
     ground_truths = np.array(ground_truths, dtype=np.int)
     normality_scores = np.array(normality_scores)
@@ -103,6 +104,9 @@ def target_separation(args, E, C, R, target_loader_eval, device, rand):
 
     #plot features
     all_features = np.concatenate(all_features, 0)
+    print(f"Feature shape:{all_features.shape}")
+    #all_features_embedded = TSNE().fit_transform(all_features)
+    #print(f"Feature shape:{all_features_embedded.shape}")
     all_labels = ground_truths
     plot_features(all_features, all_labels, num_classes=2)
 
