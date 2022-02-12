@@ -14,7 +14,8 @@
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{booktabs}
-
+\usepackage{subcaption}
+\usepackage{caption}
 % It is strongly recommended to use hyperref, especially for the review version.
 % hyperref with option pagebackref eases the reviewers' job.
 % Please disable hyperref *only* if you encounter grave issues, e.g. with the
@@ -389,7 +390,7 @@ the target into a known and unknown part.
 \subsection{Benchmark}
 \label{sec:dataset}
 
-We evaluate the effectiveness of our proposed method exploiting the {\it Office-Home} {\bf INSERT REFERENCE} benchmark dataset,
+We evaluate the effectiveness of our proposed method exploiting the {\it Office-Home} \cite{OfficeHomeDataset} benchmark dataset,
 widely used to assess the performance for OSDA settings.
 The dataset is characterized by four different domains: Art (A), Clipart (C), Product (P) and Real World (R), and
 each domain contains the same 65 object class categories.
@@ -404,7 +405,7 @@ of the system's components responsible for the separation of the target.
 \label{sec:implementation_details}
 
 As we have already seen in section \ref{sec:method}, the network is composed of a feature extractor $E$, and two heads, $C_{1/2}$ and $R_{1/2}$.
-For the feature extraction, we employ a ResNet-18 ({\bf INSERT REF}) pre-trained on ImageNet.
+For the feature extraction, we employ a ResNet-18\cite{ResNet18} pre-trained on ImageNet.
 All the experiments are run training with a batch size equals to 32 and using a stochastic gradient descent optimization strategy
 with a weight decay of 0.0005 and a momentum of 0.9.
 The learning rate is set to 0.001 in the cases where we use a single-head rotation classifier as $R_1$, and 0.003 in the multi-head case.
@@ -438,7 +439,24 @@ $R_2$ is always a single-head classifier, even if using a multi-head rotation cl
 
 \subsection{Results}
 \label{sec:results}
-Table \ref{tab:results} contains the results for all 12 {\bf (ne abbiamo provati davvero 12???)} available domain shifts,
+\begin{figure*}[h!]
+  \centering
+  \begin{subfigure}[b]{0.35\textwidth}
+    \includegraphics[trim=0 0 0 2cm, clip, width=\linewidth]{hos-a1.png}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.35\textwidth}
+    \includegraphics[trim=0 0 0 2cm, clip, width=\linewidth]{hos-a2.png}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.35\textwidth}
+    \includegraphics[trim=0 0 0 2cm, clip, width=\linewidth]{hos-l.png}
+  \end{subfigure}
+  \begin{subfigure}[b]{0.35\textwidth}
+    \includegraphics[trim=0 0 0 2cm, clip, width=\linewidth]{hos-th.png}
+  \end{subfigure}
+  \caption{\label{figurelabel} Test Caption}
+\end{figure*}
+
+Table \ref{tab:results} contains the results for all 12 available domain shifts,
 as well as perfomance differences when using multi-head rotation classifiers and center loss.
 Further details are to be found in section \ref{sec:implementation_details}.
 We can notice that multi-headed models are more capable of correctly discriminating between known and unknown samples,
@@ -446,6 +464,163 @@ ultimately resulting in better domain alignment.
 A further advantage is given when combined with center loss.
 AUROC values are computed at the end of the separation stage, 
 while HOS values are sampled at regular times on the entire original target dataset.
+
+\subsection{Ablation Study}
+\label{sec:ablation_study}
+As shown in table \ref{tab:results} different architectures give different results, 
+and as shown in table \ref{tab:params} each one requires a different set of parameters.
+To choose optimal parameters a sequential approach is followed, 
+by optimizing one parameter at the time.
+The order of optimization followed is: 
+$\alpha_1$, $\lambda_1$, $\mathcal{\tilde N}$, $\alpha_2$.
+Models not using center loss just skip the $\lambda_1$ optimization.
+Ablation study were run on two domain shifts, 
+Art $\to$ Clipart and Clipart $\to$ Product.
+In table \ref{tab:ablation_params} we report the steps followed.
+All other settings follow what is reported in \ref{sec:model_parameters}.
+The result here obtained are the same reported in table \ref{tab:params}.
+
+\section{Future Work}
+
+The results show that self-supervision technique can help in domain adaptation task and open-set classification tasks.
+A few critical points still remain on our method of study and proposed solution.
+The most important one is probably parameter choosing for different models, as we have seen that variations cause huge differences in results and sequential optimization of parameter is a sub-optimal heuristic.
+Furthermore, having the model to learn two different tasks at once, it could be useful to use a slower learning model at the expense of longer training times.
+\newpage
+\appendix
+\section{Test}
+
+\begin{table}
+  \centering
+  \begin{tabular}[h]{||c|c|c||c||}
+    \hline
+    \multicolumn{4}{||c||}{OFF-OFF} \\
+    \hline
+    $\alpha_1$ & $\mathcal{\tilde N}$ & $\alpha_2$ & HOS$_{mean}$\\    
+    \hline
+    \hline
+    \multicolumn{4}{||c||}{Picking $\alpha_1$} \\
+    \hline
+    {\bf 1.0}  & \multirow{4}{*}{0.6} & \multirow{4}{*}{3.0} & {\bf 40.27\%} \\
+    3.0  & & & 22.69\% \\
+    5.0  & & & 18.78\% \\
+    10.0 & & & 9.99\% \\
+    \hline
+    \hline
+    \multicolumn{4}{||c||}{Picking $\mathcal{\tilde N}$} \\
+    \hline
+    \multirow{4}{*}{1.0} & 0.50 & \multirow{4}{*}{3.0}  & 28.05\%\\
+    & 0.55 & & 34.73\% \\
+    & 0.60 & & 40.27\% \\
+    & 0.65 & & 43.16\% \\
+    \hline
+    \hline
+    \multicolumn{4}{||c||}{Picking $\alpha_2$} \\
+    \hline
+    \multirow{7}{*}{1.0} & \multirow{7}{*}{0.7} & 0.1 & 42.79\%\\
+    && 1.0 & 44.35\% \\
+    && 2.0 & 43.53\% \\
+    && {\bf 3.0} & {\bf 44.38}\% \\
+    && 4.0 & 43.12\% \\
+    && 5.0 & 41.97\% \\
+    && 10.0 & 42.01\% \\
+    \hline
+  \end{tabular}
+  \caption{\centering\label{tab:ablationoffoff} Hyperparameters picking process for configuration Multi-Head Off and Center-Loss Off}
+\end{table}
+
+
+
+\begin{table}
+  \centering
+  \begin{tabular}[h]{||c|c|c||c||}
+    \hline
+    \multicolumn{4}{||c||}{ON-OFF} \\
+    \hline
+    $\alpha_1$ & $\mathcal{\tilde N}$ & $\alpha_2$ & HOS$_{mean}$\\    
+    \hline
+    \hline
+    \multicolumn{4}{||c||}{Picking $\alpha_1$} \\
+    \hline
+    {\bf 1.0}  & \multirow{4}{*}{0.6} & \multirow{4}{*}{3.0} & {\bf 43.48\%} \\
+    3.0  & & & 38.45\% \\
+    5.0  & & & 37.61\% \\
+    10.0 & & & 33.23\% \\
+    \hline
+    \hline
+    \multicolumn{4}{||c||}{Picking $\mathcal{\tilde N}$} \\
+    \hline
+    \multirow{6}{*}{1.0} & 0.4 & \multirow{6}{*}{3.0}  & 38.40\%\\
+    & 0.45 & & 42.40\% \\
+    & 0.5 & & 43.48\% \\
+    & 0.55 & & 46.21\% \\
+    & {\bf0.6} & & {\bf 50.17\%} \\
+    & 0.65 & & 45.82\% \\
+    \hline
+    \hline
+    \multicolumn{4}{||c||}{Picking $\alpha_2$} \\
+    \hline
+    \multirow{7}{*}{1.0} & \multirow{7}{*}{0.7} & 0.1 & 46.02\%\\
+    && 1.0 & 47.71\% \\
+    && 2.0 & 46.56\% \\
+    && {\bf 3.0} & {\bf 50.17\%} \\
+    && 4.0 & 46.57\% \\
+    && 5.0 & 47.52\% \\
+    && 10.0 & 44.56\% \\
+    \hline
+  \end{tabular}
+  \caption{\centering\label{tab:ablationonoff} Hyperparameters picking process for configuration Multi-Head On and Center-Loss Off}
+\end{table}
+
+
+\begin{table}
+  \centering
+  \begin{tabular}[h]{||c|c|c|c||c||}
+    \hline
+    \multicolumn{5}{||c||}{ON-ON} \\
+    \hline
+    $\alpha_1$ & $\lambda_1$ & $\mathcal{\tilde N}$ & $\alpha_2$ & HOS$_{mean}$ \\
+    \hline
+    \hline
+    \multicolumn{5}{||c||}{Picking $\alpha_1$} \\
+    \hline
+    1.0 & \multirow{4}{*}{0.01} & \multirow{4}{*}{0.05} & \multirow{4}{*}{3.0} & 44.90\% \\
+    {\bf 3.0} & && & {\bf 45.33\%} \\
+    5.0 & && & 42.41\% \\
+    10.0 & && & 37.15\% \\
+    \hline
+    \hline
+    \multicolumn{5}{||c||}{Picking $\lambda_1$} \\
+    \hline
+    \multirow{5}{*}{3} & 0.0001 & \multirow{5}{*}{0.5} & \multirow{5}{*}{3.0} & 39.90\% \\
+    & 0.001 & & & 36.71\% \\
+    & 0.01 & & & 45.33\% \\
+    & {\bf 0.05 }& & & {\bf 46.63\%} \\
+    & 0.1 & & & 37.44\% \\
+    \hline
+    \hline
+    \multicolumn{5}{||c||}{Picking $\mathcal{\tilde N}$} \\
+    \hline
+    \multirow{5}{*}{3} & \multirow{5}{*}{0.05} & 0.4 & \multirow{5}{*}{3.0} & 44.32\% \\
+    & & 0.45 & & 45.13\% \\
+    & & 0.5 & & 46.63\% \\
+    & & 0.55 & & 47.09\% \\
+    & & {\bf 0.6} & & {\bf 49.78\%} \\
+    \hline
+    \hline
+    \multicolumn{5}{||c||}{Picking $\alpha_2$} \\
+    \hline
+    \multirow{7}{*}{3} & \multirow{7}{*}{0.05} & \multirow{7}{*}{0.6} & 0.1 & 45.73\% \\
+    & & & 1.0 & 45.23\% \\
+    & & & 2.0 & 45.76\% \\
+    & & & {\bf 3.0} & {\bf 49.78\%} \\
+    & & & 4.0 & 46.20\% \\
+    & & & 5.0 & 48.60\% \\
+    & & & 10.0 & 44.14\% \\
+    \hline
+  \end{tabular}
+  \caption{\centering\label{tab:ablationonon} Hyperparameters picking process for configuration Multi-Head On and Center-Loss On}
+\end{table}
 
 
 \begin{table}
@@ -495,87 +670,6 @@ while HOS values are sampled at regular times on the entire original target data
   \caption{\centering\label{tab:results}Results for domain alignment. AUROC is the area under the ROC. HOS is latest achieved HOS, HOS* the best achieved through all epochs.}
 \end{table}
 
-
-
-
-
-\begin{table}
-  \centering
-  \begin{tabular}[b]{||c|c|c|c|c|c||}
-    \hline
-    MH & CL & $\alpha_1$ & $\alpha_2$ & $\lambda_1$ & $\mathcal{\tilde N}$ \\
-    \hline
-    Off & Off & 0.0 & 0.0 & 0.0 & 0.0 \\
-    On & Off & 0.0 & 0.0 & 0.0 & 0.0 \\
-    Off & On & 0.0 & 0.0 & 0.0 & 0.0 \\
-    On & On & 0.0 & 0.0 & 0.0 & 0.0 \\
-    \hline
-  \end{tabular}
-  \caption{\label{tab:params}Model Parameters}
-\end{table}
-
-\subsection{Ablation Study}
-\label{sec:ablation_study}
-As shown in table \ref{tab:results} different architectures give different results, 
-and as shown in table \ref{tab:params} each one requires a different set of parameters.
-To choose optimal parameters a sequential approach is followed, 
-by optimizing one parameter at the time.
-The order of optimization followed is: 
-$\alpha_1$, $\lambda_1$, $\mathcal{\tilde N}$, $\alpha_2$.
-Models not using center loss just skip the $\lambda_1$ optimization.
-Ablation study were run on two domain shifts, 
-Art $\to$ Clipart and Clipart $\to$ Product.
-In table \ref{tab:ablation_params} we report the steps followed.
-All other settings follow what is reported in \ref{sec:model_parameters}.
-The result here obtained are the same reported in table \ref{tab:params}.
-
-
-\begin{table}
-  \centering
-  \begin{tabular}[h]{||c|c|c||c|c||}
-    \hline
-    \multicolumn{5}{||c||}{MH OFF CL OFF} \\
-    \hline
-    $\alpha_1$ & $\mathcal{\tilde N}$ & $\alpha_2$  & AUROC & HOS$_{mean}$\\    
-    \hline
-    \hline
-    \multicolumn{5}{||c||}{Picking $\alpha_1$} \\
-    \hline
-    1.0 & \multirow{4}{*}{0.5} & \multirow{4}{*}{3.0} & 0.5 & 30\% \\
-    3.0 & & & 0.5 & 30\% \\
-    5.0 & & & 0.5 & 30\% \\
-    10.0 & & & 0.5 & 30\% \\
-    \hline
-    \hline
-    \multicolumn{5}{||c||}{Picking $\mathcal{\tilde N}$} \\
-    \hline
-    \multirow{4}{*}{1.0} & 0.40 & \multirow{4}{*}{3.0} & 0.5 & 50\%\\
-    & 0.50 && 0.5 & 50\% \\
-    & 0.55 && 0.5 & 50\% \\
-    & 0.60 && 0.5 & 50\% \\
-    \hline
-    \hline
-    \multicolumn{5}{||c||}{Picking $\alpha_2$} \\
-    \hline
-    \multirow{4}{*}{1.0} & \multirow{4}{*}{0.6} & 1.0 & 0.5 & 50\%\\
-    && 3.0 & 0.5 & 50\% \\
-    && 5.0 & 0.5 & 50\% \\
-    && 10.0 & 0.5 & 50\% \\
-    \hline
-    \hline
-    \multicolumn{5}{||c||}{Final Parameters} \\
-    \hline
-    1.0 & 0.6 & 3.0 & 0.5 & 50\%\\
-    \hline
-  \end{tabular}
-  \caption{\label{tab:ablationoffoff} Ablation performed for OFF-OFF configuration}
-\end{table}
-\section{Future Work}
-
-The results show that self-supervision technique can help in domain adaptation task and open-set classification tasks.
-A few critical points still remain on our method of study and proposed solution.
-The most important one is probably parameter choosing for different models, as we have seen that variations cause huge differences in results and sequential optimization of parameter is a sub-optimal heuristic.
-Furthermore, having the model to learn two different tasks at once, it could be useful to use a slower learning model at the expense of longer training times.
 
 %%%%%%%%% REFERENCES
 {\small
