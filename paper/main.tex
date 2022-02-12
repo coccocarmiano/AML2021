@@ -224,6 +224,7 @@ Next, in the second stage, we can close the gap between the source domain and th
 using the same self-supervised task. Furthermore, we leverage $\mathcal{D}_t^{unk}$ to learn the additional {\it unknown} class.
 
 \subsection{Rotation Recognition}
+\label{sec:rotrecognition}
 
 We denote with $rot({\bf x}, k)$ the rotating function of a sample image {\bf x} by $k\times 90$ degrees clockwise.
 The self-supervised pre-text task consists in generating a random rotation index $k \in [0, 3]$ that then becomes
@@ -255,6 +256,7 @@ The method and its effectiveness is further illustrated in \cite{OldROS}.
 We will further discuss possible improvements and variants in {\bf PLEASE COMPLETE}.
 
 \subsection{Step I: target known/unknown separation}
+\label{sec:stepone}
 
 To perform the target separation we train a CNN iterating on $\tilde{\mathcal{D}_s} = \{({\bf x}_i^s, {\bf \tilde x}_i^s, z_i^s)\}_{i=1}^{N_s}$,
 where ${\bf \tilde x}_i^s$ is the $z_i^s\times 90$ degrees rotated version of ${\bf x}_i^s$.
@@ -398,6 +400,42 @@ For each experiment, we collect the HOS value achieved after the last training e
 along with the AUROC value computed after the step 1, crucial to assess the goodness
 of the system's components responsible for the separation of the target.
 
+\subsection{Implementation Details}
+\label{sec:implementation_details}
+
+As we have already seen in section \ref{sec:method}, the network is composed of a feature extractor $E$, and two heads, $C_{1/2}$ and $R_{1/2}$.
+For the feature extraction, we employ a ResNet-18 ({\bf INSERT REF}) pre-trained on ImageNet.
+All the experiments are run training with a batch size equals to 32 and using a stochastic gradient descent optimization strategy
+with a weight decay of 0.0005 and a momentum of 0.9.
+The learning rate is set to 0.001 in the cases where we use a single-head rotation classifier as $R_1$, and 0.003 in the multi-head case.
+The reason of this choice lies on the fact that, with a multi-head rotation classifier, we have to train 45 heads instead of a single one,
+so the training process needs to be speeded up.
+Moreover, we set a learning rate 10 times lower for the feature extractor weights.
+We also decrease the learning rate using a step learning rate scheduler, which reduces it by a factor of 10 after 90\% of total epochs.
+All models are trained for 50 epochs for the step one and for 25 epochs for the step two.
+For models using the center loss a centroid learning rate of 0.001 is used.
+The other hyperparameters are analyzed performing an ablation on section {\bf INSERT REF}.
+
+{\it Feature extractor E}: ResNet-18 pre-trained on ImageNet. It is also shared between step 1 and step 2.
+
+{\it Classifier $C_1$}:
+It is a simple linear classifier with a 45-dimensional output.
+
+{\it Classifier $C_2$}:
+Like $C_1$ but with a 46-dimensional output to consider also the unknown class. Furthermore, it leverages the learning already performed on $C_1$.
+It is worth noting that we rebalance the weight of the loss computed on samples belonging to the class unknown in the following way.
+After having separated the target into $\mathcal{D}_t^{knw}$ and $\mathcal{D}_t^{unk}$,
+we select the weight as $\frac{\mathcal{\bar{D}}_s}{|\mathcal{D}_t^{unk}|}$,
+where ${\mathcal{\bar{D}}_s}$ is the average number of samples contained in the source known classes.
+This ensures that we correctly balance the unknown class during training in a way which is independent
+on the number of identified target unknown samples during the separation.
+
+{\it Classifier $R_1$, $R_2$}: 
+they are composed by a linear layer $1024\to 256$, followed by a batch normalization layer and a leaky relu activation.
+The last layer is then a linear one for the actual classification $256\to 4$.
+The 256-dimensional output are the features used by the center loss for inferring class centroids.
+$R_2$ is always a single-head classifier, even if using a multi-head rotation classifier.
+
 \subsection{Results}
 \label{sec:results}
 Table \ref{tab:results} contains the results for all 12 {\bf (ne abbiamo provati davvero 12???)} available domain shifts,
@@ -457,42 +495,7 @@ while HOS values are sampled at regular times on the entire original target data
   \caption{\centering\label{tab:results}Results for domain alignment. AUROC is the area under the ROC. HOS is latest achieved HOS, HOS* the best achieved through all epochs.}
 \end{table}
 
-\section{Implementation Details}
-\label{sec:implementation_details}
-\subsection{Model Parameters}
-\label{sec:model_parameters}
 
-All models were run using stochastic gradient descent with batch size 32,
-a weight decay of 0.0005 and momentum of 0.9.
-For single-headed models, 
-a base learning rate of 0.001 is used,
-while for multi-headed models it is set to 0.003.
-This is because only one head of the heads is trained with each samples,
-so the process needs to be sped up.
-Rotation classifier use a learning rate set to a tenth of the base learning rate.
-A step learning rate scheduler is used, reducing it by a factor of 10 after 90\% of epochs.
-All models are run for 50 epochs for the first step described in \ref{eq:sample_separation} and for 25 epochs for the second step described in \ref{sec:domain_alignment}.
-For model using the center loss a centroid learning rate of 0.5 is used.
-All other parameters are configuration-sepcific and are reported in table \ref{tab:params}.
-"No Rotation" model is the same as a single-head without center loss model with $\alpha_2 = 0$.
-
-
-% % % 
-
-{\it Extractor E}: The extractor employed is a ResNet-34{\bf[Inserire cit a ResNet]} {\bf è pretrained???} {\bf ma 34 o 18???} for all classifiers.
-
-{\it Classifier $C_1$, $C_2$}: $C_1$ is composed of a 45 dimensional output. 
-All unknown samples are mapped as belonging to class 45.
-$C_1$ is used as a starting point for $C_2$.
-As no unknowns are present on the source dataset (they are removed),
-the weight of unknwon samples in the second step is set to {\bf spiegare come è bilanciato} while for all other classes it is set to 1.
-A single fully connected layer $512\to 45$ with batch-norm is used.
-
-{\it Classifier $R_1$, $R_2$}: 
-$R_1$ and $R_2$ are composed by a $1024\to 256$  and a $256\to 4$ fully connected layers, named {\it Discriminators}.
-The 256-dimensional output are the features used by the center loss for inferring class centers.
-If multi-head is used, each head is a separate discriminator.
-$R_2$ is always a single-head classifier, even if using a multi-head rotation classifier.
 
 
 
