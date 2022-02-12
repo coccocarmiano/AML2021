@@ -6,7 +6,7 @@ from sklearn.metrics import roc_auc_score
 from tqdm import tqdm
 import numpy as np
 from torch import nn
-#from tsnecuda import TSNE
+from tsnecuda import TSNE
 
 import matplotlib.pyplot as plt
 
@@ -105,10 +105,10 @@ def target_separation(args, E, C, R, target_loader_eval, device, rand):
     #plot features
     all_features = np.concatenate(all_features, 0)
     print(f"Feature shape:{all_features.shape}")
-    #all_features_embedded = TSNE().fit_transform(all_features)
-    #print(f"Feature shape:{all_features_embedded.shape}")
+    all_features_embedded = TSNE().fit_transform(all_features)
+    print(f"Feature shape:{all_features_embedded.shape}")
     all_labels = ground_truths
-    plot_features(args,all_features, all_labels, num_classes=2)
+    plot_features(args,all_features_embedded, all_labels, num_classes=2)
 
     # Compute AUC-ROC value
     auc = roc_auc_score(ground_truths, normality_scores)
