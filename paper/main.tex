@@ -234,11 +234,6 @@ activation score for one of the known class categories.
 Since then, several other works have analyzed this challenge in the context 
 of deep networks \cite{perera2019deep},\cite{hein2019relu}
 
-In \cite{bendale2015open}, OpenMax was proposed as an alternative to the SoftMax operator using 
-a statistical method apportion class probabilities to the open-set class. 
-A k + 1 classifier for a k class problem was used where the extra class was treated
-as the open-set class.  
-
 In \cite{ge2017generative}, a Generative Adversarial Network (GAN) based framework was used to estimate
 open-set class activations.
 
@@ -266,7 +261,7 @@ tasks that learn deep feature representations which will hopefully be informativ
 for downstream “real” tasks.
 Many such auxiliary tasks have been proposed in the literature, including
 image colorization \cite{zhang2016colorful,larsson2017learning}, patch location 
-prediction \cite{doersch2016unsuperviseddoersch2017multitask},
+prediction \cite{doersch2016unsupervised, doersch2017multitask},
 image jigsaw puzzle [\cite{noroozi2017unsupervised}, image inpainting \cite{pathak2016context},
 contrastive learning \cite{oord2019representation}, geometric transformations \cite{dosovitskiy2015discriminative}. Another geometric 
 transformation task is rotation recognition \cite{OldROS}, where input images
@@ -364,8 +359,8 @@ to successfully perform the domain alignment.
 To provide an explanation of why this applies, we can think that a rotation classifier needs to focus on discriminative patterns to
 successfully perform the rotation predictions, such as shapes, edges, and high-level object relative position like the position of the eyes
 w.r.t nose.
-The method and its effectiveness is further illustrated in \cite{OldROS}. 
-We will further discuss possible improvements and variants in {\bf PLEASE COMPLETE}.
+The method and its effectiveness is further illustrated in \cite{OldROS},
+and further improvements will be discussed in \ref{sec:future_work}.
 
 \subsection{Step I: target known/unknown separation}
 \label{sec:stepone}
@@ -592,6 +587,7 @@ All other settings follow what is reported in \ref{sec:model_parameters}.
 The result here obtained are the same reported in table \ref{tab:params}.
 
 \section{Future Work}
+\label{sec:future_work}
 
 The results show that self-supervision technique can help in domain adaptation task and open-set classification tasks.
 A few critical points still remain on our method of study and proposed solution.
