@@ -190,113 +190,83 @@ and the domain adaptation;
 %------------------------------------------------------------------------
 \section{Related Work}
 \label{sec:relatedwork}
-\textbf{Closed-Set Domain Adaptation}
-Unsupervised domain adaptation is the setting where labeled training data is 
+\textbf{Closed-Set Domain Adaptation} is the setting where labeled training data is 
 available on a source domain, but the goal is to have good performance on a 
-target domain with only unlabeled data and with a different marginal distribution
-of data from the source dataset. The aim is to align the learned representations 
-of the source and target domains.
+unlabeled target domain with a different marginal distribution
+of data. The aim is to align the learned representations of the source and target domains.
 
 Methods for unsupervised domain adaptation in computer vision can be divided into 
-three broad classes. The first class aims to induce alignment between the
-source and the target domains in some feature space optimizing for some
-measurement of distributional discrepancy. \cite{bousmalis2016domain,long2015learning,long2017deep,ganin2015unsupervised,hoffman2017cycada}
-
+three broad classes. The first class aims to induce alignment in some feature space optimizing the distributional discrepancy \cite{bousmalis2016domain,long2015learning,ganin2015unsupervised,hoffman2017cycada}.
 The second class of methods directly transforms the source images to resemble 
-the target images with generative models \cite{taigman2016unsupervised,tzeng2017adversarial,bousmalis2017unsupervised}. 
-While similar to the first class in the philosophy of alignment, 
-these methods operate on image pixels directly instead of an intermediate 
-representation space, and therefore can benefit from an additional
-round of adaptation in some representation space. Since they rely on generative 
-models, large-scale datasets must train the generative model robustly.
-Such methods often require complex methods of optimization.
-
-The third class of methods uses a model trained on the labeled source data to 
+the target images with generative models \cite{taigman2016unsupervised,tzeng2017adversarial,bousmalis2017unsupervised}, 
+operating on image pixels directly instead of an intermediate 
+representation space.
+The third class uses a model trained on the labeled source data to 
 estimate labels on the target data, then trains on some of those estimated 
 pseudo-labels (e.g. the most confident ones), therefore bootstrapping through the 
-unlabeled target data. Sometimes called self-ensembling \cite{french2018selfensembling}, this technique is borrowed from semi-supervised learning, 
-where it is called co-training \cite{saito2017asymmetric,zou2018domain,chen2017rethinking}
+unlabeled target data. This technique is borrowed from semi-supervised learning, 
+where it is called co-training \cite{saito2017asymmetric,zou2018domain,chen2017rethinking}.
 
 In contrast, the presented method uses a Self-Supervised approach, already presented in 
-the recent years by many other works \cite{sun2019unsupervised,yue2021prototypical,saito2020universal,BAFFOUR2022126,kim2020crossdomain,ieeeopensetselfsup} . Self-supervised methods use pretext tasks 
-(e.g., image rotation, jigsaw puzzle \cite{CarlucciJigsaw}, mutual information (MI) \cite{selfsupfeng}, 
-and instance discrimination \cite{chen2020simple}) to learn high-level feature representation in 
+the recent years by many other works \cite{sun2019unsupervised,saito2020universa,yue2021prototypical}.
+using pretext tasks (e.g., image rotation, jigsaw puzzle \cite{CarlucciJigsaw}, mutual information (MI) \cite{selfsupfeng}, instance discrimination \cite{chen2020simple}) to learn high-level feature representation in 
 source and target domains by jointly training a shared feature extractor.
 
+\textbf{Open Set Recognition} (OSR) has the objective of learning a classifier 
+that can reject the unknown samples while classifying the known classes accurately.
 
-\textbf{Open Set Recognition}
-The objective of Open Set Recognition (OSR) is to learn a classifier that can 
-reject the unknown samples while classifying the known classes accurately.
-
-The problem was first formulated in \cite{firstPaperOSR}, where authors 
-pointed out the possibility of an open-set sample generating a very high 
-activation score for one of the known class categories. 
-Since then, several other works have analyzed this challenge in the context 
-of deep networks \cite{perera2019deep},\cite{hein2019relu}
-
-In \cite{ge2017generative}, a Generative Adversarial Network (GAN) based framework was used to estimate
-open-set class activations.
-
-\cite{kong2021opengan} achieve strong OSR performance by using an adversarially 
-trained discriminator to delineate closed from open-set images,
-leveraging real open-set images for model selection
-
+The problem was first formulated in \cite{firstPaperOSR} and since then, several other works have analyzed this challenge in the context 
+of deep networks \cite{perera2019deep, hein2019relu, bendale2015open}.
+Some techinques presented in the past were focus on an adversarial approach to 
+delineate closed from open-set images \cite{ge2017generative, kong2021opengan}.
 Other approaches include reconstruction based methods 
 \cite{yoshihashi2019classificationreconstruction}
-which use poor test-time reconstruction as an open-set indicator, 
-and prototype-based methods \cite{shu2020podn} 
-which represent known classes with learned prototypes, and identify open-set images
-based on distances to the prototypes.
+which use poor test-time reconstruction as an open-set indicator.
 
 In the recent years different works to a Self-Supervised solution, used also in the 
-presented method, engaging in learning representations that are invariant to the 
-transformations of the input data and improving separation of classes from each other 
-and from open-set samples \cite{dhamija2021selfsupervised,jia2021selfsupervised,Perera_2020_CVPR,GeoTran}
+presented method, engaging in learning invariant representations to the 
+transformations of the input data, improving separation of classes from each other 
+and from open-set samples \cite{dhamija2021selfsupervised,jia2021selfsupervised,GeoTran}.
 
-\textbf{Self-supervised Learning}
-The emerging field of self-supervised learning uses the machinery of supervised 
-learning on problems where external supervision is not available. 
-The idea is to use data itself as supervision for auxiliary (also called “pretext”) 
-tasks that learn deep feature representations which will hopefully be informative 
+\textbf{Self-supervised Learning} is an emerging field focused on using 
+data itself as supervision for auxiliary (also called “pretext”) 
+tasks that learn deep feature representations, which will hopefully be informative 
 for downstream “real” tasks.
 Many such auxiliary tasks have been proposed in the literature, including
-image colorization \cite{zhang2016colorful,larsson2017learning}, patch location 
-prediction \cite{doersch2016unsupervised, doersch2017multitask},
+image colorization \cite{zhang2016colorful},
 image jigsaw puzzle [\cite{noroozi2017unsupervised}, image inpainting \cite{pathak2016context},
-contrastive learning \cite{oord2019representation}, geometric transformations \cite{dosovitskiy2015discriminative}. Another geometric 
-transformation task is rotation recognition \cite{OldROS}, where input images
+contrastive learning \cite{oord2019representation}, geometric transformations \cite{dosovitskiy2015discriminative}.
+
+Another geometric transformation task is rotation recognition \cite{OldROS}, where input images
 are rotated by multiples of 90° and the network is trained to predict the rotation
 angle pf each image. This pretext task has been successfully used for both anomaly
-detection \cite{golan2018deep} and closed-set domain adaptation \cite{selfsupxu}
+detection \cite{golan2018deep} and closed-set domain adaptation \cite{selfsupxu}.
 
-\textbf{Open Set Domain Adaptation}
-Open Set Domain Adaptation (OSDA) is a challenging domain adaptation setting 
-which allows the existence of unknown classes on the target domain.
-The term "OSDA" was first introduced by Busto and Gall \cite{firstosda} that
-considered the setting where each domain contains, in addition to the shared
-categories, a set of private categories. The currently accepted defiition of OSDA
-was introduced by Saito et al. \cite{saito2018open} that considered the target as 
+\textbf{Open Set Domain Adaptation} (OSDA) is a challenging domain adaptation 
+setting which allows the existence of unknown classes on the target domain.
+The term "OSDA" was first introduced by Busto and Gall \cite{firstosda}, but the 
+currently accepted definition was introduced by Saito \etal \cite{saito2018open} considering the target as 
 containing all the source categories and additional set of private categories 
-that should be considered unknown, presenting Open Set
+that should be considered unknown. They have presented Open Set
 Back-Propagation (OSBP) \cite{saito2018open} as an adversarial method 
-to increase the prediction variances so that the generator can choose to align 
-a target sample with the source known or reject it as an unknown target samples.
+to increase the prediction variances so that the generator can choose if accept Ornot a target saple.
 Separate To Adapt (STA) \cite{sat} train a multi-binary classifier to progressively 
 separate the samples of unknown and known classes.
 Universal Adaptation Network (UAN) \cite{uan}, originally proposed for the universal 
 domain adaptation setting that is a superset of OSDA, quantify the sample-level 
-transferability and recognize the unknown samples based on the transferability.
-Attract or Distract (AoD) \cite{feng2019attract} starts with a mild alignment with 
-a procedure similar to \cite{saito2018open} refining the decision by using 
+transferability and recognize the unknown samples based on it.
+Attract or Distract (AoD) \cite{feng2019attract} refine the decision by using 
 metric learning to reduce the intra-class distance in known classes and push 
 the unknown class away from the known classes.
 Jing \etal \cite{Jing_Li_Zhu_Ding_Lu_Yang_2021} have recently proposed a method
 to recognize the unknown samples according to the centroid deviation angles and
 employing the statistical Extreme Value Theory to recognize the unknown 
 samples that are misclassified into known classes.
-The approach that we are going to present is instead based on a self-supervision 
+
+The approach that we are going to present is instead based on a Self-Supervision 
 task, the rotation recognition, used to both separate known and unknown target 
 samples and align the known source and target distributions.
+
 \section{Method}
 \label{sec:method}
 
