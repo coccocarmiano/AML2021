@@ -29,6 +29,8 @@ def target_separation(args, E, C, R, target_loader_eval, device, rand):
     ground_truths = []
     normality_scores = []
 
+    all_features, all_labels = [], []
+
     with torch.no_grad():
         for batch_samples, batch_labels, batch_samples_rot_0, batch_labels_rot_0, batch_samples_rot_90, batch_labels_rot_90,\
             batch_samples_rot_180, batch_labels_rot_180, batch_samples_rot_270, batch_labels_rot_270 in tqdm(target_loader_eval):
@@ -59,7 +61,7 @@ def target_separation(args, E, C, R, target_loader_eval, device, rand):
             predicted_labels = torch.argmax(C_scores, dim=1)
 
             # Use R1 to get the scores
-            R_scores_0 = R(E_output_conc_0, predicted_labels)
+            R_features_0, R_scores_0 = R.forward_extended(E_output_conc_0, predicted_labels)
             R_scores_90 = R(E_output_conc_90, predicted_labels)
             R_scores_180 = R(E_output_conc_180, predicted_labels)
             R_scores_270 = R(E_output_conc_270, predicted_labels)
@@ -79,6 +81,8 @@ def target_separation(args, E, C, R, target_loader_eval, device, rand):
             ground_truths.append(batch_labels.item())
             normality_scores.append(n_score.item())
 
+            all_features.append(R_features_0.data.numpy())
+
     ground_truths = np.array(ground_truths, dtype=np.int)
     normality_scores = np.array(normality_scores)
 
@@ -96,6 +100,11 @@ def target_separation(args, E, C, R, target_loader_eval, device, rand):
     for ns in normality_scores:
         print(f"{ns:.3f}, ", end="")
     print()
+
+    #plot features
+    all_features = np.concatenate(all_features, 0)
+    all_labels = ground_truths
+    plot_features(all_features, all_labels, num_classes=2)
 
     # Compute AUC-ROC value
     auc = roc_auc_score(ground_truths, normality_scores)
@@ -225,6 +234,26 @@ def draw_ROC(args, llr, labels, color=None, recognizer_name=""):
     fig_path = args.plot_path + "_sep_roc.png"
     plt.savefig(fig_path)
     plt.show()
+
+def plot_features(args,features, labels, num_classes):
+    """Plot features on 2D plane.
+    Args:
+        features: (num_instances, num_features).
+        labels: (num_instances). 
+    """
+    colors = ['C0', 'C1']
+    for label_idx in range(num_classes):
+        plt.scatter(
+            features[labels==label_idx, 0],
+            features[labels==label_idx, 1],
+            c=colors[label_idx],
+            s=1,
+        )
+    plt.legend(['Unknown', 'Known'], loc='upper right')
+    fig_path = args.plot_path + "_features.png"
+    plt.savefig(fig_path)
+    plt.show()
+    plt.close()
 
 
 def target_evaluation(args, E, C, target_loader_eval, device):
