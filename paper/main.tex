@@ -358,20 +358,25 @@ recall that $\mathcal{L}_{C_2}$ is now computed using the new arranged dataset $
   \label{eq:baseloss_rot2}
 \end{equation}
 
-\subsection{Performance Metrics}
+\subsection{Performance metrics}
 \label{sec:performance_metrics}
 
-Evaluating model perfomance requires finding a balance between two values:
-{\it OS*}, 
-the fraction of correctly classified samples,
-and {\it UNK}, 
-the fraction of correclty rejected samples.
-A model not confident enough to reject a sample could still achieve high {\it OS*} values but near-zero {\it UNK},
-while a model rejecting every  sample as unkwnown will achieve perfect {\it UNK} and zero {\it OS*}.
-To compare models we use the harmonic mean between {\it OS*} and {\it UNK}, 
-defined as $HOS = 2\frac{OS^*\times UNK}{OS^*+UNK}$.
-This is because this kind of mean tends gives a bigger weight to the smaller values,
-resulting in a more severe evaluation of models.
+To have a meaningful comparison of the effectiveness
+of the models to solve OSDA problems, we need to resort to a metric which
+correctly measures the goodness of our predictions.
+The difficulty lies on the joint presence of two, usually conflicting, goals.
+We recall that an OSDA problem is characterized by the concurrent presence of
+a domain difference and a class set difference.
+The final goal is to correctly classify the samples belonging to known classes
+while rejecting the samples of unknown classes.
+The performance of both the goals are typically taken into account by two metrics, {\it OS*},
+which is the fraction of the correctly classified samples belonging to known classes, and {\it UNK},
+which in contrast is the accuracy over the correctly rejected samples.
+Since the goals are usually conflicting, we need an overall metric which is able to correctly balance
+the two contributions, providing low values if at least one of the two is low.
+We therefore pick the harmonic mean of the two contributions, defined as $HOS = 2\frac{OS^*\times UNK}{OS^*+UNK}$.
+We underline that $HOS$ is a more severe and fair metric to effectively measure the goodness of a model to perform well
+on a given OSDA problem because, from the definition of the harmonic mean, it tends to give a bigger weight to the smaller values.
 
 \section{Experiments}
 \label{sec:experiments}
