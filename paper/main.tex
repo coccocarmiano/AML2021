@@ -27,6 +27,7 @@
 %  should be clear).
 \usepackage[pagebackref,breaklinks,colorlinks]{hyperref}
 \usepackage{multirow}
+\usepackage{float}
 
 
 % Support for easy cross-referencing
@@ -415,7 +416,7 @@ Moreover, we set a learning rate 10 times lower for the feature extractor weight
 We also decrease the learning rate using a step learning rate scheduler, which reduces it by a factor of 10 after 90\% of total epochs.
 All models are trained for 50 epochs for the step one and for 25 epochs for the step two.
 For models using the center loss a centroid learning rate of 0.001 is used.
-The other hyperparameters are analyzed performing an ablation on section {\bf INSERT REF}.
+The other hyperparameters are analyzed performing an ablation on appendix \ref{sec:tables}.
 
 {\it Feature extractor E}: ResNet-18 pre-trained on ImageNet. It is also shared between step 1 and step 2.
 
@@ -439,22 +440,22 @@ $R_2$ is always a single-head classifier, even if using a multi-head rotation cl
 
 \subsection{Results}
 \label{sec:results}
-\begin{figure*}[h!]
+\begin{figure}[!htb]
   \centering
-  \begin{subfigure}[b]{0.35\textwidth}
+  \begin{subfigure}[!htb]{0.35\textwidth}
     \includegraphics[trim=0 0 0 2cm, clip, width=\linewidth]{hos-a1.png}
   \end{subfigure}
-  \begin{subfigure}[b]{0.35\textwidth}
+  \begin{subfigure}[!htb]{0.35\textwidth}
     \includegraphics[trim=0 0 0 2cm, clip, width=\linewidth]{hos-a2.png}
   \end{subfigure}
-  \begin{subfigure}[b]{0.35\textwidth}
+  \begin{subfigure}[!htb]{0.35\textwidth}
     \includegraphics[trim=0 0 0 2cm, clip, width=\linewidth]{hos-l.png}
   \end{subfigure}
-  \begin{subfigure}[b]{0.35\textwidth}
+  \begin{subfigure}[!htb]{0.35\textwidth}
     \includegraphics[trim=0 0 0 2cm, clip, width=\linewidth]{hos-th.png}
   \end{subfigure}
-  \caption{\label{figurelabel} Test Caption}
-\end{figure*}
+  \caption{\centering\label{figurelabel} HOS values for different parameters. For full reference see appendix \ref{sec:tables}}
+\end{figure}
 
 Table \ref{tab:results} contains the results for all 12 available domain shifts,
 as well as perfomance differences when using multi-head rotation classifiers and center loss.
@@ -486,9 +487,19 @@ The results show that self-supervision technique can help in domain adaptation t
 A few critical points still remain on our method of study and proposed solution.
 The most important one is probably parameter choosing for different models, as we have seen that variations cause huge differences in results and sequential optimization of parameter is a sub-optimal heuristic.
 Furthermore, having the model to learn two different tasks at once, it could be useful to use a slower learning model at the expense of longer training times.
+
+%%%%%%%%% REFERENCES
+{\small
+\bibliographystyle{ieee_fullname}
+\bibliography{egbib}
+}
+
 \newpage
 \appendix
-\section{Test}
+\section{Tables}
+\label{sec:tables}
+
+This section contains tables \ref{tab:ablationoffoff}, \ref{tab:ablationonoff} and \ref{tab:ablationonon} report the hyperparameters optimization sequence, while tables \ref{tab:results} report the final values for each domain shift with the chosen hyperparameters.
 
 \begin{table}
   \centering
@@ -622,59 +633,33 @@ Furthermore, having the model to learn two different tasks at once, it could be 
   \caption{\centering\label{tab:ablationonon} Hyperparameters picking process for configuration Multi-Head On and Center-Loss On}
 \end{table}
 
-
-\begin{table}
+\begin{table*}
   \centering
-  \begin{tabular}[t]{||c|c|c||c|c||}
+  \begin{tabular}[t]{||c||c|c|c|c||c|c|c|c||c|c|c|c||}
     \hline
-    \multicolumn{5}{||c||}{Single-Head, CE Loss} \\
+    \multicolumn{13}{||c||}{Results} \\
     \hline
-    Source & Target & AUROC & HOS & HOS* \\
-    S & T & 50\% & 30\% & 30\% \\
-    S & T & 50\% & 30\% & 30\% \\
-    S & T & 50\% & 30\% & 30\% \\
+    \multirow{2}{*}{Shift}   & \multicolumn{4}{|c||}{Single-Head, No Center Loss} & \multicolumn{4}{|c||}{Multi-Head, No Center Loss} & \multicolumn{4}{|c||}{Multi-Head, Center Loss} \\
+            & AUROC & HOS   & UNK   & OS*   & AUROC & HOS   & UNK   & OS*   & AUROC & HOS   & UNK   & OS*   \\
     \hline
+    A$\to$C & 52.07 & 44.76 & 58.65 & 36.19 & 57.46 & 46.64 & 62.95 & 37.04 & 59.77 & 52.68 & 62.73 & 45.40 \\
+    A$\to$P & 50.84 & 51.27 & 57.56 & 46.23 & 56.31 & 54.13 & 60.42 & 49.03 & 56.86 & 52.46 & 63.35 & 44.77 \\
+    A$\to$R & ??.?? & ??.?? & ??.?? & ??.?? & 59.88 & 56.60 & 53.18 & 60.65 & 58.86 & 61.67 & 66.82 & 57.26 \\
+    C$\to$A & 49.52 & 41.74 & 43.10 & 40.47 & 55.28 & 42.63 & 51.57 & 36.33 & 55.76 & 46.84 & 60.19 & 38.35 \\
+    C$\to$P & 54.42 & 46.99 & 41.51 & 54.15 & 59.13 & 51.88 & 60.03 & 45.69 & 58.35 & 52.69 & 62.19 & 45.72 \\
+    C$\to$R & 53.43 & 46.18 & 38.64 & 57.39 & 60.75 & 56.00 & 61.29 & 51.63 & 59.15 & 55.97 & 63.18 & 50.25 \\
+    P$\to$A & 48.32 & 37.07 & 33.70 & 41.20 & 55.62 & 41.72 & 48.90 & 36.39 & 53.50 & 40.97 & 49.53 & 34.94 \\
+    P$\to$C & 47.76 & 43.99 & 48.42 & 40.31 & 56.77 & 46.10 & 55.11 & 39.65 & ??.?? & ??.?? & ??.?? & ??.?? \\
+    P$\to$R & 50.37 & 34.14 & 22.88 & 67.27 & 59.68 & 48.41 & 40.91 & 59.30 & 61.10 & 56.22 & 56.89 & 55.58 \\
+    R$\to$A & 49.39 & 25.08 & 15.99 & 58.19 & 58.47 & 45.00 & 39.50 & 52.43 & 57.98 & 48.92 & 45.61 & 52.77 \\
+    R$\to$C & 49.80 & 46.70 & 48.27 & 45.23 & 57.02 & 49.00 & 42.82 & 57.34 & 57.09 & 48.69 & 61.11 & 40.47 \\
+    R$\to$P & 54.10 & 23.37 & 13.89 & 73.69 & 62.33 & 50.31 & 39.51 & 69.27 & 63.96 & 59.64 & 54.40 & 66.02 \\
     \hline
-    \multicolumn{5}{||c||}{Multi-Head, CE Loss} \\
-    \hline
-    Source & Target & AUROC & HOS & HOS* \\
-    S & T & 50\% & 30\% & 30\% \\
-    S & T & 50\% & 30\% & 30\% \\
-    S & T & 50\% & 30\% & 30\% \\
-    \hline
-    \hline
-    \multicolumn{5}{||c||}{Single-Head, CE+C Loss} \\
-    \hline
-    Source & Target & AUROC & HOS & HOS* \\
-    S & T & 50\% & 30\% & 30\% \\
-    S & T & 50\% & 30\% & 30\% \\
-    S & T & 50\% & 30\% & 30\% \\
-    \hline
-    \hline
-    \multicolumn{5}{||c||}{Multi-Head, CE+C Loss} \\
-    \hline
-    Source & Target & AUROC & HOS & HOS* \\
-    S & T & 50\% & 30\% & 30\% \\
-    S & T & 50\% & 30\% & 30\% \\
-    S & T & 50\% & 30\% & 30\% \\
-    \hline 
-    \hline
-    \multicolumn{5}{||c||}{No Rotation} \\
-    \hline
-    Source & Target & AUROC & HOS & HOS$_{Best}$ \\
-    S & T & 50\% & 30\% & 30\% \\
-    S & T & 50\% & 30\% & 30\% \\
-    S & T & 50\% & 30\% & 30\% \\
+    AVG     & ??.?? & ??.?? & ??.?? & ??.?? & 52.23 & 49.03 & 51.35 & 49.56 & ??.?? & ??.?? & ??.?? & ??.?? \\ 
     \hline
   \end{tabular}
-  \caption{\centering\label{tab:results}Results for domain alignment. AUROC is the area under the ROC. HOS is latest achieved HOS, HOS* the best achieved through all epochs.}
-\end{table}
+  \caption{\centering\label{tab:results}Results for each configuration and each domain shift. All values are percentages.}
+\end{table*}
 
-
-%%%%%%%%% REFERENCES
-{\small
-\bibliographystyle{ieee_fullname}
-\bibliography{egbib}
-}
 
 \end{document}
