@@ -108,7 +108,7 @@ def target_separation(args, E, C, R, target_loader_eval, device, rand):
     #all_features_embedded = TSNE().fit_transform(all_features)
     #print(f"Feature shape:{all_features_embedded.shape}")
     all_labels = ground_truths
-    plot_features(all_features, all_labels, num_classes=2)
+    plot_features(args,all_features, all_labels, num_classes=2)
 
     # Compute AUC-ROC value
     auc = roc_auc_score(ground_truths, normality_scores)
