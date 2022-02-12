@@ -217,7 +217,8 @@ When $\mathbb{O} > 0$, we are dealing with an OSDA problem, otherwise we are in 
 \subsection{Approach}
 \label{sec:apporach}
 The proposed method is split in two sequential stages. First, to avoid negative transfer during the domain alignment step, we want a model
-that is able to separate the target dataset into $\mathcal{D}_t^{unk}$ and $\mathcal{D}_t^{knw}$. To do that, we leverage the
+that is able to separate the target dataset into $\mathcal{D}_t^{unk}$, which contains images belonging to unknown classes,
+and $\mathcal{D}_t^{knw}$, which contains only images belonging to the known classes. To do that, we leverage the
 power of the rotation pre-text task to perform the separation.
 Next, in the second stage, we can close the gap between the source domain and the target domain exploiting $\mathcal{D}_t^{knw}$
 using the same self-supervised task. Furthermore, we leverage $\mathcal{D}_t^{unk}$ to learn the additional {\it unknown} class.
@@ -320,7 +321,7 @@ it is likely that it has managed to successfully recognize the rotation.
 Since $R_1$ has learned the domain-independent patterns of the known classes from the source dataset up to this point,
 it should be able to recognize the rotations applied only to images belonging to such classes.
 
-\subsection{Step II: Domain Alignment}
+\subsection{Step II: domain alignment}
 \label{sec:domain_alignment}
 
 \begin{figure*}
@@ -328,19 +329,34 @@ it should be able to recognize the rotations applied only to images belonging to
   \caption{\label{fig:separation} Schema representing the target images separation process}
 \end{figure*}
 
-In this phase,
-we build two "new" datasets.
-The first one is $\mathcal{D}_s^*$, composed as $\mathcal{D}_s \cup \mathcal{D}_t^{unk}$.
-Since $\mathcal{D}_t$ is an unlabeled dataset but $\mathcal{D}_s^*$ is a labeled one,
-samples in $\mathcal{D}_t^{unk}$ are labeled as unknowns.
-The second one is $\mathcal{D}_t^{knw}$.
-Here we also use two new classifiers,
-$C_2$ and $R_2$,
-similarly to how they were used in the first phase but with $C_2$ predicting $|\mathcal{C}_s|+1$ classes to accomodate unknown predictions.
-In this step $R_2$ is always single-headed and has its own weight $\alpha_2$.
-The objective function is the same described in equations \ref{eq:baseloss_class} and \ref{eq:baseloss_rot}.
-The main difference here is that $C_2$ is actually trained to recognize unknown classes,
-on both domains.
+In this step,
+having separated the target into a known part $\mathcal{D}_t^{knw}$,
+and an unknown part $\mathcal{D}_t^{unk}$,
+we arrange two new datasets in order to perform the domain alignment while also learning
+the unknown class.
+The first one is $\mathcal{D}_s^*$, composed as $\mathcal{D}_s \cup \mathcal{D}_t^{unk}$,
+which contains the original source images plus the target images identified as unknown classes.
+We thus set the labels for $\mathcal{D}_t^{unk}$ as the class {\it unknown}.
+The second one is $\mathcal{D}_t^{knw}$, which can be used to perform the domain alignment
+without the risk of negative transfer.
+While the feature extractor $E$ is inherited from the previous stage and leverages the previous training phase,
+we also use two new classifiers,
+$C_2$ and $R_2$.
+They are similar to the previous classifiers but they have two important differences.
+$C_2$ now has a $(|\mathcal{C}_s|+1)$-dimensional output to accomodate also the unknown class predictions and also
+benefits from the previous learning,
+while $R_2$ is always a single-head rotation classifier and starts the learning from scratch.
+The training phase is the same as before with the difference that we do not have the center loss this time.
+We also employ a different hyperparameter $\alpha_2$ to weigh the rotation classifier loss contribution.
+The objective function is again $\mathcal{L}_2 = \mathcal{L}_{C_2} + \mathcal{L}_{R_2}$,
+where the two contributions are identical to equations \ref{eq:baseloss_class} and \ref{eq:baseloss_rot}.
+We report the $\mathcal{L}_{R_2}$ loss contributions to make clear the usage of $\alpha_2$ and we
+recall that $\mathcal{L}_{C_2}$ is now computed using the new arranged dataset $\mathcal{D}_s^*$.
+
+\begin{equation}
+  \mathcal{L}_{R_2} = -\alpha_2\sum_{i\in\mathcal{D}_t^{knw}} {\bf z}_i^s \log \hat{{\bf z}}_i^s
+  \label{eq:baseloss_rot2}
+\end{equation}
 
 \subsection{Performance Metrics}
 \label{sec:performance_metrics}
