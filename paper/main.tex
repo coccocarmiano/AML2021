@@ -378,19 +378,25 @@ We therefore pick the harmonic mean of the two contributions, defined as $HOS = 
 We underline that $HOS$ is a more severe and fair metric to effectively measure the goodness of a model to perform well
 on a given OSDA problem because, from the definition of the harmonic mean, it tends to give a bigger weight to the smaller values.
 
+Lastly, we also exploit the AUROC metric to assess the goodness of the system in separating
+the target into a known and unknown part.
+
 \section{Experiments}
 \label{sec:experiments}
 
-\subsection{Dataset}
+\subsection{Benchmark}
 \label{sec:dataset}
 
-Our model is tested on the {\it Office-Home} dataset\cite{OfficeHomeDataset}, 
-which features 65 classes of images over four different domains: Art (A), Clipart (C), Product (P) and Real World (R).
-We set the first 45 classes to be known while the remaining 20 are unknown.
-For each experiment, 
-we report both the best achieved HOS as well as the last reported HOS.
-As separation is crucial for the model effectiveness,
- we also report the computer AUROC score for the first part.
+We evaluate the effectiveness of our proposed method exploiting the {\it Office-Home} {\bf INSERT REFERENCE} benchmark dataset,
+widely used to assess the performance for OSDA settings.
+The dataset is characterized by four different domains: Art (A), Clipart (C), Product (P) and Real World (R), and
+each domain contains the same 65 object class categories.
+We underline that the large domain gaps and the number of classes make the benchmark challenging.
+For the experiments, we fix the first 45 classes (in alphabetical order) as the known classes ($\mathcal{C}_s$),
+and the remaining 20 classes as the unknown ones ($\mathcal{C}_{t \setminus s}$).
+For each experiment, we collect the HOS value achieved after the last training epoch of the step 2,
+along with the AUROC value computed after the step 1, crucial to assess the goodness
+of the system's components responsible for the separation of the target.
 
 \subsection{Results}
 \label{sec:results}
