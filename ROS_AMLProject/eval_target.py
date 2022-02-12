@@ -82,7 +82,7 @@ def target_separation(args, E, C, R, target_loader_eval, device, rand):
             ground_truths.append(batch_labels.item())
             normality_scores.append(n_score.item())
 
-            all_features.append(R_features_0.data.cpu().numpy())
+            all_features.append(R_features_0.cpu().data.numpy())
 
     ground_truths = np.array(ground_truths, dtype=np.int)
     normality_scores = np.array(normality_scores)
