@@ -315,6 +315,11 @@ it is required to choose among the $|\mathcal{C}_s|$ possible heads to make the 
 Head $R_{1,j}$ is used where $\displaystyle j = \arg\max_j \{{\bf\hat{y}}_{i, [j]}^t\}_{j=0}^{|\mathcal{C}_s|-1}$
 ($j$ is the component $j$ of the vector).
 
+The key idea behind the normality score is that, if $R_1$ is confident enough on its predicted rotation,
+it is likely that it has managed to successfully recognize the rotation.
+Since $R_1$ has learned the domain-independent patterns of the known classes from the source dataset up to this point,
+it should be able to recognize the rotations applied only to images belonging to such classes.
+
 \subsection{Step II: Domain Alignment}
 \label{sec:domain_alignment}
 
