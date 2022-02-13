@@ -479,6 +479,28 @@ $R_2$ is always a single-head discriminator, even if using the multi-head varian
 
 \subsection{Results}
 \label{sec:results}
+
+\begin{figure}[!t]
+  \centering
+  \includegraphics[trim= 0cm 0cm 0cm 0cm, clip, width=0.8\linewidth]{results_bars.png}
+  \caption{\label{fig:results} HOS values of the different configurations over different domain shifts.}
+\end{figure}
+
+Figure \ref{fig:results} and table \ref{tab:results} summarize the performance, in terms of HOS values,
+obtained using different model configurations; in particular, we analyze the different combinations
+of having a multihead discriminator and the center loss additional contribution.
+The hyperparameters used for each model configuration are the best obtained from the ablation
+discussed in section \ref{sec:ablation_study}.
+Moreover, we report the results obtained for all the 12 available domain shifts,
+as well as the average value to have an overall performance comparison.
+As can be seen, models with a multi-head discriminator obtain better AUROC values,
+resulting in a better separability and consequently in a better domain adaptation.
+Furthermore, we notice an additional improvement with the additional center loss contribution,
+showing that it effectively improves the discriminability of the hidden features in the learning process.
+
+\subsection{Ablation Study}
+\label{sec:ablation_study}
+
 \begin{figure}[!htb]
   \centering
   \begin{subfigure}[!htb]{0.35\textwidth}
@@ -493,40 +515,47 @@ $R_2$ is always a single-head discriminator, even if using the multi-head varian
   \begin{subfigure}[!htb]{0.35\textwidth}
     \includegraphics[trim=0 0 0 2cm, clip, width=\linewidth]{hos-th.png}
   \end{subfigure}
-  \caption{\centering\label{fig:hyperparams} HOS values for different hyperparameters. For full details see appendix \ref{sec:tables}}
+  \caption{\centering\label{fig:hyperparams} Ablation HOS values for different hyperparameters and model configurations. For the full details see appendix \ref{sec:tables}.}
 \end{figure}
 
-Table \ref{tab:results} contains the results for all 12 available domain shifts,
-as well as perfomance differences when using multi-head rotation classifiers and center loss,
-as described in the previous section.
-Multi-headed models are more capable of correctly discriminating between known and unknown samples,
-ultimately resulting in better domain alignment.
-This effect is amplified when also using center loss.
-AUROC and HOS values are taken at the end of the relative stages. 
+We are now interested in conducting an ablation over the different hyperparameters for the different model configurations.
+In section \ref{sec:implementation_details} we have already discussed the architecture and the learning process,
+we thus proceed to sweep different values for all the hyperparameters to see how it affects the model performance in terms of HOS values.
+Given a specific configuration of hyperparameters values, we run the model for two domain shifts,
+Art $\to$ Clipart and Product $\to$ Clipart, and then we average the HOS values to obtain a more reliable estimate.
+We want to stress that all the hyperparameters might be highly correlated;
+therefore, a gridsearch approach would be necessary.
+However, we decide to keep a sequential ablation study,
+analyzing the effectiveness of each hyperparameter in a specific order:
+$\alpha_1$, $\lambda$, $\mathcal{\tilde N}$, $\alpha_2$.
+Once the ablation for a hyperparameter is finished,
+we fix the best value to analyze the subsequent hyperparameters.
+Image \ref{fig:hyperparams} summarizes the results of the ablation,
+while the tables containing the values can be found in appendix \ref{sec:tables}.
+First, we can observe that the performance of each hyperparameter follows a very similar trend
+indipendently from the chosen model configuration.
+An exception is the selection of a good threshold $\mathcal{\tilde N}$ to perform the
+target separation. We can see that for the configuration with a single-head and without
+the center loss contribution, it is required a larger value.
+We hypothesize that this happens as the single-head is not adequate
+to model the rotation of a large number of semantic classes.
+Infact, the model tends to give higher and less discriminant normality scores,
+achieving a worse AUROC value and performing a bad separation.
 
-\subsection{Ablation Study}
-\label{sec:ablation_study}
-Image \ref{fig:hyperparams} summarizes the parameter optimization process where a sequential approach is followed.
-For each configuration one hyperparameter is optimized at a time,
-following the order
-$\alpha_1$, $\lambda_1$, $\mathcal{\tilde N}$, $\alpha_2$ and picking the parameter giving the highest HOS.
-Models not using center loss just skip the $\lambda_1$ optimization.
-Ablation study were run and averaged on two domain shifts, 
-Art $\to$ Clipart and Product $\to$ Clipart.
-In appendix \ref{sec:tables} tables \ref{tab:ablationoffoff}, \ref{tab:ablationonoff} and \ref{tab:ablationonon} report all the steps followed for each configuration.
-This information is also summarized in figure \ref{fig:hyperparams}.
-We can notice that most of the optimal parameters are shared between configurations,
-an exception being the normality score $\mathcal{\tilde N}$ on a single-headed configuration.
-This is due to the fact that having to use only one head for all classes it is better to be very confident about classifying a sample as known.
-Smaller $\alpha_1$ and $\alpha_2$ values are preferred as they avoid overfitting the rotation classifiers as the object classifiers take a longer time to converge.
-As center loss contributions are directly summed to the rotation classifier loss term while being much bigger, 
-much smaller values need to be used for a correct model convergence.
+Smaller values of $\alpha_1$ and $\alpha_2$ are preferred as they avoid a too fast training convergence for the rotation classifier
+w.r.t the object classifier.
+Moreover, we notice that picking the right value for $\alpha_2$ provides a good improvement.
+As the center loss contribution is directly summed to the rotation classifier loss term,
+we need to pick sufficiently small values of $\lambda$ to avoid
+that it becomes too preponderant, making impossible the learning of the rotation task.
 
+To sum up, we can state that different values of hyperparameters provide an unneglectable performance improvement,
+making the choice of the correct values important for the method effectiveness.
 
-\section{Future Work and conclusions}
+\section{Future work and conclusions}
 \label{sec:future_work}
 
-The results show that self-supervision technique can help in domain adaptation task and open-set classification tasks,
+The results show that self-supervision techniques can be applied effectively in domain adaptation tasks and open-set classification tasks,
 but some critical points still remain in our method of study and proposed solution.
 The most important one is probably the parameter optimization method for different models,
 as small variations can cause huge differences in results sequentially optimizing hyperparameters is a sub-optimal heuristic.
@@ -542,14 +571,9 @@ center loss function relies on learning centroids based on sample features to pr
 This formulation requires picking a specific learning rate for such centroids,
 but we didn't run any test on how such learning rate impacts predictions or sample separability.
 
-%%%%%%%%% REFERENCES
-{\small
-\nocite{BucciROS}
-\bibliographystyle{ieee_fullname}
-\bibliography{egbib}
-}
 
 \appendix
+
 \section{Tables}
 \label{sec:tables}
 
@@ -645,7 +669,7 @@ This section contains tables \ref{tab:ablationoffoff}, \ref{tab:ablationonoff} a
     \hline
     \multicolumn{5}{||c||}{ON-ON} \\
     \hline
-    $\alpha_1$ & $\lambda_1$ & $\mathcal{\tilde N}$ & $\alpha_2$ & HOS$_{mean}$ \\
+    $\alpha_1$ & $\lambda$ & $\mathcal{\tilde N}$ & $\alpha_2$ & HOS$_{mean}$ \\
     \hline
     \hline
     \multicolumn{5}{||c||}{Picking $\alpha_1$} \\
@@ -656,7 +680,7 @@ This section contains tables \ref{tab:ablationoffoff}, \ref{tab:ablationonoff} a
     10.0 & && & 37.15\% \\
     \hline
     \hline
-    \multicolumn{5}{||c||}{Picking $\lambda_1$} \\
+    \multicolumn{5}{||c||}{Picking $\lambda$} \\
     \hline
     \multirow{5}{*}{3} & 0.0001 & \multirow{5}{*}{0.5} & \multirow{5}{*}{3.0} & 39.90\% \\
     & 0.001 & & & 36.71\% \\
@@ -711,11 +735,19 @@ This section contains tables \ref{tab:ablationoffoff}, \ref{tab:ablationonoff} a
     R$\to$C & 49.80 & 46.70 & 48.27 & 45.23 & 57.02 & 49.00 & 42.82 & 57.34 & 57.09 & 48.69 & 61.11 & 40.47 \\
     R$\to$P & 54.10 & 23.37 & 13.89 & 73.69 & 62.33 & 50.31 & 39.51 & 69.27 & 63.96 & 59.64 & 54.40 & 66.02 \\
     \hline
-    AVG     & 49.00 & 42.45 & 36.68 & 51.05 & 58.23 & 49.03 & 51.35 & 49.56 & 58.42 & 51.96 & 58.91 & 47.46 \\ 
+    AVG     & 49.00 & 42.45 & 36.68 & 51.05 & 58.23 & 49.03 & 51.35 & 49.56 & {\bf 58.42} & {\bf 51.96} & 58.91 & 47.46 \\ 
     \hline
   \end{tabular}
   \caption{\centering\label{tab:results}Final results for the three configurations on all domain shifts. All values are percentages.}
 \end{table*}
+
+\clearpage
+%%%%%%%%% REFERENCES
+{\small
+\nocite{BucciROS}
+\bibliographystyle{ieee_fullname}
+\bibliography{egbib}
+}
 
 
 \end{document}
