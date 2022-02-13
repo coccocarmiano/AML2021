@@ -129,7 +129,7 @@ To wrap up, our \textbf{main contributions} are:
   \item we define a new method to tackle OSDA problems which exploits the rotation recognition task to perform both the known/unknown target separation
 and the domain adaptation;
   \item we introduce a new OSDA metric which properly balances the measure of both the performance on predicting the known classes and the performance on doing the unknown rejection;
-  \item we conduct an extensive ablation over the hyper-parameters for different variants of the self-supervised task underlying the benefits of some techniques over others.
+  \item we conduct an extensive ablation over the hyperparameters for different variants of the self-supervised task underlying the benefits of some techniques over others.
 \end{enumerate}
 
 \section{Related Work}
@@ -374,7 +374,7 @@ $C_2$ now has a $(|\mathcal{C}_s|+1)$-dimensional output to accomodate also the 
 benefits from the previous learning,
 while $R_2$ is always a single-head rotation classifier and starts the learning from scratch.
 The training phase is the same as before with the difference that we do not have the center loss this time.
-We also employ a different hyper-parameter $\alpha_2$ to weigh the rotation classifier loss contribution.
+We also employ a different hyperparameter $\alpha_2$ to weigh the rotation classifier loss contribution.
 The objective function is again $\mathcal{L}_2 = \mathcal{L}_{C_2} + \mathcal{L}_{R_2}$,
 where the two contributions are identical to equations \ref{eq:baseloss_class} and \ref{eq:baseloss_rot}.
 We report the $\mathcal{L}_{R_2}$ loss contribution to make clear the usage of $\alpha_2$ and we
@@ -441,11 +441,13 @@ with a weight decay of 0.0005 and a momentum of 0.9.
 The learning rate is set to 0.001 in the cases where we use a single-head rotation classifier as $R_1$, and 0.003 in the multi-head case.
 The reason of this choice lies on the fact that, with a multi-head rotation classifier, we have to train 45 heads instead of a single one,
 so the training process needs to be speeded up.
-Moreover, we set a learning rate 10 times lower for the feature extractor weights.
+Moreover, we set a learning rate 10 times lower for the weights of the feature extractor and $C_{1/2}$.
 We also decrease the learning rate using a step learning rate scheduler, which reduces it by a factor of 10 after 90\% of total epochs.
 All models are trained for 50 epochs for the step one and for 25 epochs for the step two.
 For models using the center loss a centroid learning rate of 0.001 is used.
-The other hyper-parameters are analyzed performing an ablation on appendix \ref{sec:tables}.
+The other hyperparameters are analyzed performing an ablation on them,
+details can be found on the section \ref{sec:ablation_study} and the results of the ablation are
+reported on appendix \ref{sec:tables}.
 
 {\it Feature extractor E}: ResNet-18 pre-trained on ImageNet. It is also shared between step 1 and step 2.
 
@@ -462,9 +464,12 @@ This ensures that we correctly balance the unknown class during training in a wa
 on the number of identified target unknown samples during the separation.
 
 {\it Classifier $R_1$, $R_2$}: 
-they are composed by a linear layer $1024\to 256$, followed by a batch normalization layer and a leaky relu activation.
+they are seen as discriminators composed by a linear layer $1024\to 256$,
+followed by a batch normalization layer and a leaky relu activation.
 The last layer is then a linear one for the actual classification $256\to 4$.
-The 256-dimensional output are the features used by the center loss for inferring class centroids.
+In the case of multi-head rotation classifier,
+the discriminator is then composed of $|\mathcal{C}_s|$ different linear layers, both for the first and the last one.
+Moreover, the 256-dimensional output are the features used by the center loss for inferring class centroids.
 $R_2$ is always a single-head classifier, even if using a multi-head rotation classifier.
 
 \subsection{Results}
@@ -483,7 +488,7 @@ $R_2$ is always a single-head classifier, even if using a multi-head rotation cl
   \begin{subfigure}[!htb]{0.35\textwidth}
     \includegraphics[trim=0 0 0 2cm, clip, width=\linewidth]{hos-th.png}
   \end{subfigure}
-  \caption{\centering\label{fig:hyperparams} HOS values for different hyper-parameters. For full details see appendix \ref{sec:tables}}
+  \caption{\centering\label{fig:hyperparams} HOS values for different hyperparameters. For full details see appendix \ref{sec:tables}}
 \end{figure}
 
 Table \ref{tab:results} contains the results for all 12 available domain shifts,
@@ -497,7 +502,7 @@ AUROC and HOS values are taken at the end of the relative stages.
 \subsection{Ablation Study}
 \label{sec:ablation_study}
 Image \ref{fig:hyperparams} summarizes the parameter optimization process where a sequential approach is followed.
-For each configuration one hyper-parameter is optimized at a time,
+For each configuration one hyperparameter is optimized at a time,
 following the order
 $\alpha_1$, $\lambda_1$, $\mathcal{\tilde N}$, $\alpha_2$ and picking the parameter giving the highest HOS.
 Models not using center loss just skip the $\lambda_1$ optimization.
@@ -519,11 +524,11 @@ much smaller values need to be used for a correct model convergence.
 The results show that self-supervision technique can help in domain adaptation task and open-set classification tasks,
 but some critical points still remain in our method of study and proposed solution.
 The most important one is probably the parameter optimization method for different models,
-as small variations can cause huge differences in results sequentially optimizing hyper-parameters is a sub-optimal heuristic.
+as small variations can cause huge differences in results sequentially optimizing hyperparameters is a sub-optimal heuristic.
 Furthermore,
 having models learn different tasks simultaneosly can lead to instability, 
 so using slower learning models at the expense of longer training times can improve results.
-A criticality is represented by the normality score hyper-parameter:
+A criticality is represented by the normality score hyperparameter:
 model confidence over accepting or rejecting a sample is very thight between known and unknwon samples,
 so a better function do have more spread scores can bring more efficient separation,
 ultimately resulting in a better quality input data in the second step.
@@ -543,7 +548,7 @@ but we didn't run any test on how such learning rate impacts predictions or samp
 \section{Tables}
 \label{sec:tables}
 
-This section contains tables \ref{tab:ablationoffoff}, \ref{tab:ablationonoff} and \ref{tab:ablationonon} report the hyper-parameters optimization sequence, while tables \ref{tab:results} report the final values for each domain shift with the chosen hyper-parameters.
+This section contains tables \ref{tab:ablationoffoff}, \ref{tab:ablationonoff} and \ref{tab:ablationonon} report the hyperparameters optimization sequence, while tables \ref{tab:results} report the final values for each domain shift with the chosen hyperparameters.
 
 \begin{table}[h!]
   \centering
@@ -583,7 +588,7 @@ This section contains tables \ref{tab:ablationoffoff}, \ref{tab:ablationonoff} a
     && 10.0 & 42.01\% \\
     \hline
   \end{tabular}
-  \caption{\centering\label{tab:ablationoffoff} Hyper-parametr optimization process for configuration Multi-Head Off and Center-Loss Off}
+  \caption{\centering\label{tab:ablationoffoff} Hyperparametr optimization process for configuration Multi-Head Off and Center-Loss Off}
 \end{table}
 
 \begin{table}[t!]
@@ -625,7 +630,7 @@ This section contains tables \ref{tab:ablationoffoff}, \ref{tab:ablationonoff} a
     && 10.0 & 44.56\% \\
     \hline
   \end{tabular}
-  \caption{\centering\label{tab:ablationonoff} Hyper-parameters optimization process for configuration Multi-Head On and Center-Loss Off}
+  \caption{\centering\label{tab:ablationonoff} Hyperparameters optimization process for configuration Multi-Head On and Center-Loss Off}
 \end{table}
 
 
@@ -676,7 +681,7 @@ This section contains tables \ref{tab:ablationoffoff}, \ref{tab:ablationonoff} a
     & & & 10.0 & 44.14\% \\
     \hline
   \end{tabular}
-  \caption{\centering\label{tab:ablationonon} Hyper-parameters optimization process for configuration Multi-Head On and Center-Loss On}
+  \caption{\centering\label{tab:ablationonon} Hyperparameters optimization process for configuration Multi-Head On and Center-Loss On}
 \end{table}
 
 \begin{table*}
