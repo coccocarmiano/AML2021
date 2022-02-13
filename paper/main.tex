@@ -129,65 +129,9 @@ To wrap up, our \textbf{main contributions} are:
   \item we define a new method to tackle OSDA problems which exploits the rotation recognition task to perform both the known/unknown target separation
 and the domain adaptation;
   \item we introduce a new OSDA metric which properly balances the measure of both the performance on predicting the known classes and the performance on doing the unknown rejection;
-  \item we conduct an extensive ablation over the hyperparameters for different variants of the self-supervised task underlying the benefits of some techniques over others.
+  \item we conduct an extensive ablation over the hyper-parameters for different variants of the self-supervised task underlying the benefits of some techniques over others.
 \end{enumerate}
 
-
-% Classical machine learning in the past years has made some oversimplified assumptions actually detached % Punteggiatura?
-% from the usage of artificial intelligence systems in everyday real world and the problems they come with.
-
-% The first assumption is that training and test sets come from the same distributions:
-% a model trained on labeled data is expected to perform as well as on the test data.
-% However, this assumption not always holds in real-world applications, 
-% where naively applying the trained model on a new dataset may cause degradation in the performance.
-% To solve this problem Domain Adaptation is widely used, 
-% where the goal is to train a neural network on a source dataset for which labels are available and search for good performance on a target dataset, 
-% which is related to but significantly different from the source dataset, 
-% and whose label or annotation is not available. 
-% Generally this is done by by minimizing the difference between domain distributions and enforcing the recognition of domain invariant patterns in both domains. 
-% As underlined in \cite{domainAdaptFarahani}, 
-% this is usually achieved by mapping source and target data by learning transformations for extracting such features and minimizing the gap between domains in the new representation space in an optimization procedure,
-% while preserving the underlying structure of the original data. 
-
-% Secondly, 
-% in real-world classification tasks it is usually difficult to collect training samples to exhaust all classes when training a model.
-% A more realistic scenario is open set recognition (OSR) \cite{OSRsurvey},
-% where incomplete knowledge of the world exists at training time and unknown classes can be injected during testing, 
-% requiring classifiers to not only accurately classify the seen classes but also effectively deal with unseen ones,
-% which would otherwise drastically weaken the robustness of the methods.
-% On the contrary this system should reject unknown classes at test time and separate the known and unknown samples.
-% As underlined by \cite{OSRclassRec}, 
-% existing open-set classifiers rely on deep networks trained in a supervised fashion on known classes in the training set;
-% this causes specialization of learned representations to known classes and makes it hard to distinguish the unknowns from the knowns.
-
-% To solve these significant issues our method is focused on a self-supervised task. 
-% Self-supervised learning is an unsupervised learning technique where the supervised task is created out of the unlabeled input data. 
-% This task could be as simple as predicting the lower half of an image being given the upper half of the same.
-% Supervised learning requires both labeled and high quality data,
-% usually very expensive, 
-% whereas unlabeled data is often readily available in abundance.
-% The fundamental idea behind self-supervised learning is creating some auxiliary task from input data so that,
-% by solving such task,
-% the model can learn the underlying structure of the data,
-% for instance high-level knowledge, correlations, and metadata embedded in the data.
-% This type of learning was recently used for Domain Adaptation, 
-% learning robust cross-domain features and supporting generalization \cite{CarlucciJigsaw,SelfSupervisedXu},
-% and also for some Open Set problems specialized in anomaly detection and discriminating anomalous data \cite{bergman2020classificationbased,dectionGeometric}.
-
-% The approach presented in this paper brings these topics together in the so called Open-Set Domain Adaptation (OSDA) problem. 
-% A two-stage method is hence proposed, 
-% aiming to identify and isolate unknown class samples in the first stage, 
-% before reducing in the second stage the domain gap between the source domain and the known target domain to avoid negative transfer.
-% This is done in both stages using a modified version of the rotation task as self-supervised model,
-% predicting the relative rotation between an image and its rotated version.
-% Finally a classifier is used to predict if each target sample belongs either to one of the knwon classes or to an unknown class, 
-% being rejected in the latter case.
-
-% The method was evaluated on the Office-Home benchmark \cite{OfficeHomeDataset} with a specific OSDA metric.
-
-% {\bf ADD HERE RESULTS AND A BRIEF OF CONCLUSIVE IDEAS (ALSO POSSIBLE FUTURE WORKS)!!}
-
-%------------------------------------------------------------------------
 \section{Related Work}
 \label{sec:relatedwork}
 \textbf{Closed-Set Domain Adaptation} is the setting where labeled training data is 
@@ -337,7 +281,7 @@ and further improvements will be discussed in \ref{sec:future_work}.
 
 \begin{figure}
   \includegraphics[trim= 0cm 0cm 0cm 0cm, clip, width=\linewidth]{scheme_step1.png}
-  \caption{\label{fig:step1} Schema representing the step 1 training}
+  \caption{\label{fig:step1} Schema of the learning process for the model in Step I.}
 \end{figure}
 
 To perform the target separation we train a CNN iterating on $\tilde{\mathcal{D}_s} = \{({\bf x}_i^s, {\bf \tilde x}_i^s, z_i^s)\}_{i=1}^{N_s}$,
@@ -411,7 +355,7 @@ it should be able to recognize the rotations applied only to images belonging to
 
 \begin{figure}[t]
   \includegraphics[trim= 0cm 0cm 0cm 0cm, clip, width=\linewidth ]{scheme.png}
-  \caption{\label{fig:separation}\centering Schema representing the target images separation process}
+  \caption{\label{fig:separation}\centering Schema of the separation process into known and unkown samples on target images}
 \end{figure}
 
 
@@ -433,7 +377,7 @@ $C_2$ now has a $(|\mathcal{C}_s|+1)$-dimensional output to accomodate also the 
 benefits from the previous learning,
 while $R_2$ is always a single-head rotation classifier and starts the learning from scratch.
 The training phase is the same as before with the difference that we do not have the center loss this time.
-We also employ a different hyperparameter $\alpha_2$ to weigh the rotation classifier loss contribution.
+We also employ a different hyper-parameter $\alpha_2$ to weigh the rotation classifier loss contribution.
 The objective function is again $\mathcal{L}_2 = \mathcal{L}_{C_2} + \mathcal{L}_{R_2}$,
 where the two contributions are identical to equations \ref{eq:baseloss_class} and \ref{eq:baseloss_rot}.
 We report the $\mathcal{L}_{R_2}$ loss contribution to make clear the usage of $\alpha_2$ and we
@@ -441,7 +385,7 @@ recall that $\mathcal{L}_{C_2}$ is now computed using the new arranged dataset $
 
 \begin{figure}[ht]
   \includegraphics[trim= 5.2cm 0cm 2cm 0cm, clip, width=\linewidth ]{scheme_step2.png}
-  \caption{\label{fig:step2}\centering Test Caption}
+  \caption{\label{fig:step2}\centering Schema of the learning process of the model in Step II}
 \end{figure}
 
 
@@ -504,7 +448,7 @@ Moreover, we set a learning rate 10 times lower for the feature extractor weight
 We also decrease the learning rate using a step learning rate scheduler, which reduces it by a factor of 10 after 90\% of total epochs.
 All models are trained for 50 epochs for the step one and for 25 epochs for the step two.
 For models using the center loss a centroid learning rate of 0.001 is used.
-The other hyperparameters are analyzed performing an ablation on appendix \ref{sec:tables}.
+The other hyper-parameters are analyzed performing an ablation on appendix \ref{sec:tables}.
 
 {\it Feature extractor E}: ResNet-18 pre-trained on ImageNet. It is also shared between step 1 and step 2.
 
@@ -542,7 +486,7 @@ $R_2$ is always a single-head classifier, even if using a multi-head rotation cl
   \begin{subfigure}[!htb]{0.35\textwidth}
     \includegraphics[trim=0 0 0 2cm, clip, width=\linewidth]{hos-th.png}
   \end{subfigure}
-  \caption{\centering\label{fig:hyperparams} HOS values for different parameters. For full reference see appendix \ref{sec:tables}}
+  \caption{\centering\label{fig:hyperparams} HOS values for different hyper-parameters. For full details see appendix \ref{sec:tables}}
 \end{figure}
 
 Table \ref{tab:results} contains the results for all 12 available domain shifts,
@@ -592,7 +536,7 @@ a model able to reduce negative transfer.
 \section{Tables}
 \label{sec:tables}
 
-This section contains tables \ref{tab:ablationoffoff}, \ref{tab:ablationonoff} and \ref{tab:ablationonon} report the hyperparameters optimization sequence, while tables \ref{tab:results} report the final values for each domain shift with the chosen hyperparameters.
+This section contains tables \ref{tab:ablationoffoff}, \ref{tab:ablationonoff} and \ref{tab:ablationonon} report the hyper-parameters optimization sequence, while tables \ref{tab:results} report the final values for each domain shift with the chosen hyper-parameters.
 
 \begin{table}[hb!]
   \centering
@@ -632,7 +576,7 @@ This section contains tables \ref{tab:ablationoffoff}, \ref{tab:ablationonoff} a
     && 10.0 & 42.01\% \\
     \hline
   \end{tabular}
-  \caption{\centering\label{tab:ablationoffoff} Hyperparameters picking process for configuration Multi-Head Off and Center-Loss Off}
+  \caption{\centering\label{tab:ablationoffoff} Hyper-parametr optimization process for configuration Multi-Head Off and Center-Loss Off}
 \end{table}
 
 \begin{table}[t!]
@@ -674,7 +618,7 @@ This section contains tables \ref{tab:ablationoffoff}, \ref{tab:ablationonoff} a
     && 10.0 & 44.56\% \\
     \hline
   \end{tabular}
-  \caption{\centering\label{tab:ablationonoff} Hyperparameters picking process for configuration Multi-Head On and Center-Loss Off}
+  \caption{\centering\label{tab:ablationonoff} Hyper-parameters optimization process for configuration Multi-Head On and Center-Loss Off}
 \end{table}
 
 
@@ -724,7 +668,7 @@ This section contains tables \ref{tab:ablationoffoff}, \ref{tab:ablationonoff} a
     & & & 10.0 & 44.14\% \\
     \hline
   \end{tabular}
-  \caption{\centering\label{tab:ablationonon} Hyperparameters picking process for configuration Multi-Head On and Center-Loss On}
+  \caption{\centering\label{tab:ablationonon} Hyper-parameters optimization process for configuration Multi-Head On and Center-Loss On}
 \end{table}
 
 \begin{table*}
@@ -752,7 +696,7 @@ This section contains tables \ref{tab:ablationoffoff}, \ref{tab:ablationonoff} a
     AVG     & 49.00 & 42.45 & 36.68 & 51.05 & 52.23 & 49.03 & 51.35 & 49.56 & 58.42 & 51.96 & 58.91 & 47.46 \\ 
     \hline
   \end{tabular}
-  \caption{\centering\label{tab:results}Results for each configuration and each domain shift. All values are percentages.}
+  \caption{\centering\label{tab:results}Final results for the three configurations on all domain shifts. All values are percentages.}
 \end{table*}
 
 
