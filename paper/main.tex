@@ -568,6 +568,12 @@ The results show that self-supervision technique can help in domain adaptation t
 A few critical points still remain on our method of study and proposed solution.
 The most important one is probably parameter choosing for different models, as we have seen that variations cause huge differences in results and sequential optimization of parameter is a sub-optimal heuristic.
 Furthermore, having the model to learn two different tasks at once, it could be useful to use a slower learning model at the expense of longer training times.
+Another observation that we can make based 
+on gathered data is the impact that the threshold 
+choice have during the target separation step.
+This is ascrivable to a weak normality score 
+that may need particular attention in order to develop
+a model able to reduce negative transfer.
 
 %%%%%%%%% REFERENCES
 {\small
@@ -602,10 +608,12 @@ This section contains tables \ref{tab:ablationoffoff}, \ref{tab:ablationonoff} a
     \hline
     \multicolumn{4}{||c||}{Picking $\mathcal{\tilde N}$} \\
     \hline
-    \multirow{4}{*}{1.0} & 0.50 & \multirow{4}{*}{3.0}  & 28.05\%\\
+    \multirow{6}{*}{1.0} & 0.50 & \multirow{6}{*}{3.0}  & 28.05\%\\
     & 0.55 & & 34.73\% \\
     & 0.60 & & 40.27\% \\
     & 0.65 & & 43.16\% \\
+    & {\bf 0.70} & & {\bf 44.38\%} \\
+    & 0.75 & & 43.87\% \\
     \hline
     \hline
     \multicolumn{4}{||c||}{Picking $\alpha_2$} \\
@@ -726,18 +734,18 @@ This section contains tables \ref{tab:ablationoffoff}, \ref{tab:ablationonoff} a
     \hline
     A$\to$C & 52.07 & 44.76 & 58.65 & 36.19 & 57.46 & 46.64 & 62.95 & 37.04 & 59.77 & 52.68 & 62.73 & 45.40 \\
     A$\to$P & 50.84 & 51.27 & 57.56 & 46.23 & 56.31 & 54.13 & 60.42 & 49.03 & 56.86 & 52.46 & 63.35 & 44.77 \\
-    A$\to$R & ??.?? & ??.?? & ??.?? & ??.?? & 59.88 & 56.60 & 53.18 & 60.65 & 58.86 & 61.67 & 66.82 & 57.26 \\
+    A$\to$R & 27.94 & 68.13 & 17.58 & 52.25 & 59.88 & 56.60 & 53.18 & 60.65 & 58.86 & 61.67 & 66.82 & 57.26 \\
     C$\to$A & 49.52 & 41.74 & 43.10 & 40.47 & 55.28 & 42.63 & 51.57 & 36.33 & 55.76 & 46.84 & 60.19 & 38.35 \\
     C$\to$P & 54.42 & 46.99 & 41.51 & 54.15 & 59.13 & 51.88 & 60.03 & 45.69 & 58.35 & 52.69 & 62.19 & 45.72 \\
     C$\to$R & 53.43 & 46.18 & 38.64 & 57.39 & 60.75 & 56.00 & 61.29 & 51.63 & 59.15 & 55.97 & 63.18 & 50.25 \\
     P$\to$A & 48.32 & 37.07 & 33.70 & 41.20 & 55.62 & 41.72 & 48.90 & 36.39 & 53.50 & 40.97 & 49.53 & 34.94 \\
-    P$\to$C & 47.76 & 43.99 & 48.42 & 40.31 & 56.77 & 46.10 & 55.11 & 39.65 & ??.?? & ??.?? & ??.?? & ??.?? \\
+    P$\to$C & 47.76 & 43.99 & 48.42 & 40.31 & 56.77 & 46.10 & 55.11 & 39.65 & 58.64 & 46.81 & 60.95 & 37.99 \\
     P$\to$R & 50.37 & 34.14 & 22.88 & 67.27 & 59.68 & 48.41 & 40.91 & 59.30 & 61.10 & 56.22 & 56.89 & 55.58 \\
     R$\to$A & 49.39 & 25.08 & 15.99 & 58.19 & 58.47 & 45.00 & 39.50 & 52.43 & 57.98 & 48.92 & 45.61 & 52.77 \\
     R$\to$C & 49.80 & 46.70 & 48.27 & 45.23 & 57.02 & 49.00 & 42.82 & 57.34 & 57.09 & 48.69 & 61.11 & 40.47 \\
     R$\to$P & 54.10 & 23.37 & 13.89 & 73.69 & 62.33 & 50.31 & 39.51 & 69.27 & 63.96 & 59.64 & 54.40 & 66.02 \\
     \hline
-    AVG     & ??.?? & ??.?? & ??.?? & ??.?? & 52.23 & 49.03 & 51.35 & 49.56 & ??.?? & ??.?? & ??.?? & ??.?? \\ 
+    AVG     & 49.00 & 42.45 & 36.68 & 51.05 & 52.23 & 49.03 & 51.35 & 49.56 & 58.42 & 51.96 & 58.91 & 47.46 \\ 
     \hline
   \end{tabular}
   \caption{\centering\label{tab:results}Results for each configuration and each domain shift. All values are percentages.}
