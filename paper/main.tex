@@ -555,29 +555,39 @@ making the choice of the correct values important for the method effectiveness.
 \section{Future work and conclusions}
 \label{sec:future_work}
 
-The results show that self-supervision techniques can be applied effectively in domain adaptation tasks and open-set classification tasks,
-but some critical points still remain in our method of study and proposed solution.
-The most important one is probably the parameter optimization method for different models,
-as small variations can cause huge differences in results sequentially optimizing hyperparameters is a sub-optimal heuristic.
+The achieved results show that self-supervision techniques can be applied effectively in domain adaptation tasks and open-set classification tasks.
+We propose a method which leverages the self-supervision power to address the two challenges exploiting the relative rotation prediction task,
+by first separating the target domain into a known and unknown part, and then by performing the domain alignment.
+Moreover, we propose a new metric to evaluate OSDA systems, HOS, which is the harmonic mean between
+the accuracy on the target known samples and the accuracy on rejecting the unknown ones.
+
+Some critical points still remain in our method of study and in our proposed solution.
+One point is the hyperparameters ablation method for different models,
+as small variations can cause huge differences in results due to
+the sequential optimization of hyperparameters.
 Furthermore,
 having models learn different tasks simultaneosly can lead to instability, 
 so using slower learning models at the expense of longer training times can improve results.
-A criticality is represented by the normality score hyperparameter:
-model confidence over accepting or rejecting a sample is very thight between known and unknwon samples,
-so a better function do have more spread scores can bring more efficient separation,
-ultimately resulting in a better quality input data in the second step.
-Last,
-center loss function relies on learning centroids based on sample features to predict rotation.
-This formulation requires picking a specific learning rate for such centroids,
-but we didn't run any test on how such learning rate impacts predictions or sample separability.
-
+A huge criticality is represented by the normality score function,
+as simply picking the rotation prediction confidence (maximum predicted probability)
+does not provide a very discriminant score between images belonging to a known class
+and images of unknown classes.
+A better normality score function should take into considerations other factors to result in a more discriminant score.
+It is worth noting that the separation goodness influences the quality of the input material for the second step,
+resulting to be an extremely critical part for the effectiveness of the method.
+Lastly, the self-supervision task effectiveness also depends on the model architecture,
+as, for example, deeper architectures can result in a better or worse learning
+of domain-independent features, as underlined in \cite{OldROS}.
 
 \appendix
 
 \section{Tables}
 \label{sec:tables}
 
-This section contains tables \ref{tab:ablationoffoff}, \ref{tab:ablationonoff} and \ref{tab:ablationonon} report the hyperparameters optimization sequence, while tables \ref{tab:results} report the final values for each domain shift with the chosen hyperparameters.
+This section contains the tables \ref{tab:ablationoffoff}, \ref{tab:ablationonoff} and \ref{tab:ablationonon}
+reporting the values of hyperparameters analyzed during the ablation,
+while the table \ref{tab:results} contains the values of the final models using the best hyperparameters,
+for each domain shift.
 
 \begin{table}[h!]
   \centering
@@ -620,7 +630,7 @@ This section contains tables \ref{tab:ablationoffoff}, \ref{tab:ablationonoff} a
   \caption{\centering\label{tab:ablationoffoff} Hyperparametr optimization process for configuration Multi-Head Off and Center-Loss Off}
 \end{table}
 
-\begin{table}[t!]
+\begin{table}[h!]
   \vspace{-2cm}
   \centering
   \begin{tabular}[h]{||c|c|c||c||}
@@ -663,7 +673,7 @@ This section contains tables \ref{tab:ablationoffoff}, \ref{tab:ablationonoff} a
 \end{table}
 
 
-\begin{table}[b!]
+\begin{table}[h!]
   \centering
   \begin{tabular}[h]{||c|c|c|c||c||}
     \hline
