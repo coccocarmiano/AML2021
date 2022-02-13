@@ -335,6 +335,11 @@ and further improvements will be discussed in \ref{sec:future_work}.
 \subsection{Step I: target known/unknown separation}
 \label{sec:stepone}
 
+\begin{figure}
+  \includegraphics[trim= 0cm 0cm 0cm 0cm, clip, width=\linewidth]{scheme_step1.png}
+  \caption{\label{fig:separation} Schema representing the step 1 training}
+\end{figure}
+
 To perform the target separation we train a CNN iterating on $\tilde{\mathcal{D}_s} = \{({\bf x}_i^s, {\bf \tilde x}_i^s, z_i^s)\}_{i=1}^{N_s}$,
 where ${\bf \tilde x}_i^s$ is the $z_i^s\times 90$ degrees rotated version of ${\bf x}_i^s$.
 The CNN is made of a feature extractor $E$ and two heads: $R_1$ and $C_1$.
@@ -403,15 +408,12 @@ it should be able to recognize the rotations applied only to images belonging to
 \subsection{Step II: domain alignment}
 \label{sec:domain_alignment}
 
-\begin{figure*}
-  \includegraphics[width=\textwidth ]{scheme_step1.png}
-  \caption{\label{fig:separation} Schema representing the step 1 training}
-\end{figure*}
 
-\begin{figure*}
-  \includegraphics[width=\textwidth ]{scheme.png}
-  \caption{\label{fig:separation} Schema representing the target images separation process}
-\end{figure*}
+\begin{figure}[t]
+  \includegraphics[trim= 0cm 0cm 0cm 0cm, clip, width=\linewidth ]{scheme.png}
+  \caption{\label{fig:separation}\centering Schema representing the target images separation process}
+\end{figure}
+
 
 In this step,
 having separated the target into a known part $\mathcal{D}_t^{knw}$,
@@ -436,6 +438,12 @@ The objective function is again $\mathcal{L}_2 = \mathcal{L}_{C_2} + \mathcal{L}
 where the two contributions are identical to equations \ref{eq:baseloss_class} and \ref{eq:baseloss_rot}.
 We report the $\mathcal{L}_{R_2}$ loss contribution to make clear the usage of $\alpha_2$ and we
 recall that $\mathcal{L}_{C_2}$ is now computed using the new arranged dataset $\mathcal{D}_s^*$.
+
+\begin{figure}[ht]
+  \includegraphics[trim= 5.2cm 0cm 2cm 0cm, clip, width=\linewidth ]{scheme_step2.png}
+  \caption{\label{fig:step2}\centering Test Caption}
+\end{figure}
+
 
 \begin{equation}
   \mathcal{L}_{R_2} = -\alpha_2\sum_{i\in\mathcal{D}_t^{knw}} {\bf z}_i^s \log \hat{{\bf z}}_i^s
@@ -534,7 +542,7 @@ $R_2$ is always a single-head classifier, even if using a multi-head rotation cl
   \begin{subfigure}[!htb]{0.35\textwidth}
     \includegraphics[trim=0 0 0 2cm, clip, width=\linewidth]{hos-th.png}
   \end{subfigure}
-  \caption{\centering\label{figurelabel} HOS values for different parameters. For full reference see appendix \ref{sec:tables}}
+  \caption{\centering\label{fig:hyperparams} HOS values for different parameters. For full reference see appendix \ref{sec:tables}}
 \end{figure}
 
 Table \ref{tab:results} contains the results for all 12 available domain shifts,
@@ -549,7 +557,7 @@ while HOS values are sampled at regular times on the entire original target data
 \subsection{Ablation Study}
 \label{sec:ablation_study}
 As shown in table \ref{tab:results} different architectures give different results, 
-and as shown in table \ref{tab:params} each one requires a different set of parameters.
+and as shown in image \ref{fig:hyperparams} each one requires a different set of parameters.
 To choose optimal parameters a sequential approach is followed, 
 by optimizing one parameter at the time.
 The order of optimization followed is: 
@@ -557,9 +565,7 @@ $\alpha_1$, $\lambda_1$, $\mathcal{\tilde N}$, $\alpha_2$.
 Models not using center loss just skip the $\lambda_1$ optimization.
 Ablation study were run on two domain shifts, 
 Art $\to$ Clipart and Clipart $\to$ Product.
-In table \ref{tab:ablation_params} we report the steps followed.
-All other settings follow what is reported in \ref{sec:model_parameters}.
-The result here obtained are the same reported in table \ref{tab:params}.
+In appendix \ref{sec:tables} we report the steps followed for each configuration.
 
 \section{Future Work}
 \label{sec:future_work}
@@ -581,15 +587,13 @@ a model able to reduce negative transfer.
 \bibliography{egbib}
 }
 
-
-\newpage
 \appendix
 \section{Tables}
 \label{sec:tables}
 
 This section contains tables \ref{tab:ablationoffoff}, \ref{tab:ablationonoff} and \ref{tab:ablationonon} report the hyperparameters optimization sequence, while tables \ref{tab:results} report the final values for each domain shift with the chosen hyperparameters.
 
-\begin{table}
+\begin{table}[hb!]
   \centering
   \begin{tabular}[h]{||c|c|c||c||}
     \hline
@@ -630,9 +634,8 @@ This section contains tables \ref{tab:ablationoffoff}, \ref{tab:ablationonoff} a
   \caption{\centering\label{tab:ablationoffoff} Hyperparameters picking process for configuration Multi-Head Off and Center-Loss Off}
 \end{table}
 
-
-
-\begin{table}
+\begin{table}[t!]
+  \vspace{-1.7cm}
   \centering
   \begin{tabular}[h]{||c|c|c||c||}
     \hline
@@ -674,7 +677,7 @@ This section contains tables \ref{tab:ablationoffoff}, \ref{tab:ablationonoff} a
 \end{table}
 
 
-\begin{table}
+\begin{table}[hb!]
   \centering
   \begin{tabular}[h]{||c|c|c|c||c||}
     \hline
