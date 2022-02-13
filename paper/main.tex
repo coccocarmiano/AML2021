@@ -271,7 +271,7 @@ To provide an explanation of why this applies, we can think that a rotation clas
 successfully perform the rotation predictions, such as shapes, edges, and high-level object relative position like the position of the eyes
 w.r.t nose.
 The method and its effectiveness is further illustrated in \cite{OldROS},
-and further improvements will be discussed in \ref{sec:future_work}.
+and further possible improvements will be discussed in section \ref{sec:future_work}.
 
 \subsection{Step I: target known/unknown separation}
 \label{sec:stepone}
@@ -317,6 +317,10 @@ Here ${\bf v_i}$ is the output of the penultimate layer of $R_1$,
 $\gamma({\bf z}_i)$ is the centroid of the features associated to class $i$
 (notice that the centroid is relative to a different rotation class $i$ in the multi-head variant),
 $||\cdot||_2^2$ is the $l$-2 norm and $\lambda$ is the weight associated with the center loss term.
+The additional center loss contribution should favor the learning of hidden features which have
+a smaller intra-class variance, resulting in a more discriminative representation
+when combined with the standard cross-entropy loss,
+which in contrast tries to enlarge the distance between the means of the classes.
 
 When training is completed, 
 we can start separating the target samples into known and unknown.
@@ -444,7 +448,7 @@ so the training process needs to be speeded up.
 Moreover, we set a learning rate 10 times lower for the weights of the feature extractor and $C_{1/2}$.
 We also decrease the learning rate using a step learning rate scheduler, which reduces it by a factor of 10 after 90\% of total epochs.
 All models are trained for 50 epochs for the step one and for 25 epochs for the step two.
-For models using the center loss a centroid learning rate of 0.001 is used.
+For models using the center loss, a centroid learning rate of 0.001 is used.
 The other hyperparameters are analyzed performing an ablation on them,
 details can be found on the section \ref{sec:ablation_study} and the results of the ablation are
 reported on appendix \ref{sec:tables}.
@@ -464,13 +468,13 @@ This ensures that we correctly balance the unknown class during training in a wa
 on the number of identified target unknown samples during the separation.
 
 {\it Classifier $R_1$, $R_2$}: 
-they are seen as discriminators composed by a linear layer $1024\to 256$,
+they are seen as discriminators composed by a linear layer ($1024\to 256$),
 followed by a batch normalization layer and a leaky relu activation.
-The last layer is then a linear one for the actual classification $256\to 4$.
+The last layer is then a linear one for the actual classification ($256\to 4$).
 In the case of multi-head rotation classifier,
 the discriminator is then composed of $|\mathcal{C}_s|$ different linear layers, both for the first and the last one.
 Moreover, the 256-dimensional output are the features used by the center loss for inferring class centroids.
-$R_2$ is always a single-head classifier, even if using a multi-head rotation classifier.
+$R_2$ is always a single-head discriminator, even if using the multi-head variant.
 
 \subsection{Results}
 \label{sec:results}
