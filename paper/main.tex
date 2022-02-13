@@ -118,6 +118,7 @@ and also for some Open Set problems specialized in anomaly detection and discrim
 The approach presented in this paper combines the power of the self-supervised learning with the standard supervised learning approach for semantic class recognition.
 We propose a two stage method aiming to identify and isolate unknown class samples in the first stage, 
 and reducing the domain gap between domains in the second stage to avoid negative transfer.
+A schematic view of the stages can be seen in figures \ref{fig:step1}, \ref{fig:separation}, \ref{fig:step2}.
 This is done by using a modified version of the rotation task as self-supervised method,
 predicting the relative rotation between an image and its rotated version.
 Finally, a classifier is used to predict if each target sample belongs to either one of the knwon classes or to an unknown class, 
@@ -317,7 +318,7 @@ Here ${\bf v_i}$ is the output of the penultimate layer of $R_1$,
 $\gamma({\bf z}_i)$ is the centroid of the features associated to class $i$
 (notice that the centroid is relative to a different rotation class $i$ in the multi-head variant),
 $||\cdot||_2^2$ is the $l$-2 norm and $\lambda$ is the weight associated with the center loss term.
-The additional center loss contribution should favor the learning of hidden features which have
+The additional center loss contribution should favor having hidden features which have
 a smaller intra-class variance, resulting in a more discriminative representation
 when combined with the standard cross-entropy loss,
 which in contrast tries to enlarge the distance between the means of the classes.
