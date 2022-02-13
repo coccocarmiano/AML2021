@@ -1,3 +1,4 @@
+import torch
 from torch import nn
 from torch.utils import model_zoo
 from torchvision.models.resnet import BasicBlock, model_urls, Bottleneck
@@ -66,25 +67,38 @@ class Classifier(nn.Module):
         self.class_classifier = nn.Linear(input_size, classes)
 
     def forward(self, x):
-
         return self.class_classifier(x)
 
-class Discriminator(nn.Module):
-    def __init__(self,input_size,classes):
-        super(Discriminator, self).__init__()
-        self.fc1 = nn.Sequential(
-                nn.Linear(input_size, 256),
-                #nn.BatchNorm1d(256),
-                nn.LeakyReLU(0.2, inplace=True)    
-            )
 
-        self.fc2 = nn.Linear(256, classes)
+class RotationDiscriminator(nn.Module):
+    def __init__(self, input_size, hidden_size, out_classes, n_heads):
+        super(RotationDiscriminator, self).__init__()
 
+        self.n_heads = n_heads
+        self.fc1 = nn.ModuleList([nn.Linear(input_size, hidden_size) for _ in range(n_heads)])
+        self.norm = nn.BatchNorm1d(256)
+        self.relu = nn.LeakyReLU(0.2, inplace=True)
+        self.fc2 = nn.ModuleList([nn.Linear(hidden_size, out_classes) for _ in range(n_heads)])
 
-    def forward(self, x):
-        features = self.fc1(x)
-        output = self.fc2(features)
-        return output, features
+    def forward(self, x, labels=None):
+        return self.forward_extended(x, labels)[1]
+
+    def forward_extended(self, x, labels=None):
+        if self.n_heads > 1:
+            # For each sample, we select the correct head according to the label
+            x = [self.fc1[label](x[idx]) for idx, label in enumerate(labels)]
+            x = torch.vstack(x)
+            x = self.norm(x)
+            feats = self.relu(x)
+            scores = [self.fc2[label](feats[idx]) for idx, label in enumerate(labels)]
+            scores = torch.vstack(scores)
+        else:
+            x = self.fc1[0](x)
+            x = self.norm(x)
+            feats = self.relu(x)
+            scores = self.fc2[0](x)
+
+        return feats, scores
 
 def resnet18_feat_extractor():
     """Constructs a ResNet-18 model.

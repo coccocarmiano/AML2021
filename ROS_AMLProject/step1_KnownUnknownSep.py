@@ -1,135 +1,170 @@
 import torch
 from torch import nn
-from optimizer_helper import get_optim_and_scheduler
-from center_loss import CenterLoss
+import matplotlib.pyplot as plt
 
 from tqdm import tqdm
 
 #### Implement Step1
 
-def _do_epoch(args, feature_extractor, rot_cls, obj_cls, get_rotation_classifiers, source_loader, optimizer, device):
+def _do_epoch(args, E, C, R, source_loader, device, optimizer, optimizer_CL=None, criterion_CL=None):
 
-    cls_criterion = nn.CrossEntropyLoss()
-    rot_criterion_ce = nn.CrossEntropyLoss()
+    C_criterion = nn.CrossEntropyLoss()
+    R_criterion = nn.CrossEntropyLoss()
 
-    if args.center_loss:
-        criterion_center = CenterLoss(num_classes=4, feat_dim=256, use_gpu=True, device=device) #version 2: features from first layer of R1
-        optimizer_center = torch.optim.SGD(criterion_center.parameters(), lr=args.learning_rate_center) #version a: used a specified LR for center loss
-
-    feature_extractor.train()
-    obj_cls.train()
-
-    if args.multihead:
-        for head in rot_cls:
-            head.train()
-    else:
-        rot_cls.train()
-
-    cls_correct, rot_correct, cls_tot, rot_tot = 0, 0, 0, 0
-
-    for data, data_label, data_rot, data_rot_label in tqdm(source_loader):
-        
+    C_correct_preds, R_correct_preds, C_tot_preds, R_tot_preds = 0, 0, 0, 0
+    tot_avg_loss, C_avg_loss, R_avg_loss, CL_avg_loss = 0.0, 0.0, 0.0, 0.0
+    tot_batches = 0
+    for batch_samples, batch_labels, batch_samples_rot, batch_labels_rot in tqdm(source_loader):
+        tot_batches += 1
         # Zero-out gradients
+        # Move data to GPU
+        batch_samples    , batch_labels     = batch_samples.to(device)    , batch_labels.to(device),
+        batch_samples_rot, batch_labels_rot = batch_samples_rot.to(device), batch_labels_rot.to(device)
+
         optimizer.zero_grad()
         if args.center_loss:
-            optimizer_center.zero_grad()
-
-        # Move data to GPU
-        data    , data_label     = data.to(device)    , data_label.to(device),
-        data_rot, data_rot_label = data_rot.to(device), data_rot_label.to(device)
+            optimizer_CL.zero_grad()
 
         # 1. Extract features from E
         # Extracting original image features from E
-        feature_extractor_output     = feature_extractor(data)
+        E_output     = E(batch_samples)
         # Extracting rotated image features from E
-        feature_extractor_output_rot = feature_extractor(data_rot)
+        E_output_rot = E(batch_samples_rot)
         # Concatenate original+rotate features
-        feature_extractor_output_conc = torch.cat((feature_extractor_output, feature_extractor_output_rot), dim=1)
+        E_output_conc = torch.cat((E_output, E_output_rot), dim=1)
 
         # 2. Get the scores
         # Use C1 to get the scores (without softmax, the cross-entropy will do it)
-        obj_cls_output = obj_cls(feature_extractor_output)
+        C_scores = C(E_output)
 
-        # Build a list of rotation classifiers, each belonging to a different sample in the batch
-        # If multihead:     R1 will be the head corresponding to the groundtruth label
-        # If not multihead: R1 will be the only existing head
-        classifiers    = get_rotation_classifiers(data_label)
-
+        # Use R1 to get the scores
         # For the center loss version, we need to have both the features coming from the first layer of the discriminator
         # and the output scores coming out from the discriminator
-        if args.center_loss:  
-            # 1. Using the #batch_size discriminators (one for each sample), get the internal features and the output scores
-            discriminator_features = []
-            discriminator_scores = []
-            for i in range(len(classifiers)):
-                discriminator_sample_scores, discriminator_sample_features = classifiers[i](feature_extractor_output_conc[i])
-                discriminator_features.append(discriminator_sample_features)
-                discriminator_scores.append(discriminator_sample_scores)
-
-            # 2. Transform them back again into tensors (#batch_size, #features_dim)
-            discriminator_features = torch.vstack(discriminator_features)
-            discriminator_scores = torch.vstack(discriminator_scores)
+        if args.center_loss:
+            R_features, R_scores = R.forward_extended(E_output_conc, batch_labels)
         else:
-            discriminator_scores = torch.vstack([classifiers[i](feature_extractor_output_conc[i])[0] for i in range(len(classifiers))])
+            R_scores = R(E_output_conc, batch_labels)
 
-        class_loss  = cls_criterion(obj_cls_output, data_label)
-        rot_loss    = rot_criterion_ce(discriminator_scores, data_rot_label) * args.weight_RotTask_step1
-        cent_loss   = .0
+        C_loss  = C_criterion(C_scores, batch_labels)
+        R_loss    = R_criterion(R_scores, batch_labels_rot) * args.weight_RotTask_step1
+        CL_loss   = .0
 
         if args.center_loss:
-            # Version 1: Use `feature_extra` as input for Center Loss
-            #cent_loss  = criterion_center(rot_cls_output, data_rot_label) * args.cl_lambda  #version 1: features from feature extractor
+            CL_loss = criterion_CL(R_features, batch_labels_rot) * args.weight_CL
 
-            #Version 2: Use `Discriminator` classifier output as input for Center Loss
-            cent_loss = criterion_center(discriminator_features, data_rot_label) * args.cl_lambda
+        loss = C_loss + R_loss + CL_loss
 
-
-        # 3. Compute total loss, backward, step, etc
-        loss = class_loss + rot_loss + cent_loss
-        loss.backward()
-        optimizer.step()
-        # by doing so, cl_lambda would not impact on the learning of centers
+        tot_avg_loss += loss.data.item()
+        C_avg_loss += C_loss.data.item()
+        R_avg_loss += R_loss.data.item()
         if args.center_loss:
-            for param in criterion_center.parameters():
-                param.grad.data *= (1. / args.cl_lambda)
-            optimizer_center.step()
+            CL_avg_loss += CL_loss.data.item()
 
         # Extract class predictions
-        preds        = torch.argmax(obj_cls_output, dim=1)
-        cls_correct += (preds == data_label).sum().item()
+        preds        = torch.argmax(C_scores, dim=1)
+        C_correct_preds += (preds == batch_labels).sum().item()
 
         # Extract rot predictions
-        preds        = torch.argmax(discriminator_scores, dim=1)
-        rot_correct += (preds == data_rot_label).sum().item()
+        preds        = torch.argmax(R_scores, dim=1)
+        R_correct_preds += (preds == batch_labels_rot).sum().item()
 
-        cls_tot     += data_label.size(0)
-        rot_tot     += data_rot_label.size(0)
+        C_tot_preds     += batch_labels.size(0)
+        R_tot_preds     += batch_labels_rot.size(0)
+
+        # 3. Compute total loss, backward, step, etc
+        loss.backward()
+        optimizer.step()
+
+        # by doing so, weight_CL would not impact on the learning of centers
+        if args.center_loss:
+            for param in criterion_CL.parameters():
+                param.grad.data *= (1. / args.weight_CL)
+            optimizer_CL.step()
+
+    tot_avg_loss /= tot_batches
+    C_avg_loss /= tot_batches
+    R_avg_loss /= tot_batches
+    CL_avg_loss /= tot_batches
+
+    C_accuracy = C_correct_preds / C_tot_preds
+    R_accuracy = R_correct_preds / R_tot_preds
+
+    return tot_avg_loss, C_avg_loss, R_avg_loss, CL_avg_loss, C_accuracy, R_accuracy
 
 
-    acc_cls = cls_correct / cls_tot
-    acc_rot = rot_correct / rot_tot
+def step1(args, E, C, R, source_loader, device, optimizer, scheduler, optimizer_CL=None, scheduler_CL=None, criterion_CL=None):
+    # Set the training mode
+    E.train()
+    C.train()
+    R.train()
 
-    return class_loss, acc_cls, rot_loss, cent_loss, acc_rot
+    E = E.to(device)
+    C = C.to(device)
+    R = R.to(device)
 
-
-def step1(args, feature_extractor, rot_cls, obj_cls, get_rotation_classifiers, source_loader, device):
-    optimizer, scheduler = get_optim_and_scheduler(feature_extractor, rot_cls, obj_cls, args.epochs_step1, args.learning_rate, args.train_all, args.multihead)
-    feature_extractor.train()
-    obj_cls.train()
-
-    if args.multihead:
-        for head in rot_cls:
-            head.train()
-    else:
-        rot_cls.train()
+    history = {}
+    history['tot_loss'] = []
+    history['C_loss'] = []
+    history['R_loss'] = []
+    history['CL_loss'] = []
+    history['C_acc'] = []
+    history['R_acc'] = []
 
     for epoch in range(args.epochs_step1):
-        print(f'Epoch {epoch+1}/{args.epochs_step1}')
-        class_loss, acc_cls, loss_ce, loss_cl, acc_rot = _do_epoch(args, feature_extractor, rot_cls, obj_cls, get_rotation_classifiers, source_loader, optimizer, device)
-        print(f"\tClass Loss    : {class_loss.item():.4f}")
-        print(f"\tRot   Loss    : {loss_ce.item():.4f}")
+        args.logger.info(f'Epoch {epoch+1}/{args.epochs_step1}')
+        tot_loss, C_loss, R_loss, CL_loss, C_accuracy, R_accuracy = _do_epoch(args, E, C, R, source_loader, device, optimizer, optimizer_CL=optimizer_CL, criterion_CL=criterion_CL)
+        args.logger.info(f"\tTotal Loss: {tot_loss:.4f}")
+        args.logger.info(f"\tClass Loss: {C_loss:.4f}")
+        args.logger.info(f"\tRot Loss: {R_loss:.4f}")
         if args.center_loss:
-            print(f"\tCenterLoss    : {loss_cl.item():.4f}")
-        print(f"\tClass Accuracy: {acc_cls*100:.2f}%")
-        print(f"\tRot   Accuracy: {acc_rot*100:.2f}%")
+            args.logger.info(f"\tCenterLoss: {CL_loss:.4f}")
+        args.logger.info(f"\tClass Accuracy: {C_accuracy*100:.2f} %")
+        args.logger.info(f"\tRot Accuracy: {R_accuracy*100:.2f} %")
+
+        history['tot_loss'].append(tot_loss)
+        history['C_loss'].append(C_loss)
+        history['R_loss'].append(R_loss)
+        history['CL_loss'].append(CL_loss)
+        history['C_acc'].append(C_accuracy)
+        history['R_acc'].append(R_accuracy)
+
         scheduler.step()
+        if args.center_loss:
+            scheduler_CL.step()
+
+    return history
+
+def plot_step1_accuracy_loss(args, history):
+    tot_loss = history['tot_loss']
+    C_loss = history['C_loss']
+    R_loss = history['R_loss']
+    CL_loss = history['CL_loss']
+    C_accuracy = history['C_acc']
+    R_accuracy = history['R_acc']
+
+    epochs = range(1, len(tot_loss) + 1)
+
+    # Accuracy plot
+    plt.figure()
+    plt.title(f"Object classifier and rotation classifier accuracy over step1 epochs (MH: {args.multihead} - CL: {args.center_loss})")
+    plt.plot(epochs, C_accuracy, 'b', label='Object classifier accuracy')
+    plt.plot(epochs, R_accuracy, 'r', label='Rotation classifier accuracy')
+    plt.legend()
+    fig_path = args.plot_path + "_s1_acc.png"
+    plt.savefig(fig_path)
+
+    # Loss plot
+    plt.figure()
+    plt.title(f'Object classifier and rotation classifier losses over step1 epochs (MH: {args.multihead} - CL: {args.center_loss})')
+    plt.plot(epochs, tot_loss, 'm', label='Total loss')
+    plt.plot(epochs, C_loss, 'b', label='Object classifier loss')
+    plt.plot(epochs, R_loss, 'r', label='Rotation classifier loss')
+    if args.center_loss:
+        plt.plot(epochs, CL_loss, 'g', label='Center Loss')
+
+    plt.legend()
+    fig_path = args.plot_path + "_s1_loss.png"
+    plt.savefig(fig_path)
+
+    plt.show()
+

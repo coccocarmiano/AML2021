@@ -1,69 +1,82 @@
+import math
+
 import torch
 import os
 from sklearn.metrics import roc_auc_score
 from tqdm import tqdm
 import numpy as np
+from torch import nn
 
+import matplotlib.pyplot as plt
 
-#### Implement the evaluation on the target for the known/unknw separation
+softmax = torch.nn.Softmax(dim=1)
 
-def evaluation(args, feature_extractor, rot_cls, obj_cls, get_rotation_classifiers, target_loader_eval, device, rand):
-    softmax = torch.nn.Softmax(dim=1)
-    feature_extractor.eval()
-    obj_cls.eval()
+def target_separation(args, E, C, R, target_loader_eval, device, rand):
+    """
+    Separate the target into known and unknown and generate the new source and target files.
+    New source file: Original known source + Unknown target according to the performed separation
+    New target file: Unknown target according to the performed separation
+    """
 
-    if args.multihead:
-        for head in rot_cls:
-            head.eval()
-    else:
-        rot_cls.eval()
+    E.eval()
+    C.eval()
+    R.eval()
+
+    E = E.to(device)
+    C = C.to(device)
+    R = R.to(device)
 
     ground_truths = []
     normality_scores = []
 
     with torch.no_grad():
-        for data, data_label, data_rot, data_rot_label in tqdm(target_loader_eval):
-            data, data_label = data.to(device), data_label.to(device)
-            data_rot = data_rot.to(device)
+        for batch_samples, batch_labels, batch_samples_rot_0, batch_labels_rot_0, batch_samples_rot_90, batch_labels_rot_90,\
+            batch_samples_rot_180, batch_labels_rot_180, batch_samples_rot_270, batch_labels_rot_270 in tqdm(target_loader_eval):
+
+            batch_samples, batch_labels = batch_samples.to(device), batch_labels.to(device)
+            batch_samples_rot_0 = batch_samples_rot_0.to(device)
+            batch_samples_rot_90 = batch_samples_rot_90.to(device)
+            batch_samples_rot_180 = batch_samples_rot_180.to(device)
+            batch_samples_rot_270 = batch_samples_rot_270.to(device)
 
             # 1. Extract features from E
             # Extracting original image features from E
-            feature_extractor_output = feature_extractor(data)
+            E_output = E(batch_samples)
             # Extracting rotated image features from E
-            feature_extractor_output_rot = feature_extractor(data_rot)
+            E_output_rot_0 = E(batch_samples_rot_0)
+            E_output_rot_90 = E(batch_samples_rot_90)
+            E_output_rot_180 = E(batch_samples_rot_180)
+            E_output_rot_270 = E(batch_samples_rot_270)
+
             # Concatenate original+rotate features
-            feature_extractor_output_conc = torch.cat((feature_extractor_output, feature_extractor_output_rot), dim=1)
+            E_output_conc_0 = torch.cat((E_output, E_output_rot_0), dim=1)
+            E_output_conc_90 = torch.cat((E_output, E_output_rot_90), dim=1)
+            E_output_conc_180 = torch.cat((E_output, E_output_rot_180), dim=1)
+            E_output_conc_270 = torch.cat((E_output, E_output_rot_270), dim=1)
 
             # 2. Get the scores
-            # Get the object classifier predictions
-            obj_cls_scores = obj_cls(feature_extractor_output)
-            predicted_labels = torch.argmax(obj_cls_scores, dim=1)
+            C_scores = C(E_output)
+            predicted_labels = torch.argmax(C_scores, dim=1)
 
-            # Build a list of rotation classifiers, each belonging to a different sample in the batch
-            # If multihead:     R1 will be the head corresponding to the inferred label
-            # If not multihead: R1 will be the only existing head
-            classifiers = get_rotation_classifiers(predicted_labels)
-
-            # For the center loss version, we need to have both the features coming from the first layer of the discriminator
-            # and the output scores coming out from the discriminator
-            if args.center_loss:
-                # 1. Using the #batch_size discriminators (one for each sample), get the internal features and the output scores
-                discriminator_scores = []
-                for i in range(len(classifiers)):
-                    discriminator_sample_scores, discriminator_sample_features = classifiers[i](feature_extractor_output_conc[i])
-                    discriminator_scores.append(discriminator_sample_scores)
-
-                # 2. Transform them back again into tensors (#batch_size, #features_dim)
-                discriminator_scores = torch.vstack(discriminator_scores)
-            else:
-                discriminator_scores = torch.vstack([classifiers[i](feature_extractor_output_conc[i])[0] for i in range(len(classifiers))])
+            # Use R1 to get the scores
+            R_scores_0 = R(E_output_conc_0, predicted_labels)
+            R_scores_90 = R(E_output_conc_90, predicted_labels)
+            R_scores_180 = R(E_output_conc_180, predicted_labels)
+            R_scores_270 = R(E_output_conc_270, predicted_labels)
 
             # Compute softmax and get the maximum probability as the normality score
-            r_score = discriminator_scores
-            n_scores = softmax(r_score)
-            n_score, _ = torch.max(n_scores, dim=1)
+            R_probabilities_0 = softmax(R_scores_0)
+            R_probabilities_90 = softmax(R_scores_90)
+            R_probabilities_180 = softmax(R_scores_180)
+            R_probabilities_270 = softmax(R_scores_270)
 
-            ground_truths.append(data_label.item())
+            n_score_0, _ = torch.max(R_probabilities_0, dim=1)
+            n_score_90, _ = torch.max(R_probabilities_90, dim=1)
+            n_score_180, _ = torch.max(R_probabilities_180, dim=1)
+            n_score_270, _ = torch.max(R_probabilities_270, dim=1)
+            n_score = (n_score_0 + n_score_90 + n_score_180 + n_score_270) / 4
+
+            ground_truths.append(batch_labels.item())
             normality_scores.append(n_score.item())
 
     ground_truths = np.array(ground_truths, dtype=np.int)
@@ -75,46 +88,209 @@ def evaluation(args, feature_extractor, rot_cls, obj_cls, get_rotation_classifie
     ground_truths[mask_known] = 1
     ground_truths[mask_unknw] = 0
 
-    ## Display ROC AUC Value
+    print("ground_truths: ", end="")
+    for gt in ground_truths:
+        print(f"{gt}, ", end="")
+    print()
+    print("normality_scores: ", end="")
+    for ns in normality_scores:
+        print(f"{ns:.3f}, ", end="")
+    print()
+
+    # Compute AUC-ROC value
     auc = roc_auc_score(ground_truths, normality_scores)
-    print(f"Computed ROC AUC: {auc:.4f}")
+    args.logger.info("\n")
+    args.logger.info(f"Computed ROC AUC: {auc:.4f}")
+    args.logger.info("")
 
     # Perform the separation using the given threshold
     mask_sep_known = normality_scores >= args.threshold
     mask_sep_unknw = normality_scores < args.threshold
 
-    print(f"Separation performed")
-    print(f"Target samples identified as known: {mask_sep_known.sum()} - Actual known samples: {mask_known.sum()}")
-    print(f"Target samples identified as unknown: {mask_sep_unknw.sum()} - Actual unknown samples: {mask_unknw.sum()}")
+    assignments = np.zeros(normality_scores.shape, dtype=np.int)
+    assignments[mask_sep_known] = 1
+    assignments[mask_sep_unknw] = 0
 
-    known_accuracy = (mask_sep_known == mask_known).sum() / mask_sep_known.shape[0]
-    unk_accuracy = (mask_sep_unknw == mask_unknw).sum() / mask_sep_unknw.shape[0]
+    args.logger.info(f"Separation performed using threshold: {args.threshold:.3f}")
+    args.logger.info(f"Target samples identified as known: {mask_sep_known.sum()} - Actual known samples: {mask_known.sum()}")
+    args.logger.info(f"Target samples identified as unknown: {mask_sep_unknw.sum()} - Actual unknown samples: {mask_unknw.sum()}")
 
-    print(f"Known separation accuracy: {known_accuracy*100:.2f} %")
-    print(f"Unknown separation accuracy: {unk_accuracy*100:.2f} %")
+    separation_accuracy = (assignments == ground_truths).sum() / ground_truths.shape[0]
+    correct_known = 0
+    tot_known = 0
+    correct_unknown = 0
+    tot_unknown = 0
+    for pred, actual in zip(assignments, ground_truths):
+        if actual == 1:
+            tot_known += 1
+            if pred == actual:
+                correct_known += 1
+        else:
+            tot_unknown += 1
+            if pred == actual:
+                correct_unknown += 1
 
-    ## We now must build and save two datasets
-    ## New Source Dataset, with Source + Target Unknown Samples
-    ## New Target Dataset, with only Target Known Samples
+    known_accuracy = correct_known / tot_known
+    unknown_accuracy = correct_unknown / tot_unknown
+
+    args.logger.info(f"Separation accuracy: {separation_accuracy * 100:.2f} %")
+    args.logger.info(f"Known accuracy (TPR): {known_accuracy * 100:.2f} %")
+    args.logger.info(f"Unknown accuracy (TNR): {unknown_accuracy * 100:.2f} %")
+    args.logger.info("")
+
+    # We now must build and save two datasets
+    # New Source Dataset, with Source + Target Unknown Samples
+    # New Target Dataset, with only Target Known Samples
 
     if not os.path.isdir('new_txt_list'):
         os.mkdir('new_txt_list')
 
     # Build new files
     # The new source will contain the original known source plus the unknown target after our separation
-    source_and_target_unknown_file = open(f'new_txt_list/{args.source}_known_{str(rand)}.txt', 'w')
+    stu_fname = f'new_txt_list/{args.source}_known_{str(rand)}.txt'
+    source_and_target_unknown_file = open(stu_fname, 'w')
     # The new target will contain the known target after our separation
-    target_known_file = open(f'new_txt_list/{args.target}_known_{str(rand)}.txt', 'w')
+    tk_fname = f'new_txt_list/{args.target}_known_{str(rand)}.txt'
+    target_known_file = open(tk_fname, 'w')
 
     pairs = zip(target_loader_eval.dataset.names, target_loader_eval.dataset.labels)
 
     for it, (name, label) in enumerate(pairs):
         if mask_sep_known[it]:
             # Known
-            target_known_file.write(f"{name} {str(label)}\n")
+            target_known_file.write(f"{name} {-1}\n")
         else:
             # Unknown
             source_and_target_unknown_file.write(f"{name} {45}\n")
 
     source_and_target_unknown_file.close()
     target_known_file.close()
+
+    args.logger.info(f"New source file containing known source and unknown target (according to the separation) written in {stu_fname}")
+    args.logger.info(f"New target file containing known target (according to the separation) written in {tk_fname}")
+
+    draw_ROC(args, normality_scores, ground_truths)
+
+    return auc, separation_accuracy, mask_sep_unknw.sum()
+
+def get_confusion_matrix(predicted_labels, true_labels, all_labels=None):
+    labels = all_labels
+    if all_labels is None:
+        labels = set(true_labels)
+        extended = set(predicted_labels)
+        labels = labels.union(extended)
+
+    label_to_index = {l: i for i, l in enumerate(labels)}
+    conf_matr = np.zeros((len(labels), len(labels)))
+    for p, t in zip(predicted_labels, true_labels):
+        p_i = label_to_index[p]
+        t_i = label_to_index[t]
+        conf_matr[p_i, t_i] = conf_matr[p_i, t_i] + 1
+
+    return conf_matr
+
+def bayes_binary_optimal_classifier(llr, threshold=None):
+    if (llr.ndim > 1):
+        llr = llr.flatten()
+    predictions = [1 if l >= threshold else 0 for l in llr]
+    return predictions
+
+def draw_ROC(args, llr, labels, color=None, recognizer_name=""):
+    if llr.ndim > 1:
+        llr = llr.flatten()
+
+    llr_sorted = np.sort(llr)
+    FPRs = []
+    TPRs = []
+    for t in llr_sorted:
+        predictions = bayes_binary_optimal_classifier(llr, threshold=t)
+        conf_matr = get_confusion_matrix(predictions, labels)
+        FNR = conf_matr[0, 1] / (conf_matr[0, 1] + conf_matr[1, 1])
+        TPR = 1 - FNR
+        FPR = conf_matr[1, 0] / (conf_matr[1, 0] + conf_matr[0, 0])
+        FPRs.append(FPR)
+        TPRs.append(TPR)
+    plt.figure()
+    plt.title("ROC")
+    plt.xlabel("FPR")
+    plt.ylabel("TPR")
+    plt.xlim([0, 1])
+    plt.ylim([0, 1])
+    if color is not None:
+        plt.plot(FPRs, TPRs, color=color, label=f"{recognizer_name}")
+    else:
+        plt.plot(FPRs, TPRs, label=f"{recognizer_name}")
+
+    plt.legend(loc="lower right")
+    fig_path = args.plot_path + "_sep_roc.png"
+    plt.savefig(fig_path)
+    plt.show()
+
+
+def target_evaluation(args, E, C, target_loader_eval, device):
+    # Final evaluation on the target using only C2
+    # Disable training
+    E.eval()
+    C.eval()
+
+    E = E.to(device)
+    C = C.to(device)
+
+    C_criterion = nn.CrossEntropyLoss()
+
+    tot_known, tot_unkwn, known_correct, unknw_correct = 0, 0, 0, 0
+    C_avg_loss = 0.0
+    tot_batches = 0
+
+    tot_predicted_known, tot_predicted_unknown = 0, 0
+
+    with torch.no_grad():
+        for batch_samples, batch_labels, _, _, _, _, _, _, _, _ in tqdm(target_loader_eval):
+            tot_batches += 1
+            batch_samples, batch_labels = batch_samples.to(device), batch_labels.to(device)
+
+            E_output = E(batch_samples)
+            C_scores = C(E_output)
+            C_preds = torch.argmax(C_scores, dim=1)
+
+            known_mask = batch_labels < 45
+            unknw_mask = batch_labels > 44
+
+            batch_labels[unknw_mask] = 45
+
+            C_loss = C_criterion(C_scores, batch_labels)
+            C_avg_loss += C_loss.data.item()
+
+            tot_known += known_mask.sum().item()
+            tot_unkwn += unknw_mask.sum().item()
+
+            known_correct += (C_preds[known_mask] == batch_labels[known_mask]).sum().item()
+            unknw_correct += (C_preds[unknw_mask] == batch_labels[unknw_mask]).sum().item()
+
+            # debug
+            tot_predicted_known += (C_preds < 45).sum().item()
+            tot_predicted_unknown += (C_preds > 44).sum().item()
+
+    args.logger.info("")
+    args.logger.info(f"Tot predicted known (in general): {tot_predicted_known}")
+    args.logger.info(f"Tot predicted unknown (in general): {tot_predicted_unknown}")
+    args.logger.info(f"Total real known samples: {tot_known}")
+    args.logger.info(f"Total real unknown samples: {tot_unkwn}")
+    args.logger.info(f"Known correct: {known_correct}")
+    args.logger.info(f"Unknown correct: {unknw_correct}")
+
+    C_avg_loss /= tot_batches
+    if int(tot_known) == 0:
+        OS = 0.0
+    else:
+        OS = known_correct / tot_known
+    if int(tot_unkwn) == 0:
+        UNK = 0.0
+    else:
+        UNK = unknw_correct / tot_unkwn
+    if math.isclose(OS, 0.0) or math.isclose(UNK, 0.0):
+        HOS = 0.0
+    else:
+        HOS = 2 / (1.0 / float(OS) + 1.0 / float(UNK))
+
+    return HOS, OS, UNK, C_avg_loss
