@@ -112,7 +112,7 @@ by solving such task, the model can learn the underlying structure of the data,
 for instance high-level knowledge, correlations, and metadata embedded.
 This type of learning has been recently used for Domain Adaptation, 
 learning robust cross-domain features and supporting generalization \cite{CarlucciJigsaw,SelfSupervisedXu},
-and also for some Open Set problems specialized in anomaly detection and discriminating anomalous data \cite{bergman2020classificationbased,dectionGeometric}. 
+and also for some Open Set problems specialized in anomaly detection and discriminating anomalous data \cite{bergman2020classificationbased,GeoTran}. 
 
 The approach presented in this paper combines the power of the self-supervised learning with the standard supervised learning approach for semantic class recognition.
 A two-stage method is hence proposed, 
@@ -208,7 +208,7 @@ unlabeled target data. This technique is borrowed from semi-supervised learning,
 where it is called co-training \cite{saito2017asymmetric,zou2018domain,chen2017rethinking}.
 
 In contrast, the presented method uses a Self-Supervised approach, already presented in 
-the recent years by many other works \cite{sun2019unsupervised,saito2020universa,yue2021prototypical}.
+the recent years by many other works \cite{sun2019unsupervised,saito2020universal,yue2021prototypical}.
 using pretext tasks (e.g., image rotation, jigsaw puzzle \cite{CarlucciJigsaw}, mutual information (MI) \cite{selfsupfeng}, instance discrimination \cite{chen2020simple}) to learn high-level feature representation in 
 source and target domains by jointly training a shared feature extractor.
 
@@ -240,7 +240,7 @@ contrastive learning \cite{oord2019representation}, geometric transformations \c
 Another geometric transformation task is rotation recognition \cite{OldROS}, where input images
 are rotated by multiples of 90° and the network is trained to predict the rotation
 angle pf each image. This pretext task has been successfully used for both anomaly
-detection \cite{golan2018deep} and closed-set domain adaptation \cite{selfsupxu}.
+detection \cite{GeoTran} and closed-set domain adaptation \cite{SelfSupervisedXu}.
 
 \textbf{Open Set Domain Adaptation} (OSDA) is a challenging domain adaptation 
 setting which allows the existence of unknown classes on the target domain.
@@ -337,7 +337,7 @@ and further improvements will be discussed in \ref{sec:future_work}.
 
 \begin{figure}
   \includegraphics[trim= 0cm 0cm 0cm 0cm, clip, width=\linewidth]{scheme_step1.png}
-  \caption{\label{fig:separation} Schema representing the step 1 training}
+  \caption{\label{fig:step1} Schema representing the step 1 training}
 \end{figure}
 
 To perform the target separation we train a CNN iterating on $\tilde{\mathcal{D}_s} = \{({\bf x}_i^s, {\bf \tilde x}_i^s, z_i^s)\}_{i=1}^{N_s}$,
