@@ -507,13 +507,13 @@ In appendix \ref{sec:tables} tables \ref{tab:ablationoffoff}, \ref{tab:ablationo
 This information is also summarized in figure \ref{fig:hyperparams}.
 We can notice that most of the optimal parameters are shared between configurations,
 an exception being the normality score $\mathcal{\tilde N}$ on a single-headed configuration.
-This is due to the fact that having to use only one head for all classes it is better to be very confident about classyfing a sample as known.
+This is due to the fact that having to use only one head for all classes it is better to be very confident about classifying a sample as known.
 Smaller $\alpha_1$ and $\alpha_2$ values are preferred as they avoid overfitting the rotation classifiers as the object classifiers take a longer time to converge.
 As center loss contributions are directly summed to the rotation classifier loss term while being much bigger, 
 much smaller values need to be used for a correct model convergence.
 
 
-\section{Future Work}
+\section{Future Work and conclusions}
 \label{sec:future_work}
 
 The results show that self-supervision technique can help in domain adaptation task and open-set classification tasks,
