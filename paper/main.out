@@ -1,13 +1,16 @@
 \BOOKMARK [1][-]{section.1}{. Introduction}{}% 1
-\BOOKMARK [2][-]{subsection.1.1}{. Notes}{section.1}% 2
-\BOOKMARK [1][-]{section.2}{. Related Work}{}% 3
-\BOOKMARK [1][-]{section.3}{. Method - Write name of proposal approach}{}% 4
-\BOOKMARK [2][-]{subsection.3.1}{. Subsection 1}{section.3}% 5
-\BOOKMARK [2][-]{subsection.3.2}{. Subsection 2}{section.3}% 6
-\BOOKMARK [1][-]{section.4}{. Experiments}{}% 7
-\BOOKMARK [2][-]{subsection.4.1}{. Subsection 1 - Setup}{section.4}% 8
-\BOOKMARK [2][-]{subsection.4.2}{. Subsection 2 - Implementation Details}{section.4}% 9
-\BOOKMARK [2][-]{subsection.4.3}{. Subsection 3 - Results}{section.4}% 10
-\BOOKMARK [1][-]{section.5}{. Conclusions \(and Future Work\)}{}% 11
-\BOOKMARK [1][-]{appendix.A}{. Appendices}{}% 12
-\BOOKMARK [1][-]{appendix.B}{. Supplemental Material}{}% 13
+\BOOKMARK [1][-]{section.2}{. Related Work}{}% 2
+\BOOKMARK [1][-]{section.3}{. Method}{}% 3
+\BOOKMARK [2][-]{subsection.3.1}{. Problem Formulation}{section.3}% 4
+\BOOKMARK [2][-]{subsection.3.2}{. Approach}{section.3}% 5
+\BOOKMARK [2][-]{subsection.3.3}{. Rotation Recognition}{section.3}% 6
+\BOOKMARK [2][-]{subsection.3.4}{. Step I: target known/unknown separation}{section.3}% 7
+\BOOKMARK [2][-]{subsection.3.5}{. Step II: domain alignment}{section.3}% 8
+\BOOKMARK [2][-]{subsection.3.6}{. Performance metrics}{section.3}% 9
+\BOOKMARK [1][-]{section.4}{. Experiments}{}% 10
+\BOOKMARK [2][-]{subsection.4.1}{. Benchmark}{section.4}% 11
+\BOOKMARK [2][-]{subsection.4.2}{. Implementation Details}{section.4}% 12
+\BOOKMARK [2][-]{subsection.4.3}{. Results}{section.4}% 13
+\BOOKMARK [2][-]{subsection.4.4}{. Ablation Study}{section.4}% 14
+\BOOKMARK [1][-]{section.5}{. Future Work}{}% 15
+\BOOKMARK [1][-]{appendix.A}{. Tables}{}% 16

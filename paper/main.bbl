@@ -1,14 +1,80 @@
-\begin{thebibliography}{1}\itemsep=-1pt
+\begin{thebibliography}{10}\itemsep=-1pt
+
+\bibitem{bendale2015open}
+Abhijit Bendale and Terrance Boult.
+\newblock Towards open set deep networks, 2015.
+
+\bibitem{bergman2020classificationbased}
+Liron Bergman and Yedid Hoshen.
+\newblock Classification-based anomaly detection for general data, 2020.
+
+\bibitem{bousmalis2017unsupervised}
+Konstantinos Bousmalis, Nathan Silberman, David Dohan, Dumitru Erhan, and Dilip
+  Krishnan.
+\newblock Unsupervised pixel-level domain adaptation with generative
+  adversarial networks, 2017.
+
+\bibitem{bousmalis2016domain}
+Konstantinos Bousmalis, George Trigeorgis, Nathan Silberman, Dilip Krishnan,
+  and Dumitru Erhan.
+\newblock Domain separation networks, 2016.
 
 \bibitem{BucciROS}
 Silvia Bucci, Mohammad~Reza Loghmani, and Tatiana Tommasi.
 \newblock On the effectiveness of image rotation for open set domain
   adaptation, 2020.
 
+\bibitem{firstosda}
+Pau~Panareda Busto and Juergen Gall.
+\newblock Open set domain adaptation.
+\newblock In {\em 2017 IEEE International Conference on Computer Vision
+  (ICCV)}, pages 754--763, 2017.
+
 \bibitem{CarlucciJigsaw}
 Fabio~Maria Carlucci, Antonio D'Innocente, Silvia Bucci, Barbara Caputo, and
   Tatiana Tommasi.
 \newblock Domain generalization by solving jigsaw puzzles, 2019.
+
+\bibitem{chen2017rethinking}
+Liang-Chieh Chen, George Papandreou, Florian Schroff, and Hartwig Adam.
+\newblock Rethinking atrous convolution for semantic image segmentation, 2017.
+
+\bibitem{chen2020simple}
+Ting Chen, Simon Kornblith, Mohammad Norouzi, and Geoffrey Hinton.
+\newblock A simple framework for contrastive learning of visual
+  representations, 2020.
+
+\bibitem{dhamija2021selfsupervised}
+Akshay~Raj Dhamija, Touqeer Ahmad, Jonathan Schwan, Mohsen Jafarzadeh, Chunchun
+  Li, and Terrance~E. Boult.
+\newblock Self-supervised features improve open-world learning, 2021.
+
+\bibitem{dosovitskiy2015discriminative}
+Alexey Dosovitskiy, Philipp Fischer, Jost~Tobias Springenberg, Martin
+  Riedmiller, and Thomas Brox.
+\newblock Discriminative unsupervised feature learning with exemplar
+  convolutional neural networks, 2015.
+
+\bibitem{feng2019attract}
+Qianyu Feng, Guoliang Kang, Hehe Fan, and Yi Yang.
+\newblock Attract or distract: Exploit the margin of open set, 2019.
+
+\bibitem{selfsupfeng}
+Zeyu Feng, Chang Xu, and Dacheng Tao.
+\newblock Self-supervised representation learning from multi-domain data, 10
+  2019.
+
+\bibitem{ganin2015unsupervised}
+Yaroslav Ganin and Victor Lempitsky.
+\newblock Unsupervised domain adaptation by backpropagation, 2015.
+
+\bibitem{ge2017generative}
+ZongYuan Ge, Sergey Demyanov, Zetao Chen, and Rahil Garnavi.
+\newblock Generative openmax for multi-class open set classification, 2017.
+
+\bibitem{OSRsurvey}
+Chuanxing Geng, Sheng-Jun Huang, and Songcan Chen.
+\newblock Recent advances in open set recognition: A survey, 2021.
 
 \bibitem{OldROS}
 Spyros Gidaris, Praveer Singh, and Nikos Komodakis.
@@ -19,9 +85,115 @@ Spyros Gidaris, Praveer Singh, and Nikos Komodakis.
 Izhak Golan and Ran El-Yaniv.
 \newblock Deep anomaly detection using geometric transformations, 2018.
 
+\bibitem{ResNet18}
+Kaiming He, Xiangyu Zhang, Shaoqing Ren, and Jian Sun.
+\newblock Deep residual learning for image recognition, 2015.
+
+\bibitem{hein2019relu}
+Matthias Hein, Maksym Andriushchenko, and Julian Bitterwolf.
+\newblock Why relu networks yield high-confidence predictions far away from the
+  training data and how to mitigate the problem, 2019.
+
+\bibitem{hoffman2017cycada}
+Judy Hoffman, Eric Tzeng, Taesung Park, Jun-Yan Zhu, Phillip Isola, Kate
+  Saenko, Alexei~A. Efros, and Trevor Darrell.
+\newblock Cycada: Cycle-consistent adversarial domain adaptation, 2017.
+
+\bibitem{jia2021selfsupervised}
+Jingyun Jia and Philip~K. Chan.
+\newblock Self-supervised detransformation autoencoder for representation
+  learning in open set recognition, 2021.
+
+\bibitem{Jing_Li_Zhu_Ding_Lu_Yang_2021}
+Mengmeng Jing, Jingjing Li, Lei Zhu, Zhengming Ding, Ke Lu, and Yang Yang.
+\newblock Balanced open set domain adaptation via centroid alignment, 2021.
+
+\bibitem{kong2021opengan}
+Shu Kong and Deva Ramanan.
+\newblock Opengan: Open-set recognition via open data generation, 2021.
+
+\bibitem{sat}
+Hong Liu, Zhangjie Cao, Mingsheng Long, Jianmin Wang, and Qiang Yang.
+\newblock Separate to adapt: Open set domain adaptation via progressive
+  separation.
+\newblock In {\em 2019 IEEE/CVF Conference on Computer Vision and Pattern
+  Recognition (CVPR)}, pages 2922--2931, 2019.
+
+\bibitem{long2015learning}
+Mingsheng Long, Yue Cao, Jianmin Wang, and Michael~I. Jordan.
+\newblock Learning transferable features with deep adaptation networks, 2015.
+
+\bibitem{noroozi2017unsupervised}
+Mehdi Noroozi and Paolo Favaro.
+\newblock Unsupervised learning of visual representations by solving jigsaw
+  puzzles, 2017.
+
+\bibitem{perera2019deep}
+Pramuditha Perera and Vishal~M. Patel.
+\newblock Deep transfer learning for multiple class novelty detection, 2019.
+
+\bibitem{saito2020universal}
+Kuniaki Saito, Donghyun Kim, Stan Sclaroff, and Kate Saenko.
+\newblock Universal domain adaptation through self supervision, 2020.
+
+\bibitem{saito2017asymmetric}
+Kuniaki Saito, Yoshitaka Ushiku, and Tatsuya Harada.
+\newblock Asymmetric tri-training for unsupervised domain adaptation, 2017.
+
+\bibitem{saito2018open}
+Kuniaki Saito, Shohei Yamamoto, Yoshitaka Ushiku, and Tatsuya Harada.
+\newblock Open set domain adaptation by backpropagation, 2018.
+
+\bibitem{firstPaperOSR}
+Walter~J. Scheirer, Anderson de Rezende~Rocha, Archana Sapkota, and Terrance~E.
+  Boult.
+\newblock Toward open set recognition, 2013.
+
+\bibitem{sun2019unsupervised}
+Yu Sun, Eric Tzeng, Trevor Darrell, and Alexei~A. Efros.
+\newblock Unsupervised domain adaptation through self-supervision, 2019.
+
+\bibitem{taigman2016unsupervised}
+Yaniv Taigman, Adam Polyak, and Lior Wolf.
+\newblock Unsupervised cross-domain image generation, 2016.
+
+\bibitem{tzeng2017adversarial}
+Eric Tzeng, Judy Hoffman, Kate Saenko, and Trevor Darrell.
+\newblock Adversarial discriminative domain adaptation, 2017.
+
+\bibitem{OfficeHomeDataset}
+Hemanth Venkateswara, Jose Eusebio, Shayok Chakraborty, and Sethuraman
+  Panchanathan.
+\newblock Deep hashing network for unsupervised domain adaptation, 2017.
+
 \bibitem{CenterLoss}
 Yandong Wen, Kaipeng Zhang, Zhifeng Li, and Yu Qiao.
 \newblock A discriminative feature learning approach for deep face recognition,
   2016.
+
+\bibitem{SelfSupervisedXu}
+Jiaolong Xu, Liang Xiao, and Antonio~M. Lopez.
+\newblock Self-supervised domain adaptation for computer vision tasks, 2019.
+
+\bibitem{uan}
+Kaichao You, Mingsheng Long, Zhangjie Cao, Jianmin Wang, and Michael~I. Jordan.
+\newblock Universal domain adaptation.
+\newblock In {\em 2019 IEEE/CVF Conference on Computer Vision and Pattern
+  Recognition (CVPR)}, pages 2715--2724, 2019.
+
+\bibitem{yue2021prototypical}
+Xiangyu Yue, Zangwei Zheng, Shanghang Zhang, Yang Gao, Trevor Darrell, Kurt
+  Keutzer, and Alberto~Sangiovanni Vincentelli.
+\newblock Prototypical cross-domain self-supervised learning for few-shot
+  unsupervised domain adaptation, 2021.
+
+\bibitem{zhang2016colorful}
+Richard Zhang, Phillip Isola, and Alexei~A. Efros.
+\newblock Colorful image colorization, 2016.
+
+\bibitem{zou2018domain}
+Yang Zou, Zhiding Yu, B.~V. K.~Vijaya Kumar, and Jinsong Wang.
+\newblock Domain adaptation for semantic segmentation via class-balanced
+  self-training, 2018.
 
 \end{thebibliography}

@@ -152,7 +152,7 @@ unlabeled target data. This technique is borrowed from semi-supervised learning,
 where it is called co-training \cite{saito2017asymmetric,zou2018domain,chen2017rethinking}.
 
 In contrast, the presented method uses a Self-Supervised approach, already presented in 
-the recent years by many other works \cite{sun2019unsupervised,saito2020universal,yue2021prototypical}.
+the recent years by many other works \cite{sun2019unsupervised,saito2020universal,yue2021prototypical}
 using pretext tasks (e.g., image rotation, jigsaw puzzle \cite{CarlucciJigsaw}, mutual information (MI) \cite{selfsupfeng}, instance discrimination \cite{chen2020simple}) to learn high-level feature representation in 
 source and target domains by jointly training a shared feature extractor.
 
@@ -164,7 +164,7 @@ of deep networks \cite{perera2019deep, hein2019relu, bendale2015open}.
 Some techinques presented in the past were focus on an adversarial approach to 
 delineate closed from open-set images \cite{ge2017generative, kong2021opengan}.
 
-In the recent years different works to a Self-Supervised solution, used also in the 
+In the recent years different works have landed to a Self-Supervised solution, used also in the 
 presented method, engaging in learning invariant representations to the 
 transformations of the input data, improving separation of classes from each other 
 and from open-set samples \cite{dhamija2021selfsupervised,jia2021selfsupervised,GeoTran}.
@@ -175,11 +175,11 @@ tasks that learn deep feature representations, which will hopefully be informati
 for downstream “real” tasks.
 Many such auxiliary tasks have been proposed in the literature, including
 image colorization \cite{zhang2016colorful},
-image jigsaw puzzle [\cite{noroozi2017unsupervised}, geometric transformations \cite{dosovitskiy2015discriminative}.
+image jigsaw puzzle \cite{noroozi2017unsupervised}, geometric transformations \cite{dosovitskiy2015discriminative}.
 
 Another geometric transformation task is rotation recognition \cite{OldROS}, where input images
 are rotated by multiples of 90° and the network is trained to predict the rotation
-angle pf each image. This pretext task has been successfully used for both anomaly
+angle of each image. This pretext task has been successfully used for both anomaly
 detection \cite{GeoTran} and closed-set domain adaptation \cite{SelfSupervisedXu}.
 
 \textbf{Open Set Domain Adaptation} (OSDA) is a challenging domain adaptation 
@@ -189,7 +189,7 @@ currently accepted definition was introduced by Saito \etal \cite{saito2018open}
 containing all the source categories and additional set of private categories 
 that should be considered unknown. They have presented Open Set
 Back-Propagation (OSBP) \cite{saito2018open} as an adversarial method 
-to increase the prediction variances so that the generator can choose if accept Ornot a target saple.
+to increase the prediction variances so that the generator can choose if accept or not a target saple.
 Separate To Adapt (STA) \cite{sat} train a multi-binary classifier to progressively 
 separate the samples of unknown and known classes.
 Universal Adaptation Network (UAN) \cite{uan}, originally proposed for the universal 
@@ -263,6 +263,7 @@ of the images belonging to that semantic class.
 This variation can mitigate the problem of trying to predict the rotation of a larger number
 of semantic classes. Infact, as the number of semantic classes grows,
 the problem of predicting the relative orientation becomes more difficult.
+
 The application of the rotation recognition pre-text task allows to effectively favor and force the model to learn
 domain-independent patterns, which are crucial to perform the novelty detection in a cross-domain fashion and, moreover,
 to successfully perform the domain alignment.
