@@ -28,6 +28,7 @@
 \usepackage[pagebackref,breaklinks,colorlinks]{hyperref}
 \usepackage{multirow}
 \usepackage{float}
+\usepackage{url}
 
 
 % Support for easy cross-referencing
@@ -51,7 +52,7 @@
 \author{Protopapa Andrea, Quarta Matteo, Ruggeri Giuseppe, Versace Alessandro\\
 Politecnico di Torino\\
 Italy\\
-{\tt\small \{s286302,s292477,s292459,292435\}@studenti.polito.it}
+{\tt\small s\{286302,292477,292459,292435\}@studenti.polito.it}
 % For a paper whose authors are all at the same institution,
 % omit the following lines up until the closing ``}''.
 % Additional authors and addresses can be added with ``\and'',
@@ -71,12 +72,7 @@ Italy\\
   novelty detection on the target data and then aligning the two domains avoiding potential negative adaptation.
   Furthermore, we assess the performance using a new metric which represents in a balanced way the ability to jointly solve the two problems.
   Experiments conducted on the Office-Home benchmark show interesting results and method effectiveness.
-   
-
-  % Performance loss over domain change is a common problem in machine learning applications.
-  % Solving the issue usually relies on adapting the model to the new domain by having at disposal large and labeled datasets, either rare or costly to acquire.
-  % In this paper we propose a new approach, adapting models to the new domains while not needing relying on labeled data thanks to a self-supervision.
-  % Experiments conducted on the Office-Home dataset show interesting results and method effectiveness.
+  Full code for our proposed method is made publicly available \url{https://github.com/coccocarmiano/AML2021}
 \end{abstract}
 
 \section{Introduction}
@@ -91,38 +87,42 @@ However, the actual data present a huge variety on the domains while still repre
 For example, we may want to be capable of predicting that both an image of a real elephant and a drawing of an elephant are containing the semantic class \textit{elephant}.
 Domain adaptation techniques have been developing in recent years to reduce the domain gap between a labeled source domain and one or more unlabeled target domains.
 Generally, this is done by enforcing the learning of domain-invariant patterns of both domains.
-As underlined in \cite{domainAdaptFarahani}, this is usually achieved by learning a transformation function which projects both the source and target domain data in a
-new space where we jointly maintain the underlying structure of the original data while reducing the domain gap by removing the domain-specific information.
 
-Another big issue encountered in real world usages is the presence of additional anomaly semantic classes on the observed data.
-The problem comes under the name of \textit{Open-Set Recognition (OSR)} \cite{OSRsurvey}, where we require not only to accurately classify the known seen classes, but also
-effectively deal with unknown ones, which would otherwise drastically weaken the robustness of the methods.
+Another big issue,
+named {\textit Open-Set Recognition (OSR)} \cite{OSRsurvey},
+features the presence of additional anomalous semantic classes in the observed data and requires to both accurately classify
+known observed samples and also reject the ones from unknown classes.
 
-The jointly presence and accounting of the two described problems has been emerged as a new sub-field of computer vision with the name of \textit{Open-Set Domain Adaptation (OSDA)}.
-As a consequence, if we try to reduce the domain gap between the whole target domain and the source domain, we will observe a negative adaptation due to the unwanted alignment between
-the data belonging to the anomaly semantic classes and the source classes we want to model and predict.
-For this reason, it is important to first perform anomaly detection of the additional set of novelty classes, translating the problem into a \textit{Closed-Set Domain Adaptation (CSDA)} one,
-and next do the alignment between the source and the target domain identified as known.
+The joint presence and accounting of these two problems has been formalized as a new sub-field of computer vision with the name of \textit{Open-Set Domain Adaptation (OSDA)}.
+As a consequence, 
+if we try to reduce the domain gap between the whole target and the source domain, 
+we will observe an unwanted alignment between
+the data belonging to anomalous semantic classes and the source classes we want to model and predict.
+For this reason, 
+it is important to first perform anomaly detection of the additional set of unknown classes
+and then do the alignment between the source and the target domain identified as known
+translating the problem into a \textit{Closed-Set Domain Adaptation (CSDA)} one.
 
 Common machine learning methods usually leverage huge manually annotated datasets to perform well on the given tasks.
-However, acquiring annotated material is usually very costly and difficult, moreover, relying on such data may not be scalable in large applications on the long run.
-Thus, recently, a commonly employed approach is self-supervised learning, which consists in creating new automatically labeled data starting from the original unlabeled data.
-The fundamental idea is creating some auxiliary task from input data so that,
-by solving such task, the model can learn the underlying structure of the data,
-for instance high-level knowledge, correlations, and metadata embedded.
+However, 
+acquiring such data is often very costly and relying on this data may not be scalable in large applications on the long run.
+Recently, 
+a commonly employed approach is self-supervised learning, 
+which consists in creating new automatically labeled data starting from the original unlabeled data.
+The fundamental idea is creating some auxiliary task from input data so that the model can learn the underlying structure of the data,
+such as high-level knowledge, correlations, and metadata embedded.
 This type of learning has been recently used for Domain Adaptation, 
 learning robust cross-domain features and supporting generalization \cite{CarlucciJigsaw,SelfSupervisedXu},
 and also for some Open Set problems specialized in anomaly detection and discriminating anomalous data \cite{bergman2020classificationbased,GeoTran}. 
 
 The approach presented in this paper combines the power of the self-supervised learning with the standard supervised learning approach for semantic class recognition.
-A two-stage method is hence proposed, 
-aiming to identify and isolate unknown class samples in the first stage, 
-before reducing in the second stage the domain gap between the source domain and the known target domain to avoid negative transfer.
-This is done in both stages using a modified version of the rotation task as self-supervised method,
+We propose a two stage method aiming to identify and isolate unknown class samples in the first stage, 
+and reducing the domain gap between domains in the second stage to avoid negative transfer.
+This is done by using a modified version of the rotation task as self-supervised method,
 predicting the relative rotation between an image and its rotated version.
-Finally, a classifier is used to predict if each target sample belongs either to one of the knwon classes or to an unknown class, 
+Finally, a classifier is used to predict if each target sample belongs to either one of the knwon classes or to an unknown class, 
 being rejected in the latter case.
-We evaluate the method on the Office-Home benchmark \cite{OfficeHomeDataset} exploiting a new OSDA metric. 
+We evaluate the method on the Office-Home benchmark \cite{OfficeHomeDataset} using a new OSDA metric. 
 
 To wrap up, our \textbf{main contributions} are: 
 \begin{enumerate}
@@ -163,9 +163,6 @@ The problem was first formulated in \cite{firstPaperOSR} and since then, several
 of deep networks \cite{perera2019deep, hein2019relu, bendale2015open}.
 Some techinques presented in the past were focus on an adversarial approach to 
 delineate closed from open-set images \cite{ge2017generative, kong2021opengan}.
-Other approaches include reconstruction based methods 
-\cite{yoshihashi2019classificationreconstruction}
-which use poor test-time reconstruction as an open-set indicator.
 
 In the recent years different works to a Self-Supervised solution, used also in the 
 presented method, engaging in learning invariant representations to the 
@@ -178,8 +175,7 @@ tasks that learn deep feature representations, which will hopefully be informati
 for downstream “real” tasks.
 Many such auxiliary tasks have been proposed in the literature, including
 image colorization \cite{zhang2016colorful},
-image jigsaw puzzle [\cite{noroozi2017unsupervised}, image inpainting \cite{pathak2016context},
-contrastive learning \cite{oord2019representation}, geometric transformations \cite{dosovitskiy2015discriminative}.
+image jigsaw puzzle [\cite{noroozi2017unsupervised}, geometric transformations \cite{dosovitskiy2015discriminative}.
 
 Another geometric transformation task is rotation recognition \cite{OldROS}, where input images
 are rotated by multiples of 90° and the network is trained to predict the rotation
@@ -495,35 +491,45 @@ as described in the previous section.
 Multi-headed models are more capable of correctly discriminating between known and unknown samples,
 ultimately resulting in better domain alignment.
 This effect is amplified when also using center loss.
-AUROC values are computed at the end of the separation stage, 
-while HOS values are sampled at regular times on the entire original target dataset.
+AUROC and HOS values are taken at the end of the relative stages. 
 
 \subsection{Ablation Study}
 \label{sec:ablation_study}
-As shown in table \ref{tab:results} different architectures give different results, 
-and as shown in image \ref{fig:hyperparams} each one requires a different set of parameters.
-To choose optimal parameters a sequential approach is followed, 
-by optimizing one parameter at the time.
-The order of optimization followed is: 
-$\alpha_1$, $\lambda_1$, $\mathcal{\tilde N}$, $\alpha_2$.
+Image \ref{fig:hyperparams} summarizes the parameter optimization process where a sequential approach is followed.
+For each configuration one hyper-parameter is optimized at a time,
+following the order
+$\alpha_1$, $\lambda_1$, $\mathcal{\tilde N}$, $\alpha_2$ and picking the parameter giving the highest HOS.
 Models not using center loss just skip the $\lambda_1$ optimization.
 Ablation study were run on two domain shifts, 
 Art $\to$ Clipart and Clipart $\to$ Product.
-In appendix \ref{sec:tables} we report the steps followed for each configuration.
+In appendix \ref{sec:tables} tables \ref{tab:ablationoffoff}, \ref{tab:ablationonoff} and \ref{tab:ablationonon} report all the steps followed for each configuration.
+This information is also summarized in figure \ref{fig:hyperparams}.
+We can notice that most of the optimal parameters are shared between configurations,
+an exception being the normality score $\mathcal{\tilde N}$ on a single-headed configuration.
+This is due to the fact that having to use only one head for all classes it is better to be very confident about classyfing a sample as known.
+Smaller $\alpha_1$ and $\alpha_2$ values are preferred as they avoid overfitting the rotation classifiers as the object classifiers take a longer time to converge.
+As center loss contributions are directly summed to the rotation classifier loss term while being much bigger, 
+much smaller values need to be used for a correct model convergence.
+
 
 \section{Future Work}
 \label{sec:future_work}
 
-The results show that self-supervision technique can help in domain adaptation task and open-set classification tasks.
-A few critical points still remain on our method of study and proposed solution.
-The most important one is probably parameter choosing for different models, as we have seen that variations cause huge differences in results and sequential optimization of parameter is a sub-optimal heuristic.
-Furthermore, having the model to learn two different tasks at once, it could be useful to use a slower learning model at the expense of longer training times.
-Another observation that we can make based 
-on gathered data is the impact that the threshold 
-choice have during the target separation step.
-This is ascrivable to a weak normality score 
-that may need particular attention in order to develop
-a model able to reduce negative transfer.
+The results show that self-supervision technique can help in domain adaptation task and open-set classification tasks,
+but some critical points still remain in our method of study and proposed solution.
+The most important one is probably the parameter optimization method for different models,
+as small variations can cause huge differences in results sequentially optimizing hyper-parameters is a sub-optimal heuristic.
+Furthermore,
+having models learn different tasks simultaneosly can lead to instability, 
+so using slower learning models at the expense of longer training times can improve results.
+A criticality is represented by the normality score hyper-parameter:
+model confidence over accepting or rejecting a sample is very thight between known and unknwon samples,
+so a better function do have more spread scores can bring more efficient separation,
+ultimately resulting in a better quality input data in the second step.
+Last,
+center loss function relies on learning centroids based on sample features to predict rotation.
+This formulation requires picking a specific learning rate for such centroids,
+but we didn't run any test on how such learning rate impacts predictions or sample separability.
 
 %%%%%%%%% REFERENCES
 {\small
@@ -538,7 +544,7 @@ a model able to reduce negative transfer.
 
 This section contains tables \ref{tab:ablationoffoff}, \ref{tab:ablationonoff} and \ref{tab:ablationonon} report the hyper-parameters optimization sequence, while tables \ref{tab:results} report the final values for each domain shift with the chosen hyper-parameters.
 
-\begin{table}[hb!]
+\begin{table}[h!]
   \centering
   \begin{tabular}[h]{||c|c|c||c||}
     \hline
@@ -580,7 +586,7 @@ This section contains tables \ref{tab:ablationoffoff}, \ref{tab:ablationonoff} a
 \end{table}
 
 \begin{table}[t!]
-  \vspace{-1.7cm}
+  \vspace{-2cm}
   \centering
   \begin{tabular}[h]{||c|c|c||c||}
     \hline
@@ -622,7 +628,7 @@ This section contains tables \ref{tab:ablationoffoff}, \ref{tab:ablationonoff} a
 \end{table}
 
 
-\begin{table}[hb!]
+\begin{table}[b!]
   \centering
   \begin{tabular}[h]{||c|c|c|c||c||}
     \hline
@@ -655,6 +661,7 @@ This section contains tables \ref{tab:ablationoffoff}, \ref{tab:ablationonoff} a
     & & 0.5 & & 46.63\% \\
     & & 0.55 & & 47.09\% \\
     & & {\bf 0.6} & & {\bf 49.78\%} \\
+    & & 0.65 & & 47.23\% \\
     \hline
     \hline
     \multicolumn{5}{||c||}{Picking $\alpha_2$} \\
@@ -693,7 +700,7 @@ This section contains tables \ref{tab:ablationoffoff}, \ref{tab:ablationonoff} a
     R$\to$C & 49.80 & 46.70 & 48.27 & 45.23 & 57.02 & 49.00 & 42.82 & 57.34 & 57.09 & 48.69 & 61.11 & 40.47 \\
     R$\to$P & 54.10 & 23.37 & 13.89 & 73.69 & 62.33 & 50.31 & 39.51 & 69.27 & 63.96 & 59.64 & 54.40 & 66.02 \\
     \hline
-    AVG     & 49.00 & 42.45 & 36.68 & 51.05 & 52.23 & 49.03 & 51.35 & 49.56 & 58.42 & 51.96 & 58.91 & 47.46 \\ 
+    AVG     & 49.00 & 42.45 & 36.68 & 51.05 & 58.23 & 49.03 & 51.35 & 49.56 & 58.42 & 51.96 & 58.91 & 47.46 \\ 
     \hline
   \end{tabular}
   \caption{\centering\label{tab:results}Final results for the three configurations on all domain shifts. All values are percentages.}
